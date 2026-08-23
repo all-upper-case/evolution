@@ -1,0 +1,36 @@
+# Evolution
+
+An autonomous, open-source ecosystem and evolution simulator developed collaboratively by Josie and Codex.
+
+The long-term goal is a living sandbox in which populations compete for resources, reproduce with mutation, form ecological niches, and generate surprising but explainable evolutionary dynamics.
+
+## Intended experience
+
+- Run directly in a modern web browser.
+- Watch organisms move, feed, reproduce, mutate, and die.
+- Pause, accelerate, reset, and replay a simulation from a seed.
+- Inspect organisms, lineages, traits, population history, and ecosystem statistics.
+- Adjust environmental conditions and observe evolutionary consequences.
+- Export and reload reproducible experiments.
+
+## Engineering principles
+
+1. **Deterministic core:** identical seed and settings must produce identical results.
+2. **Simulation before spectacle:** rules and tests come before decorative effects.
+3. **Small reviewable increments:** every development run should leave the project working.
+4. **Measured complexity:** add systems only when they produce observable, testable behavior.
+5. **Browser-first and local-first:** no account or hosted backend is required for the core simulator.
+6. **Explainable evolution:** important outcomes should be visible through inspectable traits and statistics.
+
+## Project status
+
+The project is in autonomous bootstrap development. See:
+
+- [Roadmap](docs/ROADMAP.md)
+- [Autonomous development policy](docs/AUTONOMY.md)
+- [Decision log](docs/DECISIONS.md)
+- [Progress log](docs/PROGRESS.md)
+
+## License
+
+A license will be selected before the first public release.
