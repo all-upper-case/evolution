@@ -4,9 +4,9 @@ This is the source of truth for autonomous development. Work from the earliest i
 
 ## Milestone 0 — Project foundation
 
-- [ ] Select and scaffold a minimal browser-oriented TypeScript toolchain.
+- [x] Select and scaffold a minimal browser-oriented TypeScript toolchain.
 - [ ] Establish unit tests, type checking, linting, formatting, and CI.
-- [ ] Implement a seeded pseudorandom-number generator with determinism tests.
+- [x] Implement a seeded pseudorandom-number generator with determinism tests.
 - [ ] Establish simulation configuration, serialization conventions, and numerical limits.
 - [ ] Render a minimal application shell with simulation controls.
 
