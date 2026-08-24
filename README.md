@@ -22,9 +22,26 @@ The long-term goal is a living sandbox in which populations compete for resource
 5. **Browser-first and local-first:** no account or hosted backend is required for the core simulator.
 6. **Explainable evolution:** important outcomes should be visible through inspectable traits and statistics.
 
+## Getting started
+
+Evolution requires Node.js 22.12 or later.
+
+```bash
+npm install
+npm run dev
+```
+
+The development server prints the local URL to open in a browser. Before committing, run the complete local quality gate:
+
+```bash
+npm run validate
+```
+
+Individual commands are also available for tests, type checking, linting, formatting checks, and production builds.
+
 ## Project status
 
-The project is in autonomous bootstrap development. See:
+The project is in autonomous foundation development. The browser shell and the first deterministic simulation utility are implemented; the ecological world model comes next. See:
 
 - [Roadmap](docs/ROADMAP.md)
 - [Autonomous development policy](docs/AUTONOMY.md)
