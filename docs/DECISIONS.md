@@ -33,3 +33,11 @@ Early organisms will use a compact genome of explicit numeric traits affecting p
 Scheduled work will use focused branches and pull requests. Direct changes to the default branch are limited to initial repository bootstrap.
 
 **Why:** Reviewable increments make unattended work observable and recoverable.
+
+## 2026-08-24 — Minimal vanilla TypeScript toolchain
+
+**Status:** Accepted
+
+The initial application uses Vite, vanilla TypeScript, Vitest, ESLint with typed rules, and Prettier. It deliberately does not use a component framework.
+
+**Why:** The first interface is small, and the simulation core must remain framework-independent. Avoiding a UI framework reduces dependencies and architectural commitment while Vite provides a fast browser build and a test-compatible toolchain. A framework can be adopted later if measured interface complexity justifies it.
