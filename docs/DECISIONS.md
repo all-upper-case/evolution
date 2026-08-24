@@ -41,3 +41,11 @@ Scheduled work will use focused branches and pull requests. Direct changes to th
 The initial application uses Vite, vanilla TypeScript, Vitest, ESLint with typed rules, and Prettier. It deliberately does not use a component framework.
 
 **Why:** The first interface is small, and the simulation core must remain framework-independent. Avoiding a UI framework reduces dependencies and architectural commitment while Vite provides a fast browser build and a test-compatible toolchain. A framework can be adopted later if measured interface complexity justifies it.
+
+## 2026-08-24 — Autonomous merge authority
+
+**Status:** Accepted
+
+The owner explicitly delegates authority to merge or squash-merge completed autonomous branches without waiting for case-by-case approval.
+
+**Why:** Evolution is intended to progress as an autonomous project. Pull requests remain useful as validation and audit boundaries, but routine owner review is not a release gate. The agent should prefer squash merges after re-checking that the branch is current and all required validation is green.
