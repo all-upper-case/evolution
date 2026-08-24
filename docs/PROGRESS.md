@@ -46,4 +46,4 @@ The ecological model does not exist yet. The next work should define bounded, se
 
 ### Recommended next action
 
-After an independent review and merge of this foundation pull request, implement validated simulation configuration, serialization conventions, and explicit numerical limits.
+After recording the owner's delegated merge authority, squash-merge this green foundation pull request. Then implement validated simulation configuration, serialization conventions, and explicit numerical limits.
