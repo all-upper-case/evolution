@@ -49,9 +49,11 @@ Do not manufacture changes merely to fill an activation. If no safe implementati
 - Use a fresh branch named `codex/<short-purpose>`.
 - One coherent concern per pull request.
 - Include purpose, behavior, validation performed, and known limitations.
-- Never merge a failing pull request.
-- Do not merge autonomously until CI exists and the change is low-risk.
-- Once CI is reliable, documentation-only and narrowly tested low-risk changes may be merged; architectural changes and milestone-completing changes remain for a later independent review run.
+- Never merge a failing, conflicted, incomplete, or materially uncertain pull request.
+- When local validation and required GitHub CI pass, autonomously merge completed work without waiting for owner approval.
+- Prefer squash merging so each coherent development increment becomes one default-branch commit.
+- Re-check the pull request head and CI immediately before merging; do not merge if the head moved after validation.
+- Leave a pull request open only for a concrete engineering reason documented in its description or progress log, not for routine human approval.
 - Never rewrite shared history or delete branches containing unique work.
 
 ## Continuity protocol
