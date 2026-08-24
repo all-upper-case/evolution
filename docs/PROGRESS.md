@@ -38,7 +38,7 @@ Complete the first portion of Milestone 0: scaffold the application and add test
 
 ### Validation
 
-Local formatting, linting, strict type checking, six unit tests, and the Vite production build all pass on Node.js 24.19.0. The pull request's first GitHub Actions run is still required before the CI roadmap item can be marked complete.
+Local formatting, linting, strict type checking, six unit tests, and the Vite production build all pass on Node.js 24.19.0. The pull request's first GitHub Actions run also completed successfully, so the quality-gate roadmap item is complete.
 
 ### Risk and follow-up
 
@@ -46,4 +46,4 @@ The ecological model does not exist yet. The next work should define bounded, se
 
 ### Recommended next action
 
-Review CI for this pull request. If green, mark the quality-gate item complete and implement validated simulation configuration, serialization conventions, and explicit numerical limits.
+After an independent review and merge of this foundation pull request, implement validated simulation configuration, serialization conventions, and explicit numerical limits.
