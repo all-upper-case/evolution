@@ -27,7 +27,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -81,6 +82,89 @@ h1 {
   box-shadow: 0 1.5rem 5rem rgb(0 0 0 / 25%);
   gap: 1.75rem;
   backdrop-filter: blur(10px);
+}
+
+.panel-heading,
+.metrics,
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.panel-heading {
+  justify-content: space-between;
+}
+.tick-readout {
+  text-align: right;
+}
+.tick-readout small,
+.metrics small {
+  display: block;
+  color: #789484;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.tick-readout output {
+  color: #83e6a6;
+  font-size: clamp(2rem, 8vw, 4rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.metrics {
+  padding: 1rem;
+  border: 1px solid #294838;
+  border-radius: 0.8rem;
+  background: #0a1711;
+}
+.metrics div {
+  flex: 1;
+}
+.metrics strong {
+  display: block;
+  margin-top: 0.3rem;
+  font-variant-numeric: tabular-nums;
+}
+.controls {
+  flex-wrap: wrap;
+}
+.controls label {
+  display: grid;
+  color: #cfe0d4;
+  font-size: 0.75rem;
+  font-weight: 700;
+  gap: 0.35rem;
+}
+.controls input,
+.controls select {
+  min-height: 2.75rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #3d5a49;
+  border-radius: 0.65rem;
+  color: #f4fff7;
+  background: #07120e;
+}
+.controls input {
+  width: 12rem;
+}
+.secondary {
+  border: 1px solid #3d5a49;
+  color: #d9eee0;
+  background: #10231b;
+}
+.secondary:hover {
+  background: #19382a;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.message {
+  min-height: 1.3rem;
+  margin: 0 !important;
+  color: #82d69f !important;
+  font-size: 0.85rem;
 }
 
 .status {
@@ -148,7 +232,8 @@ button:hover {
 }
 
 button:focus-visible,
-input:focus-visible {
+input:focus-visible,
+select:focus-visible {
   outline: 3px solid #b0f5c6;
   outline-offset: 3px;
 }
@@ -199,6 +284,23 @@ footer {
 
   .sequence {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .panel-heading {
+    align-items: flex-start;
+  }
+  .metrics {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .controls input,
+  .controls select,
+  .controls button {
+    width: 100%;
   }
 
   footer {

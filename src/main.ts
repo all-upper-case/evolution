@@ -1,82 +1,84 @@
 import "./styles.css";
 
-import { SeededRandom } from "./simulation/random";
+import { SimulationClock } from "./simulation/clock";
+import { createDefaultSimulationConfig } from "./simulation/configuration";
 
 const app = document.querySelector<HTMLElement>("#app");
-
-if (app === null) {
-  throw new Error("Application root was not found.");
-}
+if (app === null) throw new Error("Application root was not found.");
 
 app.innerHTML = `
-  <section class="shell" aria-labelledby="page-title">
-    <header class="hero">
-      <p class="eyebrow">Deterministic ecosystem laboratory</p>
-      <h1 id="page-title">Evolution</h1>
-      <p class="summary">
-        A living sandbox for observing inheritance, competition, mutation, and
-        ecological change. The simulation world is being built from a tested,
-        reproducible foundation.
-      </p>
-    </header>
+  <main class="shell" aria-labelledby="page-title">
+    <header class="hero"><p class="eyebrow">Deterministic ecosystem laboratory</p><h1 id="page-title">Evolution</h1><p class="summary">A reproducible living sandbox. The ecological world is next; this control deck already runs on its fixed simulation clock.</p></header>
+    <section class="panel" aria-labelledby="clock-title">
+      <div class="panel-heading"><div><p class="status"><span aria-hidden="true"></span><b id="state">Paused</b></p><h2 id="clock-title">Simulation clock</h2></div><div class="tick-readout"><small>Current tick</small><output id="tick">0</output></div></div>
+      <div class="metrics" aria-live="polite"><div><small>Simulated time</small><strong id="elapsed">0.00 s</strong></div><div><small>Seed</small><strong id="seed-display">42</strong></div><div><small>Update rate</small><strong>30 ticks/s</strong></div></div>
+      <div class="controls" aria-label="Simulation controls">
+        <button id="play" type="button">Play</button><button id="step" class="secondary" type="button">Step</button>
+        <label>Speed<select id="speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+        <label>Seed<input id="seed" type="number" min="0" max="4294967295" step="1" value="42"></label><button id="reset" class="secondary" type="button">Reset</button>
+      </div><p id="message" class="message" role="status"></p>
+    </section><footer><span>Milestone 0</span><span>Fixed-timestep foundation</span></footer>
+  </main>`;
 
-    <section class="panel" aria-labelledby="foundation-title">
-      <div>
-        <p class="status"><span aria-hidden="true"></span> Foundation online</p>
-        <h2 id="foundation-title">Seeded randomness preview</h2>
-        <p>
-          Enter a whole-number seed. The same seed always produces the same
-          sequence—the first invariant required by the future ecosystem.
-        </p>
-      </div>
+const config = createDefaultSimulationConfig();
+let clock = new SimulationClock(config.world.ticksPerSecond);
+let previousFrame: number | undefined;
+const element = (id: string): HTMLElement => {
+  const found = document.querySelector<HTMLElement>(`#${id}`);
+  if (found === null) throw new Error(`Control #${id} was not found.`);
+  return found;
+};
+const play = element("play") as HTMLButtonElement;
+const step = element("step") as HTMLButtonElement;
+const speed = element("speed") as HTMLSelectElement;
+const seed = element("seed") as HTMLInputElement;
+const message = element("message") as HTMLParagraphElement;
 
-      <form id="seed-form" class="seed-form">
-        <label for="seed">Seed</label>
-        <div class="input-row">
-          <input id="seed" name="seed" type="number" step="1" value="42" required />
-          <button type="submit">Generate</button>
-        </div>
-      </form>
-
-      <output id="sequence" class="sequence" aria-live="polite"></output>
-    </section>
-
-    <footer>
-      <span>Milestone 0</span>
-      <span>Simulation core next</span>
-    </footer>
-  </section>
-`;
-
-const seedForm = document.querySelector<HTMLFormElement>("#seed-form");
-const seedInput = document.querySelector<HTMLInputElement>("#seed");
-const sequenceOutput = document.querySelector<HTMLOutputElement>("#sequence");
-
-if (seedForm === null || seedInput === null || sequenceOutput === null) {
-  throw new Error("Seed preview controls were not found.");
-}
-
-const renderSequence = (): void => {
-  const seed = Number(seedInput.value);
-
-  if (!Number.isSafeInteger(seed)) {
-    sequenceOutput.textContent = "Enter a safe whole-number seed.";
-    return;
-  }
-
-  const random = new SeededRandom(seed);
-  const values = Array.from({ length: 5 }, () => random.next().toFixed(6));
-  sequenceOutput.innerHTML = values
-    .map(
-      (value, index) =>
-        `<span><small>${String(index + 1)}</small>${value}</span>`,
-    )
-    .join("");
+const render = (): void => {
+  const snapshot = clock.snapshot;
+  (element("tick") as HTMLOutputElement).value = snapshot.tick.toLocaleString();
+  element("elapsed").textContent =
+    `${snapshot.elapsedSimulationSeconds.toFixed(2)} s`;
+  element("state").textContent = snapshot.running ? "Running" : "Paused";
+  play.textContent = snapshot.running ? "Pause" : "Play";
+  step.disabled = snapshot.running;
 };
 
-seedForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  renderSequence();
+play.addEventListener("click", () => {
+  if (clock.snapshot.running) clock.pause();
+  else clock.play();
+  previousFrame = undefined;
+  render();
+});
+step.addEventListener("click", () => {
+  clock.step();
+  render();
+});
+speed.addEventListener("change", () => {
+  clock.setSpeed(Number(speed.value));
+  render();
+});
+(element("reset") as HTMLButtonElement).addEventListener("click", () => {
+  const value = Number(seed.value);
+  if (!Number.isSafeInteger(value) || value < 0 || value > 0xffff_ffff) {
+    message.textContent =
+      "Seed must be a whole number from 0 to 4,294,967,295.";
+    return;
+  }
+  clock = new SimulationClock(config.world.ticksPerSecond);
+  speed.value = "1";
+  element("seed-display").textContent = value.toLocaleString();
+  message.textContent = `Reset with seed ${value.toLocaleString()}.`;
+  previousFrame = undefined;
+  render();
 });
 
-renderSequence();
+const frame = (timestamp: number): void => {
+  if (previousFrame !== undefined)
+    clock.advance((timestamp - previousFrame) / 1000);
+  previousFrame = timestamp;
+  render();
+  requestAnimationFrame(frame);
+};
+render();
+requestAnimationFrame(frame);

@@ -8,13 +8,13 @@ This is the source of truth for autonomous development. Work from the earliest i
 - [x] Establish unit tests, type checking, linting, formatting, and CI.
 - [x] Implement a seeded pseudorandom-number generator with determinism tests.
 - [x] Establish simulation configuration, serialization conventions, and numerical limits.
-- [ ] Render a minimal application shell with simulation controls.
+- [x] Render a minimal application shell with simulation controls.
 
 Exit condition: a tested application builds in CI and can run locally from a documented command.
 
 ## Milestone 1 — Deterministic ecological core
 
-- [ ] Implement a fixed-timestep world independent of display frame rate.
+- [x] Implement a fixed-timestep world independent of display frame rate.
 - [ ] Represent a bounded two-dimensional environment with renewable food resources.
 - [ ] Implement organisms with position, age, energy, and inheritable genome traits.
 - [ ] Implement movement, feeding, metabolism, reproduction, mutation, and death.

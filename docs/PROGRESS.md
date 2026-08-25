@@ -70,3 +70,24 @@ The limits are conservative starting values rather than claims about final brows
 ### Recommended next action
 
 Add a minimal application shell with functional play, pause, single-step, speed, reset, and seed controls backed by a fixed-timestep simulation clock.
+
+## 2026-08-25 — Functional simulation clock (development)
+
+### Changed
+
+- Replaced the randomness preview with a responsive simulation control deck supporting play, pause, step, speed, seed, and reset controls.
+- Added a deterministic fixed-timestep clock that converts irregular display-frame durations into discrete ticks without reading wall time itself.
+- Added tests covering frame-partition independence, pause and step behavior, speed scaling, invalid input, and reset behavior.
+- Completed the final Milestone 0 roadmap item and the fixed-timestep foundation item in Milestone 1.
+
+### Validation
+
+Formatting, typed linting, strict type checking, unit tests, and the production build pass locally. GitHub Actions CI must also pass before merge.
+
+### Risk and follow-up
+
+The clock deliberately does not cap catch-up ticks yet because no world workload exists. A bounded catch-up policy should be measured when rendering and background-tab behavior can be tested. Seed reset currently prepares the experiment identity; it will initialize world state in the next increment.
+
+### Recommended next action
+
+Implement the bounded two-dimensional world and deterministic renewable food resources as a headless simulation module, then connect its aggregate state to the control shell.
