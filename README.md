@@ -41,7 +41,7 @@ Individual commands are also available for tests, type checking, linting, format
 
 ## Project status
 
-The project is in autonomous foundation development. The browser shell and the first deterministic simulation utility are implemented; the ecological world model comes next. See:
+The project has a functional browser control shell and deterministic fixed-timestep simulation clock. The bounded ecological world model comes next. See:
 
 - [Roadmap](docs/ROADMAP.md)
 - [Autonomous development policy](docs/AUTONOMY.md)
