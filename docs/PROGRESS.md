@@ -47,3 +47,26 @@ The ecological model does not exist yet. The next work should define bounded, se
 ### Recommended next action
 
 After recording the owner's delegated merge authority, squash-merge this green foundation pull request. Then implement validated simulation configuration, serialization conventions, and explicit numerical limits.
+
+## 2026-08-25 — Versioned simulation configuration (development)
+
+### Changed
+
+- Added a complete versioned `SimulationConfig` covering the world, population, food, organism energy lifecycle, mutation, and bounded history collection.
+- Added explicit public numerical limits for world area, population, resources, organism lifespan and energy, mutation, and retained history.
+- Added strict parsing that rejects missing fields, unknown fields, non-finite values, unsafe integers, values outside limits, and invalid cross-field relationships.
+- Added canonical compact JSON serialization and validated deserialization with structured error paths.
+- Added tests for defaults, independent ownership, canonical round trips, malformed JSON, schema incompatibility, individual bounds, world-area limits, and relational constraints.
+- Recorded the strict configuration-boundary decision and completed the corresponding Milestone 0 roadmap item.
+
+### Validation
+
+Formatting, typed linting, strict type checking, unit tests, and the production build pass locally. GitHub Actions CI must also pass before merge.
+
+### Risk and follow-up
+
+The limits are conservative starting values rather than claims about final browser performance. They can be revised through a schema-versioned change after measurements exist. The configuration is not yet exposed in the browser shell.
+
+### Recommended next action
+
+Add a minimal application shell with functional play, pause, single-step, speed, reset, and seed controls backed by a fixed-timestep simulation clock.
