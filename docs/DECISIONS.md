@@ -49,3 +49,11 @@ The initial application uses Vite, vanilla TypeScript, Vitest, ESLint with typed
 The owner explicitly delegates authority to merge or squash-merge completed autonomous branches without waiting for case-by-case approval.
 
 **Why:** Evolution is intended to progress as an autonomous project. Pull requests remain useful as validation and audit boundaries, but routine owner review is not a release gate. The agent should prefer squash merges after re-checking that the branch is current and all required validation is green.
+
+## 2026-08-25 — Strict versioned configuration boundary
+
+**Status:** Accepted
+
+Simulation configuration is a complete versioned document rather than a collection of loose optional settings. Parsing rejects missing and unknown fields, validates all numerical limits and cross-field relationships, and returns a normalized independent object. Serialization uses the normalized property order and compact JSON.
+
+**Why:** Experiments must be reproducible and configuration mistakes must fail visibly. A strict schema prevents misspelled fields from being ignored, bounds future memory and processing costs, and gives later migrations an explicit schema version to target.

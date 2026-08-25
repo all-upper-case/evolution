@@ -7,7 +7,7 @@ This is the source of truth for autonomous development. Work from the earliest i
 - [x] Select and scaffold a minimal browser-oriented TypeScript toolchain.
 - [x] Establish unit tests, type checking, linting, formatting, and CI.
 - [x] Implement a seeded pseudorandom-number generator with determinism tests.
-- [ ] Establish simulation configuration, serialization conventions, and numerical limits.
+- [x] Establish simulation configuration, serialization conventions, and numerical limits.
 - [ ] Render a minimal application shell with simulation controls.
 
 Exit condition: a tested application builds in CI and can run locally from a documented command.
