@@ -15,7 +15,7 @@ Exit condition: a tested application builds in CI and can run locally from a doc
 ## Milestone 1 — Deterministic ecological core
 
 - [x] Implement a fixed-timestep world independent of display frame rate.
-- [ ] Represent a bounded two-dimensional environment with renewable food resources.
+- [x] Represent a bounded two-dimensional environment with renewable food resources.
 - [ ] Implement organisms with position, age, energy, and inheritable genome traits.
 - [ ] Implement movement, feeding, metabolism, reproduction, mutation, and death.
 - [ ] Enforce population/resource limits and stable update ordering.
