@@ -57,3 +57,11 @@ The owner explicitly delegates authority to merge or squash-merge completed auto
 Simulation configuration is a complete versioned document rather than a collection of loose optional settings. Parsing rejects missing and unknown fields, validates all numerical limits and cross-field relationships, and returns a normalized independent object. Serialization uses the normalized property order and compact JSON.
 
 **Why:** Experiments must be reproducible and configuration mistakes must fail visibly. A strict schema prevents misspelled fields from being ignored, bounds future memory and processing costs, and gives later migrations an explicit schema version to target.
+
+## 2026-08-26 — Dense bounded resource grid
+
+**Status:** Accepted
+
+The first world stores food quantities in a fixed-size row-major numeric grid. Seeded placement and renewal operate on cell indices, while public coordinates remain two-dimensional. Total resources and occupied cells are tracked incrementally.
+
+**Why:** The configuration already imposes a small bounded world area. A dense grid gives deterministic constant-time lookup and simple snapshots without committing future organisms or rendering to a spatial-index design. It can be replaced behind the headless world boundary if measurements later favor another representation.

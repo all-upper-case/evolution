@@ -91,3 +91,26 @@ The clock deliberately does not cap catch-up ticks yet because no world workload
 ### Recommended next action
 
 Implement the bounded two-dimensional world and deterministic renewable food resources as a headless simulation module, then connect its aggregate state to the control shell.
+
+## 2026-08-26 — Bounded renewable world (development)
+
+### Changed
+
+- Added a headless bounded two-dimensional world backed by a fixed-size numeric food grid.
+- Added deterministic seeded initial food placement and per-tick renewal capped by the configured maximum resource count.
+- Added immutable world snapshots, lightweight aggregate summaries, coordinate lookup, stable tick advancement, and validation of public inputs.
+- Connected world advancement and food statistics to the existing browser controls without coupling core simulation code to rendering.
+- Added deterministic tests covering bounds, seed effects, fractional renewal, resource caps, snapshot ownership, and partition-independent 1,000-tick runs.
+- Recorded the dense resource-grid decision and completed the corresponding Milestone 1 roadmap item.
+
+### Validation
+
+Formatting, typed linting, strict type checking, unit tests, and the production build pass locally. GitHub Actions CI must also pass before merge.
+
+### Risk and follow-up
+
+Initial placement permits multiple food units in one cell, which keeps the model simple and allows spatial concentration. Food is not consumed yet; the cap therefore fills and remains stable. Organism feeding will create the depletion needed for continuing renewal dynamics.
+
+### Recommended next action
+
+Implement organisms with bounded position, age, energy, lineage identity, and explicit inheritable numeric genome traits, without movement or reproduction behavior yet.
