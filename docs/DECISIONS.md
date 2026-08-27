@@ -65,3 +65,11 @@ Simulation configuration is a complete versioned document rather than a collecti
 The first world stores food quantities in a fixed-size row-major numeric grid. Seeded placement and renewal operate on cell indices, while public coordinates remain two-dimensional. Total resources and occupied cells are tracked incrementally.
 
 **Why:** The configuration already imposes a small bounded world area. A dense grid gives deterministic constant-time lookup and simple snapshots without committing future organisms or rendering to a spatial-index design. It can be replaced behind the headless world boundary if measurements later favor another representation.
+
+## 2026-08-27 — Stable founder identity and bounded scalar genomes
+
+**Status:** Accepted
+
+Founders receive monotonically increasing numeric identities in stable array order, begin one lineage each, and carry five bounded floating-point traits for movement, perception, metabolism, reproduction threshold, and mutation rate. Initial positions and traits are sampled through the world's seeded random stream. Multiple organisms may initially occupy one cell.
+
+**Why:** Explicit scalar traits remain inspectable and easy to test while giving upcoming ecological mechanics meaningful heritable inputs. Stable identity order supports deterministic updates and lineage tracking. Permitting co-location avoids adding collision or placement-retry rules before movement semantics exist.
