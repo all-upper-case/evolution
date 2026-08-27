@@ -27,6 +27,7 @@ describe("SimulationWorld", () => {
       width: 16,
       height: 16,
       totalFood: 20,
+      population: 250,
     });
     expect(first.snapshot).toEqual(second.snapshot);
     expect(first.summary.occupiedFoodCells).toBeLessThanOrEqual(20);
@@ -70,5 +71,27 @@ describe("SimulationWorld", () => {
     expect(before.tick).toBe(0);
     expect(before.totalFood).toBe(20);
     expect(before.foodByCell).not.toBe(world.snapshot.foodByCell);
+    expect(before.organisms).not.toBe(world.snapshot.organisms);
+    expect(before.organisms[0]).not.toBe(world.snapshot.organisms[0]);
+    expect(before.organisms[0]?.genome).not.toBe(
+      world.snapshot.organisms[0]?.genome,
+    );
+  });
+
+  it("includes deterministic bounded founders in world snapshots", () => {
+    const config = smallConfig(12);
+    config.population.initialCount = 5;
+    const first = new SimulationWorld(config);
+    const second = new SimulationWorld(config);
+
+    expect(first.snapshot.organisms).toEqual(second.snapshot.organisms);
+    expect(first.snapshot.organisms).toHaveLength(5);
+    expect(first.snapshot.organisms[0]).toMatchObject({
+      id: 1,
+      lineageId: 1,
+      parentId: null,
+      ageTicks: 0,
+      energy: config.organisms.initialEnergy,
+    });
   });
 });
