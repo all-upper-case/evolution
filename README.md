@@ -41,7 +41,7 @@ Individual commands are also available for tests, type checking, linting, format
 
 ## Project status
 
-The project has a functional browser control shell, deterministic fixed-timestep clock, and bounded two-dimensional world with seeded renewable food resources. Organisms come next. See:
+The project has a functional browser control shell, deterministic fixed-timestep clock, bounded renewable food world, and seeded founder organisms with explicit inheritable numeric traits. Ecological behavior comes next. See:
 
 - [Roadmap](docs/ROADMAP.md)
 - [Autonomous development policy](docs/AUTONOMY.md)
