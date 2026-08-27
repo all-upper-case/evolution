@@ -135,3 +135,24 @@ Founders may share cells because collision semantics do not exist yet. Organism 
 ### Recommended next action
 
 Implement deterministic movement, feeding, metabolism, reproduction with mutation, and death in stable organism identity order.
+
+## 2026-08-27 — First ecological lifecycle (development)
+
+### Changed
+
+- Implemented food-seeking movement driven by inheritable speed and perception traits with deterministic spatial tie-breaking.
+- Added food consumption, energy gain, genome-scaled metabolism, aging, and death from energy exhaustion or maximum age.
+- Added asexual reproduction with lineage continuity, monotonic identities, delayed newborn activation, bounded genome mutation, and the configured population ceiling.
+- Added lifecycle, inheritance, cap, mortality, and 500-tick replay tests and completed the lifecycle roadmap item.
+
+### Validation
+
+Formatting, typed linting, strict type checking, unit tests, and the production build pass locally. GitHub Actions CI must also pass before merge.
+
+### Risk and follow-up
+
+Movement currently searches a bounded Manhattan neighborhood directly for each organism. This is intentionally simple and deterministic; practical browser measurements should precede any spatial-index optimization. The population ceiling is conservative during ticks containing deaths because reproduction never assumes that a later organism will die.
+
+### Recommended next action
+
+Harden and explicitly test stable update ordering and all population/resource limits, then add canonical full-world snapshot restoration and long-run replay tests.

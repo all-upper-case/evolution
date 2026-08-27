@@ -73,3 +73,11 @@ The first world stores food quantities in a fixed-size row-major numeric grid. S
 Founders receive monotonically increasing numeric identities in stable array order, begin one lineage each, and carry five bounded floating-point traits for movement, perception, metabolism, reproduction threshold, and mutation rate. Initial positions and traits are sampled through the world's seeded random stream. Multiple organisms may initially occupy one cell.
 
 **Why:** Explicit scalar traits remain inspectable and easy to test while giving upcoming ecological mechanics meaningful heritable inputs. Stable identity order supports deterministic updates and lineage tracking. Permitting co-location avoids adding collision or placement-retry rules before movement semantics exist.
+
+## 2026-08-27 — Deterministic first ecological lifecycle
+
+**Status:** Accepted
+
+Each tick renews food, then processes organisms in ascending identity order. Organisms move toward the richest visible cell using row-major ties, consume at most one food unit, pay genome-scaled metabolism, die when energy or age is exhausted, and reproduce asexually when their genome-scaled threshold is met. Newborns inherit their parent's lineage and bounded mutated traits, receive new monotonic identities, and begin acting on the next tick.
+
+**Why:** A stable, explicit lifecycle makes resource competition and selection pressure reproducible and inspectable. Delaying newborn actions avoids recursive same-tick population growth, while hard trait and population bounds keep autonomous runs safe.
