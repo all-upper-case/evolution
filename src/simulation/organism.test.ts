@@ -4,6 +4,7 @@ import { createDefaultSimulationConfig } from "./configuration";
 import {
   createFounderPopulation,
   GENOME_TRAIT_RANGES,
+  inheritGenome,
   type Genome,
 } from "./organism";
 import { SeededRandom } from "./random";
@@ -70,5 +71,45 @@ describe("founder organisms", () => {
     expect(Object.isFrozen(founders)).toBe(true);
     expect(Object.isFrozen(founder)).toBe(true);
     expect(Object.isFrozen(founder?.genome)).toBe(true);
+  });
+});
+
+describe("genome inheritance", () => {
+  it("copies traits exactly when mutation is disabled", () => {
+    const config = createDefaultSimulationConfig();
+    config.evolution.mutationProbability = 0;
+    const parent = createFounderPopulation(config, new SeededRandom(42))[0]
+      ?.genome;
+    expect(parent).toBeDefined();
+    if (parent === undefined) throw new Error("Expected a founder genome.");
+
+    const child = inheritGenome(parent, config, new SeededRandom(7));
+
+    expect(child).toEqual(parent);
+    expect(child).not.toBe(parent);
+    expect(Object.isFrozen(child)).toBe(true);
+  });
+
+  it("mutates traits deterministically without escaping trait bounds", () => {
+    const config = createDefaultSimulationConfig();
+    config.evolution.mutationProbability = 1;
+    config.evolution.mutationMagnitude = 1;
+    const parent = createFounderPopulation(config, new SeededRandom(42))[0]
+      ?.genome;
+    expect(parent).toBeDefined();
+    if (parent === undefined) throw new Error("Expected a founder genome.");
+    const first = inheritGenome(parent, config, new SeededRandom(99));
+    const repeated = inheritGenome(parent, config, new SeededRandom(99));
+
+    expect(first).toEqual(repeated);
+    expect(first).not.toEqual(parent);
+    for (const trait of Object.keys(GENOME_TRAIT_RANGES) as (keyof Genome)[]) {
+      expect(first[trait]).toBeGreaterThanOrEqual(
+        GENOME_TRAIT_RANGES[trait].minimum,
+      );
+      expect(first[trait]).toBeLessThanOrEqual(
+        GENOME_TRAIT_RANGES[trait].maximum,
+      );
+    }
   });
 });

@@ -55,6 +55,35 @@ const createFounderGenome = (random: SeededRandom): Genome =>
     ),
   });
 
+const clamp = (value: number, range: TraitRange): number =>
+  Math.min(range.maximum, Math.max(range.minimum, value));
+
+/** Creates an independently owned descendant genome with bounded mutations. */
+export const inheritGenome = (
+  parent: Genome,
+  config: SimulationConfig,
+  random: SeededRandom,
+): Genome => {
+  const inherited = {} as Genome;
+
+  for (const trait of Object.keys(GENOME_TRAIT_RANGES) as (keyof Genome)[]) {
+    const parentValue = parent[trait];
+    const probability = Math.min(
+      1,
+      config.evolution.mutationProbability * parent.mutationRateScale,
+    );
+    const mutation = random.chance(probability)
+      ? 1 + (random.next() * 2 - 1) * config.evolution.mutationMagnitude
+      : 1;
+    inherited[trait] = clamp(
+      parentValue * mutation,
+      GENOME_TRAIT_RANGES[trait],
+    );
+  }
+
+  return Object.freeze(inherited);
+};
+
 /**
  * Creates the deterministic founder population in stable ascending identity
  * order. Founders begin separate lineages; descendants will retain lineageId.

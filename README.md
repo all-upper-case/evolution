@@ -41,7 +41,7 @@ Individual commands are also available for tests, type checking, linting, format
 
 ## Project status
 
-The project has a functional browser control shell, deterministic fixed-timestep clock, bounded renewable food world, and seeded founder organisms with explicit inheritable numeric traits. Ecological behavior comes next. See:
+The project has a functional browser control shell and a deterministic ecological core in which organisms seek food, spend energy, reproduce with bounded mutation, and die. Stable ordering and long-run replay validation come next. See:
 
 - [Roadmap](docs/ROADMAP.md)
 - [Autonomous development policy](docs/AUTONOMY.md)

@@ -40,11 +40,14 @@ describe("SimulationWorld", () => {
   });
 
   it("renews food each tick without exceeding the resource cap", () => {
-    const world = new SimulationWorld(smallConfig());
+    const config = smallConfig();
+    config.organisms.maximumAgeTicks = 1;
+    const world = new SimulationWorld(config);
     world.step();
-    expect(world.summary).toMatchObject({ tick: 1, totalFood: 22.5 });
-    world.advanceTicks(10);
-    expect(world.summary).toMatchObject({ tick: 11, totalFood: 30 });
+    expect(world.summary.tick).toBe(1);
+    expect(world.summary.totalFood).toBeLessThanOrEqual(22.5);
+    world.advanceTicks(20);
+    expect(world.summary).toMatchObject({ tick: 21, totalFood: 30 });
   });
 
   it("remains identical across long seeded headless runs", () => {
@@ -93,5 +96,88 @@ describe("SimulationWorld", () => {
       ageTicks: 0,
       energy: config.organisms.initialEnergy,
     });
+  });
+
+  it("moves, feeds, ages, and spends metabolism in a stable order", () => {
+    const config = smallConfig(99);
+    config.population.initialCount = 1;
+    config.population.maximumCount = 1;
+    config.food.initialUnits = 256;
+    config.food.maximumUnits = 256;
+    config.food.regrowthUnitsPerTick = 0;
+    config.organisms.initialEnergy = 10;
+    config.organisms.reproductionThreshold = 100;
+    const world = new SimulationWorld(config);
+    const before = world.snapshot.organisms[0];
+    expect(before).toBeDefined();
+    if (before === undefined) throw new Error("Expected a founder organism.");
+
+    world.step();
+
+    const after = world.snapshot.organisms[0];
+    expect(after).toBeDefined();
+    if (after === undefined) throw new Error("Expected a surviving organism.");
+    expect(after.ageTicks).toBe(1);
+    expect(after.energy).toBeGreaterThan(before.energy);
+    expect(world.summary.totalFood).toBeLessThan(256);
+    expect(after.x === before.x && after.y === before.y).toBe(false);
+  });
+
+  it("reproduces with lineage continuity and enforces the population cap", () => {
+    const config = smallConfig(123);
+    config.population.initialCount = 3;
+    config.population.maximumCount = 5;
+    config.food.initialUnits = 0;
+    config.food.regrowthUnitsPerTick = 0;
+    config.organisms.initialEnergy = 40;
+    config.organisms.maximumEnergy = 100;
+    config.organisms.reproductionThreshold = 10;
+    config.organisms.offspringEnergy = 5;
+    const world = new SimulationWorld(config);
+
+    world.step();
+
+    expect(world.summary.population).toBe(5);
+    const children = world.snapshot.organisms.filter(
+      ({ parentId }) => parentId !== null,
+    );
+    expect(children.map(({ id }) => id)).toEqual([4, 5]);
+    expect(children[0]).toMatchObject({ parentId: 1, lineageId: 1 });
+    expect(children[1]).toMatchObject({ parentId: 2, lineageId: 2 });
+  });
+
+  it("removes organisms that exhaust their energy or reach maximum age", () => {
+    const config = smallConfig();
+    config.population.initialCount = 4;
+    config.food.initialUnits = 0;
+    config.food.regrowthUnitsPerTick = 0;
+    config.organisms.initialEnergy = 0.01;
+    config.organisms.metabolismPerTick = 1;
+    config.organisms.maximumAgeTicks = 1;
+    const world = new SimulationWorld(config);
+
+    world.step();
+
+    expect(world.summary.population).toBe(0);
+    expect(world.snapshot.organisms).toEqual([]);
+  });
+
+  it("replays the complete ecological lifecycle deterministically", () => {
+    const config = smallConfig(8675309);
+    config.population.initialCount = 20;
+    config.population.maximumCount = 100;
+    config.food.initialUnits = 100;
+    config.food.maximumUnits = 200;
+    config.food.regrowthUnitsPerTick = 4;
+    const first = new SimulationWorld(config);
+    const second = new SimulationWorld(config);
+
+    first.advanceTicks(500);
+    second.advanceTicks(200);
+    second.advanceTicks(300);
+
+    expect(first.snapshot).toEqual(second.snapshot);
+    expect(first.summary.population).toBeLessThanOrEqual(100);
+    expect(first.summary.totalFood).toBeLessThanOrEqual(200);
   });
 });
