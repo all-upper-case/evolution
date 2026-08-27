@@ -16,7 +16,7 @@ Exit condition: a tested application builds in CI and can run locally from a doc
 
 - [x] Implement a fixed-timestep world independent of display frame rate.
 - [x] Represent a bounded two-dimensional environment with renewable food resources.
-- [ ] Implement organisms with position, age, energy, and inheritable genome traits.
+- [x] Implement organisms with position, age, energy, and inheritable genome traits.
 - [ ] Implement movement, feeding, metabolism, reproduction, mutation, and death.
 - [ ] Enforce population/resource limits and stable update ordering.
 - [ ] Add deterministic snapshot and replay tests.
