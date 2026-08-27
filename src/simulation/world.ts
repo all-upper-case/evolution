@@ -1,4 +1,9 @@
 import { parseSimulationConfig, type SimulationConfig } from "./configuration";
+import {
+  cloneOrganism,
+  createFounderPopulation,
+  type Organism,
+} from "./organism";
 import { SeededRandom } from "./random";
 
 export interface WorldSummary {
@@ -7,10 +12,12 @@ export interface WorldSummary {
   height: number;
   totalFood: number;
   occupiedFoodCells: number;
+  population: number;
 }
 
 export interface WorldSnapshot extends WorldSummary {
   foodByCell: readonly number[];
+  organisms: readonly Organism[];
   randomState: number;
 }
 
@@ -19,6 +26,7 @@ export class SimulationWorld {
   readonly #config: SimulationConfig;
   readonly #random: SeededRandom;
   readonly #foodByCell: Float64Array;
+  readonly #organisms: Organism[];
   #tick = 0;
   #totalFood = 0;
   #occupiedFoodCells = 0;
@@ -30,6 +38,7 @@ export class SimulationWorld {
       this.#config.world.width * this.#config.world.height,
     );
     this.#depositFood(this.#config.food.initialUnits);
+    this.#organisms = [...createFounderPopulation(this.#config, this.#random)];
   }
 
   public get summary(): WorldSummary {
@@ -39,6 +48,7 @@ export class SimulationWorld {
       height: this.#config.world.height,
       totalFood: this.#totalFood,
       occupiedFoodCells: this.#occupiedFoodCells,
+      population: this.#organisms.length,
     };
   }
 
@@ -46,6 +56,7 @@ export class SimulationWorld {
     return {
       ...this.summary,
       foodByCell: Object.freeze(Array.from(this.#foodByCell)),
+      organisms: Object.freeze(this.#organisms.map(cloneOrganism)),
       randomState: this.#random.state,
     };
   }

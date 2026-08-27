@@ -114,3 +114,24 @@ Initial placement permits multiple food units in one cell, which keeps the model
 ### Recommended next action
 
 Implement organisms with bounded position, age, energy, lineage identity, and explicit inheritable numeric genome traits, without movement or reproduction behavior yet.
+
+## 2026-08-27 — Seeded founder organisms (development)
+
+### Changed
+
+- Added deterministic founder organisms with bounded positions, stable identity order, separate lineage identity, parent references, age, and energy.
+- Added explicit bounded scalar genome traits for movement, perception, metabolism, reproduction threshold, and mutation rate.
+- Included independently owned organism records in immutable world snapshots and live population count in the browser shell.
+- Added focused founder and world integration tests, recorded the organism model decision, and completed the corresponding Milestone 1 roadmap item.
+
+### Validation
+
+Formatting, typed linting, strict type checking, unit tests, and the production build pass locally. GitHub Actions CI must also pass before merge.
+
+### Risk and follow-up
+
+Founders may share cells because collision semantics do not exist yet. Organism state is intentionally static: age, energy, and traits will begin changing only when the ecological lifecycle mechanics are implemented in the next increment.
+
+### Recommended next action
+
+Implement deterministic movement, feeding, metabolism, reproduction with mutation, and death in stable organism identity order.
