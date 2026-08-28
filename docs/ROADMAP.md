@@ -18,7 +18,7 @@ Exit condition: a tested application builds in CI and can run locally from a doc
 - [x] Represent a bounded two-dimensional environment with renewable food resources.
 - [x] Implement organisms with position, age, energy, and inheritable genome traits.
 - [x] Implement movement, feeding, metabolism, reproduction, mutation, and death.
-- [ ] Enforce population/resource limits and stable update ordering.
+- [x] Enforce population/resource limits and stable update ordering.
 - [ ] Add deterministic snapshot and replay tests.
 
 Exit condition: seeded headless simulations show reproducible population dynamics over thousands of ticks.
