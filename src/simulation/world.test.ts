@@ -146,6 +146,64 @@ describe("SimulationWorld", () => {
     expect(children[1]).toMatchObject({ parentId: 2, lineageId: 2 });
   });
 
+  it("keeps survivors in identity order and delays newborn turns", () => {
+    const config = smallConfig(456);
+    config.population.initialCount = 3;
+    config.population.maximumCount = 6;
+    config.food.initialUnits = 0;
+    config.food.regrowthUnitsPerTick = 0;
+    config.organisms.initialEnergy = 40;
+    config.organisms.maximumEnergy = 100;
+    config.organisms.reproductionThreshold = 10;
+    config.organisms.offspringEnergy = 5;
+    const world = new SimulationWorld(config);
+
+    world.step();
+
+    const afterBirth = world.snapshot.organisms;
+    expect(afterBirth.map(({ id }) => id)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(afterBirth.slice(3).map(({ ageTicks }) => ageTicks)).toEqual([
+      0, 0, 0,
+    ]);
+    expect(afterBirth.slice(3).map(({ parentId }) => parentId)).toEqual([
+      1, 2, 3,
+    ]);
+
+    world.step();
+
+    const afterNextTick = world.snapshot.organisms;
+    expect(afterNextTick.map(({ id }) => id)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(afterNextTick.slice(3).map(({ ageTicks }) => ageTicks)).toEqual([
+      1, 1, 1,
+    ]);
+  });
+
+  it("preserves every resource accounting invariant under consumption", () => {
+    const config = smallConfig(789);
+    config.population.initialCount = 40;
+    config.population.maximumCount = 80;
+    config.food.initialUnits = 29;
+    config.food.maximumUnits = 30;
+    config.food.regrowthUnitsPerTick = 2.5;
+    const world = new SimulationWorld(config);
+
+    for (let tick = 0; tick < 250; tick += 1) {
+      world.step();
+      const snapshot = world.snapshot;
+      const total = snapshot.foodByCell.reduce((sum, food) => sum + food, 0);
+      const occupied = snapshot.foodByCell.filter((food) => food > 0).length;
+
+      expect(snapshot.totalFood).toBeCloseTo(total, 10);
+      expect(snapshot.occupiedFoodCells).toBe(occupied);
+      expect(snapshot.totalFood).toBeGreaterThanOrEqual(0);
+      expect(snapshot.totalFood).toBeLessThanOrEqual(config.food.maximumUnits);
+      expect(snapshot.foodByCell.every((food) => food >= 0)).toBe(true);
+      expect(snapshot.population).toBeLessThanOrEqual(
+        config.population.maximumCount,
+      );
+    }
+  });
+
   it("removes organisms that exhaust their energy or reach maximum age", () => {
     const config = smallConfig();
     config.population.initialCount = 4;
