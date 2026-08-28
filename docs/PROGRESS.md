@@ -156,3 +156,23 @@ Movement currently searches a bounded Manhattan neighborhood directly for each o
 ### Recommended next action
 
 Harden and explicitly test stable update ordering and all population/resource limits, then add canonical full-world snapshot restoration and long-run replay tests.
+
+## 2026-08-28 — Core limit and ordering guarantees (development)
+
+### Changed
+
+- Added explicit tests proving that survivors remain in identity order, births are assigned to parents in that order, and newborns cannot act until the following tick.
+- Added a sustained consumption/regrowth test that independently recalculates food totals and occupied cells while checking non-negative resources and hard food/population ceilings on every tick.
+- Completed the stable ordering and limit-enforcement roadmap item.
+
+### Validation
+
+Local formatting, typed linting, strict type checking, all 46 unit tests, and the production build pass. GitHub Actions CI must also pass before merge.
+
+### Risk and follow-up
+
+World snapshots remain read-only observations rather than a restorable serialized state. Long-run replay currently proves identical fresh runs but does not yet prove continuation after a save/load boundary.
+
+### Recommended next action
+
+Define a strict versioned full-world snapshot format, implement validated restoration including random and identity-generator state, and prove uninterrupted and restored runs remain identical over thousands of ticks.
