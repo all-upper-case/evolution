@@ -176,3 +176,26 @@ World snapshots remain read-only observations rather than a restorable serialize
 ### Recommended next action
 
 Define a strict versioned full-world snapshot format, implement validated restoration including random and identity-generator state, and prove uninterrupted and restored runs remain identical over thousands of ticks.
+
+## 2026-08-29 — Restorable deterministic world snapshots (development)
+
+### Changed
+
+- Expanded world snapshots into strict versioned documents containing configuration, food, organisms, tick, aggregate counts, random state, and the next organism identity.
+- Added canonical JSON serialization, deserialization, and full restoration of a continuing headless world.
+- Added validation for document shape, schema version, world dimensions, resources, population, organism ordering, ancestry, genome bounds, living-state bounds, random state, and identity continuity.
+- Added direct pseudorandom-state restoration and regression coverage.
+- Proved that a world saved at tick 750 and restored from JSON remains identical to an uninterrupted world through tick 3,000.
+- Completed Milestone 1's final roadmap item and exit condition.
+
+### Validation
+
+Local formatting, typed linting, strict type checking, all 49 unit tests, and the production build pass. GitHub Actions CI must also pass before merge.
+
+### Risk and follow-up
+
+The snapshot API is currently headless; browser-facing download/upload controls remain correctly deferred to Milestone 3. Snapshot schema migration is also deferred until a second schema version exists.
+
+### Recommended next action
+
+Begin Milestone 2 by rendering the bounded food grid and living organisms efficiently, without coupling simulation updates to display frame timing.

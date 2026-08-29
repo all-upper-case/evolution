@@ -31,6 +31,21 @@ describe("SeededRandom", () => {
     expect([random.next(), random.next(), random.next()]).toEqual(expected);
   });
 
+  it("continues exactly from a captured state", () => {
+    const original = new SeededRandom(123);
+    original.next();
+    original.next();
+    const state = original.state;
+    const expected = Array.from({ length: 20 }, () => original.next());
+    const restored = new SeededRandom(999);
+
+    restored.restore(state);
+
+    expect(Array.from({ length: 20 }, () => restored.next())).toEqual(expected);
+    expect(() => restored.restore(-1)).toThrow(RangeError);
+    expect(() => restored.restore(0x1_0000_0000)).toThrow(RangeError);
+  });
+
   it("generates integers inside a half-open interval", () => {
     const random = new SeededRandom(17);
     const values = Array.from({ length: 250 }, () => random.integer(-3, 8));
