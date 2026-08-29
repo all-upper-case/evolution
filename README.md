@@ -41,7 +41,7 @@ Individual commands are also available for tests, type checking, linting, format
 
 ## Project status
 
-The project has a functional browser control shell and a deterministic ecological core in which organisms seek food, spend energy, reproduce with bounded mutation, and die. Stable ordering and long-run replay validation come next. See:
+The project has a functional browser control shell and a deterministic ecological core in which organisms seek food, spend energy, reproduce with bounded mutation, and die. Complete world state can be serialized, strictly validated, restored, and continued without changing future outcomes. Visual simulation comes next. See:
 
 - [Roadmap](docs/ROADMAP.md)
 - [Autonomous development policy](docs/AUTONOMY.md)
