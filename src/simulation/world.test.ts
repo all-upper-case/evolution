@@ -4,7 +4,12 @@ import {
   createDefaultSimulationConfig,
   type SimulationConfig,
 } from "./configuration";
-import { SimulationWorld } from "./world";
+import {
+  SimulationWorld,
+  WorldSnapshotError,
+  deserializeWorldSnapshot,
+  serializeWorldSnapshot,
+} from "./world";
 
 const smallConfig = (seed = 42): SimulationConfig => {
   const config = createDefaultSimulationConfig();
@@ -237,5 +242,57 @@ describe("SimulationWorld", () => {
     expect(first.snapshot).toEqual(second.snapshot);
     expect(first.summary.population).toBeLessThanOrEqual(100);
     expect(first.summary.totalFood).toBeLessThanOrEqual(200);
+  });
+
+  it("serializes, restores, and continues a multi-thousand-tick run exactly", () => {
+    const config = smallConfig(20260829);
+    config.population.initialCount = 24;
+    config.population.maximumCount = 120;
+    config.food.initialUnits = 120;
+    config.food.maximumUnits = 240;
+    config.food.regrowthUnitsPerTick = 4.5;
+    const uninterrupted = new SimulationWorld(config);
+    uninterrupted.advanceTicks(750);
+
+    const serialized = serializeWorldSnapshot(uninterrupted.snapshot);
+    const restored = SimulationWorld.fromSnapshot(
+      deserializeWorldSnapshot(serialized),
+    );
+
+    expect(restored.snapshot).toEqual(uninterrupted.snapshot);
+    uninterrupted.advanceTicks(2_250);
+    restored.advanceTicks(2_250);
+    expect(restored.snapshot).toEqual(uninterrupted.snapshot);
+    expect(serializeWorldSnapshot(restored.snapshot)).toBe(
+      serializeWorldSnapshot(uninterrupted.snapshot),
+    );
+  });
+
+  it("rejects malformed, inconsistent, and unsafe snapshots", () => {
+    const world = new SimulationWorld(smallConfig(17));
+    world.advanceTicks(10);
+    const valid = world.snapshot;
+
+    expect(() => deserializeWorldSnapshot("not-json")).toThrow(
+      WorldSnapshotError,
+    );
+    expect(() =>
+      SimulationWorld.fromSnapshot({ ...valid, schemaVersion: 2 }),
+    ).toThrow(WorldSnapshotError);
+    expect(() =>
+      SimulationWorld.fromSnapshot({
+        ...valid,
+        totalFood: valid.totalFood + 1,
+      }),
+    ).toThrow(WorldSnapshotError);
+    expect(() =>
+      SimulationWorld.fromSnapshot({
+        ...valid,
+        nextOrganismId: valid.organisms.at(-1)?.id ?? 1,
+      }),
+    ).toThrow(WorldSnapshotError);
+    expect(() =>
+      SimulationWorld.fromSnapshot({ ...valid, unexpected: true }),
+    ).toThrow(WorldSnapshotError);
   });
 });
