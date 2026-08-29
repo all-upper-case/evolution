@@ -62,4 +62,12 @@ export class SeededRandom {
   public reset(): void {
     this.#state = this.#initialSeed;
   }
+
+  /** Restores a previously captured unsigned 32-bit generator state. */
+  public restore(state: number): void {
+    if (!Number.isSafeInteger(state) || state < 0 || state >= UINT32_RANGE) {
+      throw new RangeError("Random state must be an unsigned 32-bit integer.");
+    }
+    this.#state = state;
+  }
 }
