@@ -19,7 +19,7 @@ Exit condition: a tested application builds in CI and can run locally from a doc
 - [x] Implement organisms with position, age, energy, and inheritable genome traits.
 - [x] Implement movement, feeding, metabolism, reproduction, mutation, and death.
 - [x] Enforce population/resource limits and stable update ordering.
-- [ ] Add deterministic snapshot and replay tests.
+- [x] Add deterministic snapshot and replay tests.
 
 Exit condition: seeded headless simulations show reproducible population dynamics over thousands of ticks.
 
