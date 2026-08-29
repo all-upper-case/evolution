@@ -81,3 +81,11 @@ Founders receive monotonically increasing numeric identities in stable array ord
 Each tick renews food, then processes organisms in ascending identity order. Organisms move toward the richest visible cell using row-major ties, consume at most one food unit, pay genome-scaled metabolism, die when energy or age is exhausted, and reproduce asexually when their genome-scaled threshold is met. Newborns inherit their parent's lineage and bounded mutated traits, receive new monotonic identities, and begin acting on the next tick.
 
 **Why:** A stable, explicit lifecycle makes resource competition and selection pressure reproducible and inspectable. Delaying newborn actions avoids recursive same-tick population growth, while hard trait and population bounds keep autonomous runs safe.
+
+## 2026-08-29 — Versioned complete world snapshots
+
+**Status:** Accepted
+
+Restorable snapshots are strict versioned documents containing the normalized simulation configuration, full food grid, living organisms, tick, aggregate resource counts, pseudorandom-number state, and next organism identity. Restoration rejects unknown, missing, inconsistent, out-of-bounds, or non-finite state before constructing a continuing world.
+
+**Why:** A seed alone can replay from the beginning but cannot efficiently pause, transfer, or resume a mature ecosystem. Capturing every source of future behavior makes save/load continuation deterministic, while strict validation prevents corrupt or hand-edited state from silently violating simulation invariants.
