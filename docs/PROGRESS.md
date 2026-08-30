@@ -265,3 +265,26 @@ The first deployment requires GitHub Pages to use GitHub Actions as its publishi
 ### Recommended next action
 
 After the first successful deployment, verify the public site on a narrow mobile viewport. Then resume Milestone 2 with organism selection and trait/lineage inspection.
+
+## 2026-08-30 — Organism selection and inspection (development)
+
+### Changed
+
+- Added pointer-to-world coordinate mapping that remains accurate when the habitat canvas is responsively scaled.
+- Made living organisms selectable by mouse or touch, with deterministic oldest-identity selection when multiple organisms overlap.
+- Added a cyan selection highlight and a responsive inspection panel showing identity, lineage, parent, age, energy, position, and all five inherited traits.
+- Kept inspection synchronized as the organism moves and changes, and clearly reports when the selected organism dies.
+- Added pure coordinate/selection tests, selected-pixel renderer coverage, and a browser-level interaction test using a real seeded founder.
+- Completed the organism-selection and trait/lineage-inspection roadmap item.
+
+### Validation
+
+Formatting, typed linting, strict type checking, all 57 tests, and the production build pass locally. GitHub Actions CI must also pass before merge.
+
+### Risk and follow-up
+
+When organisms overlap, the oldest identity is selected; cycling through co-located organisms is deferred until density or overlap proves to be a usability problem. The current panel presents exact values but does not yet explain whether a trait is relatively high or low within the population.
+
+### Recommended next action
+
+Add bounded population, birth, death, resource, and trait-distribution history collection with clear live charts, without placing rendering concerns inside the deterministic core.
