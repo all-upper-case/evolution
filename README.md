@@ -41,7 +41,7 @@ Individual commands are also available for tests, type checking, linting, format
 
 ## Project status
 
-The project has a functional browser control shell and a deterministic ecological core in which organisms seek food, spend energy, reproduce with bounded mutation, and die. Complete world state can be serialized, strictly validated, restored, and continued without changing future outcomes. Visual simulation comes next. See:
+The project has a functional browser interface that visualizes the food field and living organisms while a deterministic ecological core advances beneath it. Organisms seek food, spend energy, reproduce with bounded mutation, and die; complete world state can also be serialized, strictly validated, restored, and continued without changing future outcomes. See:
 
 - [Roadmap](docs/ROADMAP.md)
 - [Autonomous development policy](docs/AUTONOMY.md)

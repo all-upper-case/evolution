@@ -89,3 +89,11 @@ Each tick renews food, then processes organisms in ascending identity order. Org
 Restorable snapshots are strict versioned documents containing the normalized simulation configuration, full food grid, living organisms, tick, aggregate resource counts, pseudorandom-number state, and next organism identity. Restoration rejects unknown, missing, inconsistent, out-of-bounds, or non-finite state before constructing a continuing world.
 
 **Why:** A seed alone can replay from the beginning but cannot efficiently pause, transfer, or resume a mature ecosystem. Capturing every source of future behavior makes save/load continuation deterministic, while strict validation prevents corrupt or hand-edited state from silently violating simulation invariants.
+
+## 2026-08-30 — One canvas pixel per world cell
+
+**Status:** Accepted
+
+The first live world view uses a single canvas whose internal resolution matches the simulation grid. Each world cell becomes one opaque RGBA pixel: food intensity controls green brightness, organisms overwrite their occupied cell in an energy-scaled amber, and CSS scales the canvas responsively with pixelated sampling. Rendering reads immutable snapshots and never advances or mutates simulation state.
+
+**Why:** A fixed-size pixel buffer provides bounded linear rendering work and one canvas upload instead of thousands of DOM nodes or drawing calls. It keeps the visual layer replaceable, preserves the core/UI boundary, and makes the complete 128×128 default habitat legible immediately.

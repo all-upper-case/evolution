@@ -25,7 +25,7 @@ Exit condition: seeded headless simulations show reproducible population dynamic
 
 ## Milestone 2 — Watchable simulation
 
-- [ ] Visualize terrain, food, and organisms efficiently.
+- [x] Visualize terrain, food, and organisms efficiently.
 - [ ] Add play, pause, step, speed, reset, and seed controls.
 - [ ] Add organism selection and trait/lineage inspection.
 - [ ] Add population, birth, death, resource, and trait-distribution charts.

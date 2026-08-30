@@ -1,5 +1,6 @@
 import "./styles.css";
 
+import { renderWorld } from "./rendering/world-renderer";
 import { SimulationClock } from "./simulation/clock";
 import { createDefaultSimulationConfig } from "./simulation/configuration";
 import { SimulationWorld } from "./simulation/world";
@@ -10,6 +11,10 @@ if (app === null) throw new Error("Application root was not found.");
 app.innerHTML = `
   <main class="shell" aria-labelledby="page-title">
     <header class="hero"><p class="eyebrow">Deterministic ecosystem laboratory</p><h1 id="page-title">Evolution</h1><p class="summary">A reproducible living sandbox with renewable resources and seeded founder organisms carrying explicit inheritable traits.</p></header>
+    <section class="world-panel" aria-labelledby="world-title">
+      <div class="world-heading"><div><p class="eyebrow">Live world</p><h2 id="world-title">The habitat</h2></div><div class="legend" aria-label="Map legend"><span class="food-key">Food</span><span class="organism-key">Organisms</span></div></div>
+      <div class="world-frame"><canvas id="world" role="img" aria-label="World at tick 0 with 250 organisms and 12,000 food units">Your browser does not support the ecosystem canvas.</canvas></div>
+    </section>
     <section class="panel" aria-labelledby="clock-title">
       <div class="panel-heading"><div><p class="status"><span aria-hidden="true"></span><b id="state">Paused</b></p><h2 id="clock-title">Simulation clock</h2></div><div class="tick-readout"><small>Current tick</small><output id="tick">0</output></div></div>
       <div class="metrics" aria-live="polite"><div><small>Simulated time</small><strong id="elapsed">0.00 s</strong></div><div><small>Population</small><strong id="population">250</strong></div><div><small>Food units</small><strong id="food">12,000</strong></div><div><small>Occupied cells</small><strong id="food-cells">0</strong></div><div><small>Seed</small><strong id="seed-display">42</strong></div></div>
@@ -18,7 +23,7 @@ app.innerHTML = `
         <label>Speed<select id="speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
         <label>Seed<input id="seed" type="number" min="0" max="4294967295" step="1" value="42"></label><button id="reset" class="secondary" type="button">Reset</button>
       </div><p id="message" class="message" role="status"></p>
-    </section><footer><span>Milestone 1</span><span>Seeded founder organisms</span></footer>
+    </section><footer><span>Milestone 2</span><span>Watchable simulation</span></footer>
   </main>`;
 
 const config = createDefaultSimulationConfig();
@@ -35,6 +40,8 @@ const step = element("step") as HTMLButtonElement;
 const speed = element("speed") as HTMLSelectElement;
 const seed = element("seed") as HTMLInputElement;
 const message = element("message") as HTMLParagraphElement;
+const worldCanvas = element("world") as HTMLCanvasElement;
+let renderedWorldTick = -1;
 
 const render = (): void => {
   const snapshot = clock.snapshot;
@@ -49,6 +56,15 @@ const render = (): void => {
   element("food-cells").textContent =
     world.summary.occupiedFoodCells.toLocaleString();
   element("population").textContent = world.summary.population.toLocaleString();
+  if (renderedWorldTick !== world.summary.tick) {
+    const worldSnapshot = world.snapshot;
+    renderWorld(worldCanvas, worldSnapshot);
+    worldCanvas.setAttribute(
+      "aria-label",
+      `World at tick ${worldSnapshot.tick.toLocaleString()} with ${worldSnapshot.population.toLocaleString()} organisms and ${worldSnapshot.totalFood.toLocaleString(undefined, { maximumFractionDigits: 2 })} food units`,
+    );
+    renderedWorldTick = worldSnapshot.tick;
+  }
   play.textContent = snapshot.running ? "Pause" : "Play";
   step.disabled = snapshot.running;
 };
@@ -81,6 +97,7 @@ speed.addEventListener("change", () => {
   element("seed-display").textContent = value.toLocaleString();
   message.textContent = `Reset with seed ${value.toLocaleString()}.`;
   previousFrame = undefined;
+  renderedWorldTick = -1;
   render();
 });
 
