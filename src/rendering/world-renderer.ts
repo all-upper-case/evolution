@@ -3,6 +3,7 @@ import type { WorldSnapshot } from "../simulation/world";
 const BACKGROUND = [7, 18, 14, 255] as const;
 const ORGANISM_LOW_ENERGY = [255, 171, 64] as const;
 const ORGANISM_HIGH_ENERGY = [255, 241, 168] as const;
+const SELECTED_ORGANISM = [86, 224, 255, 255] as const;
 
 const writePixel = (
   pixels: Uint8ClampedArray,
@@ -19,6 +20,7 @@ const writePixel = (
 /** Converts an immutable world snapshot into one RGBA pixel per world cell. */
 export const createWorldPixels = (
   snapshot: WorldSnapshot,
+  selectedOrganismId?: number,
 ): Uint8ClampedArray => {
   const pixels = new Uint8ClampedArray(snapshot.width * snapshot.height * 4);
 
@@ -33,6 +35,14 @@ export const createWorldPixels = (
   }
 
   for (const organism of snapshot.organisms) {
+    if (organism.id === selectedOrganismId) {
+      writePixel(
+        pixels,
+        organism.y * snapshot.width + organism.x,
+        SELECTED_ORGANISM,
+      );
+      continue;
+    }
     const energyRatio = Math.min(
       1,
       organism.energy / snapshot.config.organisms.maximumEnergy,
@@ -59,12 +69,13 @@ export const createWorldPixels = (
 export const renderWorld = (
   canvas: HTMLCanvasElement,
   snapshot: WorldSnapshot,
+  selectedOrganismId?: number,
 ): void => {
   if (canvas.width !== snapshot.width) canvas.width = snapshot.width;
   if (canvas.height !== snapshot.height) canvas.height = snapshot.height;
   const context = canvas.getContext("2d", { alpha: false });
   if (context === null) throw new Error("Canvas 2D rendering is unavailable.");
   const image = context.createImageData(snapshot.width, snapshot.height);
-  image.data.set(createWorldPixels(snapshot));
+  image.data.set(createWorldPixels(snapshot, selectedOrganismId));
   context.putImageData(image, 0, 0);
 };

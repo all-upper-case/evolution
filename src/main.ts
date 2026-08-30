@@ -1,8 +1,10 @@
 import "./styles.css";
 
 import { renderWorld } from "./rendering/world-renderer";
+import { organismAtCell, worldCellAtPoint } from "./rendering/world-selection";
 import { SimulationClock } from "./simulation/clock";
 import { createDefaultSimulationConfig } from "./simulation/configuration";
+import type { Organism } from "./simulation/organism";
 import { SimulationWorld } from "./simulation/world";
 
 const app = document.querySelector<HTMLElement>("#app");
@@ -13,7 +15,17 @@ app.innerHTML = `
     <header class="hero"><p class="eyebrow">Deterministic ecosystem laboratory</p><h1 id="page-title">Evolution</h1><p class="summary">A reproducible living sandbox with renewable resources and seeded founder organisms carrying explicit inheritable traits.</p></header>
     <section class="world-panel" aria-labelledby="world-title">
       <div class="world-heading"><div><p class="eyebrow">Live world</p><h2 id="world-title">The habitat</h2></div><div class="legend" aria-label="Map legend"><span class="food-key">Food</span><span class="organism-key">Organisms</span></div></div>
-      <div class="world-frame"><canvas id="world" role="img" aria-label="World at tick 0 with 250 organisms and 12,000 food units">Your browser does not support the ecosystem canvas.</canvas></div>
+      <div class="world-layout">
+        <div><div class="world-frame"><canvas id="world" role="img" tabindex="0" aria-describedby="world-help" aria-label="World at tick 0 with 250 organisms and 12,000 food units">Your browser does not support the ecosystem canvas.</canvas></div><p id="world-help" class="world-help">Tap or click an organism to inspect it. Cyan marks the selected organism.</p></div>
+        <aside class="inspector" aria-labelledby="inspector-title" aria-live="polite">
+          <p class="eyebrow">Selected organism</p><h3 id="inspector-title">None selected</h3>
+          <p id="inspector-empty">Choose an amber organism in the habitat to inspect its life and inherited traits.</p>
+          <div id="inspector-details" hidden>
+            <dl class="identity-grid"><div><dt>Lineage</dt><dd id="inspect-lineage">—</dd></div><div><dt>Parent</dt><dd id="inspect-parent">—</dd></div><div><dt>Age</dt><dd id="inspect-age">—</dd></div><div><dt>Energy</dt><dd id="inspect-energy">—</dd></div><div><dt>Position</dt><dd id="inspect-position">—</dd></div></dl>
+            <h4>Inherited traits</h4><dl class="trait-list"><div><dt>Movement speed</dt><dd id="inspect-movement">—</dd></div><div><dt>Perception range</dt><dd id="inspect-perception">—</dd></div><div><dt>Metabolism</dt><dd id="inspect-metabolism">—</dd></div><div><dt>Reproduction threshold</dt><dd id="inspect-reproduction">—</dd></div><div><dt>Mutation tendency</dt><dd id="inspect-mutation">—</dd></div></dl>
+          </div>
+        </aside>
+      </div>
     </section>
     <section class="panel" aria-labelledby="clock-title">
       <div class="panel-heading"><div><p class="status"><span aria-hidden="true"></span><b id="state">Paused</b></p><h2 id="clock-title">Simulation clock</h2></div><div class="tick-readout"><small>Current tick</small><output id="tick">0</output></div></div>
@@ -42,6 +54,50 @@ const seed = element("seed") as HTMLInputElement;
 const message = element("message") as HTMLParagraphElement;
 const worldCanvas = element("world") as HTMLCanvasElement;
 let renderedWorldTick = -1;
+let renderedSelectionId: number | null = null;
+let selectedOrganismId: number | null = null;
+
+const formatTrait = (value: number): string => value.toFixed(2);
+const renderInspector = (organism: Organism | null): void => {
+  const details = element("inspector-details");
+  const empty = element("inspector-empty");
+  if (organism === null) {
+    element("inspector-title").textContent = "None selected";
+    details.hidden = true;
+    empty.hidden = false;
+    return;
+  }
+  element("inspector-title").textContent =
+    `Organism #${organism.id.toLocaleString()}`;
+  empty.hidden = true;
+  details.hidden = false;
+  element("inspect-lineage").textContent =
+    `#${organism.lineageId.toLocaleString()}`;
+  element("inspect-parent").textContent =
+    organism.parentId === null
+      ? "Founder"
+      : `#${organism.parentId.toLocaleString()}`;
+  element("inspect-age").textContent =
+    `${organism.ageTicks.toLocaleString()} ticks`;
+  element("inspect-energy").textContent = organism.energy.toFixed(1);
+  element("inspect-position").textContent =
+    `${organism.x.toLocaleString()}, ${organism.y.toLocaleString()}`;
+  element("inspect-movement").textContent = formatTrait(
+    organism.genome.movementSpeed,
+  );
+  element("inspect-perception").textContent = formatTrait(
+    organism.genome.perceptionRange,
+  );
+  element("inspect-metabolism").textContent = formatTrait(
+    organism.genome.metabolismScale,
+  );
+  element("inspect-reproduction").textContent = formatTrait(
+    organism.genome.reproductionThresholdScale,
+  );
+  element("inspect-mutation").textContent = formatTrait(
+    organism.genome.mutationRateScale,
+  );
+};
 
 const render = (): void => {
   const snapshot = clock.snapshot;
@@ -56,14 +112,29 @@ const render = (): void => {
   element("food-cells").textContent =
     world.summary.occupiedFoodCells.toLocaleString();
   element("population").textContent = world.summary.population.toLocaleString();
-  if (renderedWorldTick !== world.summary.tick) {
+  if (
+    renderedWorldTick !== world.summary.tick ||
+    renderedSelectionId !== selectedOrganismId
+  ) {
     const worldSnapshot = world.snapshot;
-    renderWorld(worldCanvas, worldSnapshot);
+    const selectedOrganism =
+      selectedOrganismId === null
+        ? null
+        : (worldSnapshot.organisms.find(
+            (organism) => organism.id === selectedOrganismId,
+          ) ?? null);
+    if (selectedOrganismId !== null && selectedOrganism === null) {
+      message.textContent = `Organism #${selectedOrganismId.toLocaleString()} is no longer alive.`;
+      selectedOrganismId = null;
+    }
+    renderWorld(worldCanvas, worldSnapshot, selectedOrganismId ?? undefined);
+    renderInspector(selectedOrganism);
     worldCanvas.setAttribute(
       "aria-label",
       `World at tick ${worldSnapshot.tick.toLocaleString()} with ${worldSnapshot.population.toLocaleString()} organisms and ${worldSnapshot.totalFood.toLocaleString(undefined, { maximumFractionDigits: 2 })} food units`,
     );
     renderedWorldTick = worldSnapshot.tick;
+    renderedSelectionId = selectedOrganismId;
   }
   play.textContent = snapshot.running ? "Pause" : "Play";
   step.disabled = snapshot.running;
@@ -73,6 +144,24 @@ play.addEventListener("click", () => {
   if (clock.snapshot.running) clock.pause();
   else clock.play();
   previousFrame = undefined;
+  render();
+});
+worldCanvas.addEventListener("pointerdown", (event) => {
+  const snapshot = world.snapshot;
+  const rectangle = worldCanvas.getBoundingClientRect();
+  const cell = worldCellAtPoint(
+    event.clientX,
+    event.clientY,
+    rectangle,
+    snapshot.width,
+    snapshot.height,
+  );
+  const organism = cell === null ? null : organismAtCell(snapshot, cell);
+  selectedOrganismId = organism?.id ?? null;
+  message.textContent =
+    organism === null
+      ? "No organism occupies that cell."
+      : `Selected organism #${organism.id.toLocaleString()}.`;
   render();
 });
 step.addEventListener("click", () => {
@@ -93,11 +182,13 @@ speed.addEventListener("change", () => {
   config.seed = value;
   clock = new SimulationClock(config.world.ticksPerSecond);
   world = new SimulationWorld(config);
+  selectedOrganismId = null;
   speed.value = "1";
   element("seed-display").textContent = value.toLocaleString();
   message.textContent = `Reset with seed ${value.toLocaleString()}.`;
   previousFrame = undefined;
   renderedWorldTick = -1;
+  renderedSelectionId = null;
   render();
 });
 

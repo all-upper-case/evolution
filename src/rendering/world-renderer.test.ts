@@ -48,6 +48,25 @@ describe("world renderer", () => {
     expect(JSON.stringify(snapshot)).toBe(before);
   });
 
+  it("highlights a selected organism without changing snapshot state", () => {
+    const config = createDefaultSimulationConfig();
+    config.world.width = 16;
+    config.world.height = 16;
+    config.population.initialCount = 1;
+    config.population.maximumCount = 1;
+    const snapshot = new SimulationWorld(config).snapshot;
+    const organism = snapshot.organisms[0];
+    if (organism === undefined) throw new Error("Expected one organism.");
+    const before = JSON.stringify(snapshot);
+    const pixels = createWorldPixels(snapshot, organism.id);
+    const offset = (organism.y * snapshot.width + organism.x) * 4;
+
+    expect(Array.from(pixels.slice(offset, offset + 4))).toEqual([
+      86, 224, 255, 255,
+    ]);
+    expect(JSON.stringify(snapshot)).toBe(before);
+  });
+
   it("maps higher food quantities to brighter green pixels", () => {
     const config = createDefaultSimulationConfig();
     config.world.width = 16;

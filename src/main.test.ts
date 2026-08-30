@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createDefaultSimulationConfig } from "./simulation/configuration";
+import { SimulationWorld } from "./simulation/world";
 
 const renderWorld = vi.hoisted(() => vi.fn());
 vi.mock("./rendering/world-renderer", () => ({ renderWorld }));
@@ -7,6 +9,7 @@ class FakeElement {
   public textContent = "";
   public value = "";
   public disabled = false;
+  public hidden = false;
   readonly #listeners = new Map<string, EventListener>();
 
   public addEventListener(type: string, listener: EventListener): void {
@@ -26,6 +29,20 @@ class FakeElement {
 
   public setAttribute(): void {
     return;
+  }
+
+  public getBoundingClientRect(): DOMRect {
+    return {
+      bottom: 128,
+      height: 128,
+      left: 0,
+      right: 128,
+      top: 0,
+      width: 128,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    };
   }
 }
 
@@ -124,5 +141,33 @@ describe("simulation controls", () => {
     expect(find("speed").value).toBe("1");
     expect(find("message").textContent).toBe("Reset with seed 77.");
     expect(renderWorld).toHaveBeenCalled();
+  });
+
+  it("selects a founder from the habitat and reveals its inspection data", () => {
+    const founder = new SimulationWorld(createDefaultSimulationConfig())
+      .snapshot.organisms[0];
+    if (founder === undefined) throw new Error("Expected a founder organism.");
+    const pointer = new Event("pointerdown");
+    Object.defineProperties(pointer, {
+      clientX: { value: founder.x + 0.5 },
+      clientY: { value: founder.y + 0.5 },
+    });
+
+    find("world").dispatchEvent(pointer);
+
+    expect(find("inspector-title").textContent).toBe(
+      `Organism #${founder.id.toLocaleString()}`,
+    );
+    expect(find("inspect-parent").textContent).toBe("Founder");
+    expect(find("inspect-position").textContent).toBe(
+      `${founder.x.toLocaleString()}, ${founder.y.toLocaleString()}`,
+    );
+    expect(find("inspector-details").hidden).toBe(false);
+    expect(find("message").textContent).toContain("Selected organism");
+    expect(renderWorld).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.anything(),
+      founder.id,
+    );
   });
 });
