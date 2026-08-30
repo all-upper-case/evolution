@@ -223,3 +223,25 @@ Multiple organisms occupying one cell currently appear as one pixel, which is an
 ### Recommended next action
 
 Review and harden the existing play, pause, step, speed, reset, and seed controls in the now-visible simulation, then mark that Milestone 2 item complete only after UI-level behavior is explicitly tested.
+
+## 2026-08-30 — Browser control behavior (development)
+
+### Changed
+
+- Added a browser-level integration test for the complete simulation control deck.
+- Verified that play and pause update visible state and safely disable single-step while running.
+- Verified fixed-timestep advancement at normal and accelerated speeds through scheduled display frames.
+- Verified single-step behavior, invalid-seed feedback, and complete reset behavior with a new seed.
+- Completed the simulation-controls roadmap item using the actual rendered interface rather than clock-only tests.
+
+### Validation
+
+Formatting, typed linting, strict type checking, all unit and browser-interface tests, and the production build pass locally. GitHub Actions CI must also pass before merge.
+
+### Risk and follow-up
+
+The integration test uses a minimal DOM harness and a mocked pixel renderer so it exercises browser controls and animation scheduling without adding a browser-emulation dependency or depending on canvas support in the test environment. Pixel rendering remains independently covered by the renderer test suite.
+
+### Recommended next action
+
+Add organism selection on the habitat canvas and an inspectable panel showing identity, ancestry, age, energy, position, and inheritable traits.
