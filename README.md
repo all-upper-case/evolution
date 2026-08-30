@@ -43,7 +43,7 @@ Individual commands are also available for tests, type checking, linting, format
 
 ## Project status
 
-The project has a functional browser interface that visualizes the food field and living organisms while a deterministic ecological core advances beneath it. Organisms seek food, spend energy, reproduce with bounded mutation, and die; complete world state can also be serialized, strictly validated, restored, and continued without changing future outcomes. See:
+The project has a functional browser interface that visualizes the food field and living organisms while a deterministic ecological core advances beneath it. Organisms seek food, spend energy, reproduce with bounded mutation, and die. A user can select a living organism to inspect its identity, ancestry, age, energy, position, and inherited traits. Complete world state can also be serialized, strictly validated, restored, and continued without changing future outcomes. See:
 
 - [Roadmap](docs/ROADMAP.md)
 - [Autonomous development policy](docs/AUTONOMY.md)
