@@ -245,3 +245,23 @@ The integration test uses a minimal DOM harness and a mocked pixel renderer so i
 ### Recommended next action
 
 Add organism selection on the habitat canvas and an inspectable panel showing identity, ancestry, age, energy, position, and inheritable traits.
+
+## 2026-08-30 — GitHub Pages hosting (development)
+
+### Changed
+
+- Configured Vite to generate assets beneath the repository's `/evolution/` project-site path.
+- Added an official GitHub Pages build-and-deploy workflow for every successful merge to `main`, with manual dispatch available for recovery.
+- Added the public simulator URL to the README.
+
+### Validation
+
+Formatting, typed linting, strict type checking, all tests, and the production build pass locally. The generated HTML references assets beneath `/evolution/`. Pull-request CI and the first Pages deployment must pass before hosting is considered complete.
+
+### Risk and follow-up
+
+The first deployment requires GitHub Pages to use GitHub Actions as its publishing source. Mobile layout and performance still need verification on the deployed site and actual phone hardware.
+
+### Recommended next action
+
+After the first successful deployment, verify the public site on a narrow mobile viewport. Then resume Milestone 2 with organism selection and trait/lineage inspection.
