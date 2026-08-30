@@ -199,3 +199,27 @@ The snapshot API is currently headless; browser-facing download/upload controls 
 ### Recommended next action
 
 Begin Milestone 2 by rendering the bounded food grid and living organisms efficiently, without coupling simulation updates to display frame timing.
+
+## 2026-08-30 — Live ecosystem canvas (development)
+
+### Changed
+
+- Added a responsive live habitat canvas showing every world cell, food concentration, and organism position.
+- Implemented a bounded linear pixel-buffer renderer with one opaque RGBA pixel per cell and one canvas upload per changed simulation tick.
+- Made food brightness reflect local quantity and organism brightness reflect current energy.
+- Added a visible legend, updated milestone labeling, and a changing accessible canvas description with tick, population, and food totals.
+- Kept rendering snapshot-driven and separate from deterministic simulation updates.
+- Added renderer tests covering bounded output size, opacity, food intensity, organism precedence, and snapshot immutability.
+- Completed Milestone 2's first roadmap item.
+
+### Validation
+
+Local formatting, typed linting, strict type checking, all 52 unit tests, and the production build pass. GitHub Actions CI must also pass before merge.
+
+### Risk and follow-up
+
+Multiple organisms occupying one cell currently appear as one pixel, which is an accurate occupancy view but does not communicate local density. Selection and inspection will provide individual access later. Practical browser performance limits remain to be measured after the interface gains its planned inspection and charting workload.
+
+### Recommended next action
+
+Review and harden the existing play, pause, step, speed, reset, and seed controls in the now-visible simulation, then mark that Milestone 2 item complete only after UI-level behavior is explicitly tested.
