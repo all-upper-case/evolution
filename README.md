@@ -1,5 +1,7 @@
 # Evolution
 
+[Open the live simulator](https://all-upper-case.github.io/evolution/)
+
 An autonomous, open-source ecosystem and evolution simulator developed collaboratively by Josie and Codex.
 
 The long-term goal is a living sandbox in which populations compete for resources, reproduce with mutation, form ecological niches, and generate surprising but explainable evolutionary dynamics.
