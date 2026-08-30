@@ -97,3 +97,11 @@ Restorable snapshots are strict versioned documents containing the normalized si
 The first live world view uses a single canvas whose internal resolution matches the simulation grid. Each world cell becomes one opaque RGBA pixel: food intensity controls green brightness, organisms overwrite their occupied cell in an energy-scaled amber, and CSS scales the canvas responsively with pixelated sampling. Rendering reads immutable snapshots and never advances or mutates simulation state.
 
 **Why:** A fixed-size pixel buffer provides bounded linear rendering work and one canvas upload instead of thousands of DOM nodes or drawing calls. It keeps the visual layer replaceable, preserves the core/UI boundary, and makes the complete 128×128 default habitat legible immediately.
+
+## 2026-08-30 — Snapshot-driven organism inspection
+
+**Status:** Accepted
+
+Organism selection maps pointer coordinates through the canvas's displayed rectangle into a world cell, then selects the first organism in stable identity order at that cell. Selection is stored only in the interface, rendered cyan, and refreshed from immutable world snapshots as the organism moves and changes. It never enters serialized simulation state or update logic.
+
+**Why:** This makes individual lives and inheritable traits observable without weakening determinism. Stable overlap resolution is predictable, and keeping selection outside the ecological core ensures that observing an organism cannot change its fate.
