@@ -28,7 +28,7 @@ Exit condition: seeded headless simulations show reproducible population dynamic
 - [x] Visualize terrain, food, and organisms efficiently.
 - [x] Add play, pause, step, speed, reset, and seed controls.
 - [x] Add organism selection and trait/lineage inspection.
-- [ ] Add population, birth, death, resource, and trait-distribution charts.
+- [x] Add population, birth, death, resource, and trait-distribution charts.
 - [ ] Add accessible color choices and responsive layout.
 - [ ] Measure and document practical browser performance limits.
 

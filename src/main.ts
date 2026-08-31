@@ -1,10 +1,16 @@
 import "./styles.css";
 
+import {
+  EcosystemHistory,
+  traitHistogram,
+  type GenomeTrait,
+} from "./analytics/history";
+import { histogramBars, lineChartPoints } from "./rendering/chart-data";
 import { renderWorld } from "./rendering/world-renderer";
 import { organismAtCell, worldCellAtPoint } from "./rendering/world-selection";
 import { SimulationClock } from "./simulation/clock";
 import { createDefaultSimulationConfig } from "./simulation/configuration";
-import type { Organism } from "./simulation/organism";
+import { GENOME_TRAIT_RANGES, type Organism } from "./simulation/organism";
 import { SimulationWorld } from "./simulation/world";
 
 const app = document.querySelector<HTMLElement>("#app");
@@ -27,6 +33,22 @@ app.innerHTML = `
         </aside>
       </div>
     </section>
+    <section class="analytics" aria-labelledby="analytics-title">
+      <div class="world-heading"><div><p class="eyebrow">Ecosystem history</p><h2 id="analytics-title">Live trends</h2></div><p class="chart-window" id="chart-window">Showing tick 0</p></div>
+      <div class="trend-grid">
+        <article class="chart-card"><div><h3>Population</h3><strong id="chart-population-value">250</strong></div><svg viewBox="0 0 300 100" role="img" aria-labelledby="population-chart-label"><title id="population-chart-label">Population history</title><polyline id="population-line" class="population-line" points="" /></svg></article>
+        <article class="chart-card"><div><h3>Births and deaths</h3><strong id="chart-events-value">0 / 0</strong></div><svg viewBox="0 0 300 100" role="img" aria-labelledby="events-chart-label"><title id="events-chart-label">Births in green and deaths in pink per sampling interval</title><polyline id="birth-line" class="birth-line" points="" /><polyline id="death-line" class="death-line" points="" /></svg><p class="chart-legend"><span class="birth-key">Births</span><span class="death-key">Deaths</span></p></article>
+        <article class="chart-card"><div><h3>Food resources</h3><strong id="chart-food-value">12,000</strong></div><svg viewBox="0 0 300 100" role="img" aria-labelledby="food-chart-label"><title id="food-chart-label">Food resource history</title><polyline id="food-line" class="food-line" points="" /></svg></article>
+      </div>
+      <div class="trait-heading"><div><h3>Inherited trait distributions</h3><p>Each chart shows how the living population is spread from the trait's minimum to maximum.</p></div><span id="trait-sample-size">250 living organisms</span></div>
+      <div class="trait-charts">
+        <article><h4>Movement speed</h4><svg viewBox="0 0 120 54" role="img" aria-label="Movement speed distribution"><g id="histogram-movement"></g></svg><p><span>Slow</span><span>Fast</span></p></article>
+        <article><h4>Perception</h4><svg viewBox="0 0 120 54" role="img" aria-label="Perception range distribution"><g id="histogram-perception"></g></svg><p><span>Near</span><span>Far</span></p></article>
+        <article><h4>Metabolism</h4><svg viewBox="0 0 120 54" role="img" aria-label="Metabolism distribution"><g id="histogram-metabolism"></g></svg><p><span>Low</span><span>High</span></p></article>
+        <article><h4>Reproduction threshold</h4><svg viewBox="0 0 120 54" role="img" aria-label="Reproduction threshold distribution"><g id="histogram-reproduction"></g></svg><p><span>Low</span><span>High</span></p></article>
+        <article><h4>Mutation tendency</h4><svg viewBox="0 0 120 54" role="img" aria-label="Mutation tendency distribution"><g id="histogram-mutation"></g></svg><p><span>Low</span><span>High</span></p></article>
+      </div>
+    </section>
     <section class="panel" aria-labelledby="clock-title">
       <div class="panel-heading"><div><p class="status"><span aria-hidden="true"></span><b id="state">Paused</b></p><h2 id="clock-title">Simulation clock</h2></div><div class="tick-readout"><small>Current tick</small><output id="tick">0</output></div></div>
       <div class="metrics" aria-live="polite"><div><small>Simulated time</small><strong id="elapsed">0.00 s</strong></div><div><small>Population</small><strong id="population">250</strong></div><div><small>Food units</small><strong id="food">12,000</strong></div><div><small>Occupied cells</small><strong id="food-cells">0</strong></div><div><small>Seed</small><strong id="seed-display">42</strong></div></div>
@@ -41,6 +63,11 @@ app.innerHTML = `
 const config = createDefaultSimulationConfig();
 let clock = new SimulationClock(config.world.ticksPerSecond);
 let world = new SimulationWorld(config);
+let history = new EcosystemHistory(
+  config.history.sampleEveryTicks,
+  config.history.maximumSamples,
+);
+history.observe(world.snapshot);
 let previousFrame: number | undefined;
 const element = (id: string): HTMLElement => {
   const found = document.querySelector<HTMLElement>(`#${id}`);
@@ -56,6 +83,78 @@ const worldCanvas = element("world") as HTMLCanvasElement;
 let renderedWorldTick = -1;
 let renderedSelectionId: number | null = null;
 let selectedOrganismId: number | null = null;
+let renderedHistoryTick = -1;
+
+const setPoints = (id: string, points: string): void =>
+  element(id).setAttribute("points", points);
+const traitCharts: readonly [GenomeTrait, string][] = [
+  ["movementSpeed", "histogram-movement"],
+  ["perceptionRange", "histogram-perception"],
+  ["metabolismScale", "histogram-metabolism"],
+  ["reproductionThresholdScale", "histogram-reproduction"],
+  ["mutationRateScale", "histogram-mutation"],
+];
+
+const renderAnalytics = (): void => {
+  const samples = history.samples;
+  const latest = samples.at(-1);
+  if (latest === undefined) return;
+  const first = samples[0] ?? latest;
+  element("chart-window").textContent =
+    first.tick === latest.tick
+      ? `Showing tick ${latest.tick.toLocaleString()}`
+      : `Ticks ${first.tick.toLocaleString()}–${latest.tick.toLocaleString()}`;
+  element("chart-population-value").textContent =
+    latest.population.toLocaleString();
+  element("chart-events-value").textContent =
+    `${latest.births.toLocaleString()} / ${latest.deaths.toLocaleString()}`;
+  element("chart-food-value").textContent = latest.totalFood.toLocaleString(
+    undefined,
+    { maximumFractionDigits: 1 },
+  );
+  setPoints(
+    "population-line",
+    lineChartPoints(
+      samples.map((sample) => sample.population),
+      300,
+      100,
+    ),
+  );
+  const births = samples.map((sample) => sample.births);
+  const deaths = samples.map((sample) => sample.deaths);
+  const eventMaximum = Math.max(...births, ...deaths, 1);
+  setPoints("birth-line", lineChartPoints(births, 300, 100, eventMaximum));
+  setPoints("death-line", lineChartPoints(deaths, 300, 100, eventMaximum));
+  setPoints(
+    "food-line",
+    lineChartPoints(
+      samples.map((sample) => sample.totalFood),
+      300,
+      100,
+    ),
+  );
+
+  const snapshot = world.snapshot;
+  element("trait-sample-size").textContent =
+    `${snapshot.population.toLocaleString()} living organisms`;
+  for (const [trait, id] of traitCharts) {
+    const range = GENOME_TRAIT_RANGES[trait];
+    element(id).innerHTML = histogramBars(
+      traitHistogram(snapshot, trait, range.minimum, range.maximum),
+      120,
+      54,
+    );
+  }
+  renderedHistoryTick = latest.tick;
+};
+
+const advanceWorld = (ticks: number): void => {
+  for (let index = 0; index < ticks; index += 1) {
+    world.step();
+    if (world.summary.tick % config.history.sampleEveryTicks === 0)
+      history.observe(world.snapshot);
+  }
+};
 
 const formatTrait = (value: number): string => value.toFixed(2);
 const renderInspector = (organism: Organism | null): void => {
@@ -138,6 +237,8 @@ const render = (): void => {
   }
   play.textContent = snapshot.running ? "Pause" : "Play";
   step.disabled = snapshot.running;
+  if ((history.samples.at(-1)?.tick ?? -1) !== renderedHistoryTick)
+    renderAnalytics();
 };
 
 play.addEventListener("click", () => {
@@ -165,7 +266,7 @@ worldCanvas.addEventListener("pointerdown", (event) => {
   render();
 });
 step.addEventListener("click", () => {
-  world.advanceTicks(clock.step());
+  advanceWorld(clock.step());
   render();
 });
 speed.addEventListener("change", () => {
@@ -182,6 +283,11 @@ speed.addEventListener("change", () => {
   config.seed = value;
   clock = new SimulationClock(config.world.ticksPerSecond);
   world = new SimulationWorld(config);
+  history = new EcosystemHistory(
+    config.history.sampleEveryTicks,
+    config.history.maximumSamples,
+  );
+  history.observe(world.snapshot);
   selectedOrganismId = null;
   speed.value = "1";
   element("seed-display").textContent = value.toLocaleString();
@@ -189,13 +295,14 @@ speed.addEventListener("change", () => {
   previousFrame = undefined;
   renderedWorldTick = -1;
   renderedSelectionId = null;
+  renderedHistoryTick = -1;
   render();
 });
 
 const frame = (timestamp: number): void => {
   if (previousFrame !== undefined) {
     const ticks = clock.advance((timestamp - previousFrame) / 1000);
-    world.advanceTicks(ticks);
+    advanceWorld(ticks);
   }
   previousFrame = timestamp;
   render();
