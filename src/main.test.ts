@@ -7,9 +7,11 @@ vi.mock("./rendering/world-renderer", () => ({ renderWorld }));
 
 class FakeElement {
   public textContent = "";
+  public innerHTML = "";
   public value = "";
   public disabled = false;
   public hidden = false;
+  readonly attributes = new Map<string, string>();
   readonly #listeners = new Map<string, EventListener>();
 
   public addEventListener(type: string, listener: EventListener): void {
@@ -27,8 +29,8 @@ class FakeElement {
     return true;
   }
 
-  public setAttribute(): void {
-    return;
+  public setAttribute(name: string, value: string): void {
+    this.attributes.set(name, value);
   }
 
   public getBoundingClientRect(): DOMRect {
@@ -169,5 +171,22 @@ describe("simulation controls", () => {
       expect.anything(),
       founder.id,
     );
+  });
+
+  it("samples ecological trends and refreshes trait distributions", () => {
+    expect(find("chart-window").textContent).toBe("Showing tick 0");
+    expect(find("histogram-movement").innerHTML).toContain("<rect");
+
+    find("play").click();
+    runFrame(1_000);
+    runFrame(2_000);
+
+    expect(find("tick").value).toBe("30");
+    expect(find("chart-window").textContent).toBe("Ticks 0–30");
+    expect(find("population-line").attributes.get("points")).toContain(
+      "300.00",
+    );
+    expect(find("chart-events-value").textContent).toMatch(/^\d[\d,]* \/ \d/);
+    expect(find("trait-sample-size").textContent).toContain("living organisms");
   });
 });

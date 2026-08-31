@@ -89,6 +89,165 @@ h1 {
   gap: 1.25rem;
 }
 
+.analytics {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.chart-window {
+  margin: 0;
+  color: #789484;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.trend-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.chart-card,
+.trait-charts article {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid #294838;
+  border-radius: 1rem;
+  background: rgb(10 23 17 / 88%);
+}
+
+.chart-card > div,
+.trait-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.chart-card h3,
+.trait-heading h3,
+.trait-charts h4 {
+  margin: 0;
+  color: #d9eee0;
+  font-size: 0.88rem;
+}
+
+.chart-card strong {
+  color: #f4fff7;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-card svg {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+  overflow: visible;
+  border-bottom: 1px solid #294838;
+  background: linear-gradient(to bottom, rgb(41 72 56 / 24%), transparent);
+}
+
+.chart-card polyline {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.population-line,
+.birth-line {
+  stroke: #83e6a6;
+}
+
+.death-line {
+  stroke: #ff7f9b;
+}
+
+.food-line {
+  stroke: #ffd46c;
+}
+
+.chart-legend {
+  display: flex;
+  margin: 0.55rem 0 0;
+  color: #9eb2a4;
+  font-size: 0.7rem;
+  font-weight: 700;
+  gap: 1rem;
+}
+
+.chart-legend span::before {
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.18rem;
+  margin-right: 0.35rem;
+  border-radius: 1rem;
+  content: "";
+  vertical-align: 0.2rem;
+}
+
+.birth-key::before {
+  background: #83e6a6;
+}
+
+.death-key::before {
+  background: #ff7f9b;
+}
+
+.trait-heading {
+  margin-top: 1rem;
+}
+
+.trait-heading p {
+  margin: 0.35rem 0 0;
+  color: #789484;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.trait-heading > span {
+  flex: none;
+  color: #82d69f;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.trait-charts {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.trait-charts article {
+  padding: 0.8rem;
+}
+
+.trait-charts h4 {
+  min-height: 2.2em;
+  font-size: 0.72rem;
+}
+
+.trait-charts svg {
+  display: block;
+  width: 100%;
+  margin-top: 0.7rem;
+  border-bottom: 1px solid #294838;
+}
+
+.trait-charts rect {
+  fill: #56e0ff;
+}
+
+.trait-charts p {
+  display: flex;
+  justify-content: space-between;
+  margin: 0.4rem 0 0;
+  color: #789484;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
 .world-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(15rem, 0.42fr);
@@ -442,6 +601,19 @@ footer {
 @media (max-width: 40rem) {
   .world-layout {
     grid-template-columns: 1fr;
+  }
+
+  .trend-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trait-charts {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .trait-heading {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .input-row {

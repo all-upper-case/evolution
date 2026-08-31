@@ -288,3 +288,25 @@ When organisms overlap, the oldest identity is selected; cycling through co-loca
 ### Recommended next action
 
 Add bounded population, birth, death, resource, and trait-distribution history collection with clear live charts, without placing rendering concerns inside the deterministic core.
+
+## 2026-08-31 — Live ecosystem analytics (development)
+
+### Changed
+
+- Added bounded snapshot-derived history for population, food resources, and births and deaths inferred from stable organism identities.
+- Added responsive live line charts for population, life events, and food, plus fixed-bin histograms for all five inherited traits.
+- Kept analytics observational and separate from the deterministic core; reset now clears all collected history with the world.
+- Added analytics, chart-coordinate, histogram, validation, capacity, and browser-level integration tests.
+- Completed the Milestone 2 ecosystem-chart roadmap item.
+
+### Validation
+
+Formatting, typed linting, strict type checking, all 64 tests, and the production build pass locally. GitHub Actions CI must also pass before merge.
+
+### Risk and follow-up
+
+Birth and death counts summarize each configured sampling interval rather than every individual tick. The default one-second simulated interval is intended to keep trends legible and collection bounded. Chart rendering currently scales linearly with retained samples up to the explicit configured cap; practical performance measurement remains a later Milestone 2 item.
+
+### Recommended next action
+
+Audit color contrast, non-color chart cues, keyboard interaction, narrow-screen layout, and live-region behavior, then complete the accessible-color and responsive-layout roadmap item only after browser-level coverage passes.

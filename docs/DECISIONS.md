@@ -105,3 +105,11 @@ The first live world view uses a single canvas whose internal resolution matches
 Organism selection maps pointer coordinates through the canvas's displayed rectangle into a world cell, then selects the first organism in stable identity order at that cell. Selection is stored only in the interface, rendered cyan, and refreshed from immutable world snapshots as the organism moves and changes. It never enters serialized simulation state or update logic.
 
 **Why:** This makes individual lives and inheritable traits observable without weakening determinism. Stable overlap resolution is predictable, and keeping selection outside the ecological core ensures that observing an organism cannot change its fate.
+
+## 2026-08-31 — Bounded observational ecosystem analytics
+
+**Status:** Accepted
+
+The browser samples immutable world snapshots at the configured history interval. Population, food, and organism-identity changes form a bounded trend history; current genome values form fixed-bin distributions using the model's explicit trait bounds. Analytics remain outside the simulation core and are reset with the world.
+
+**Why:** Stable identities provide exact births and deaths between samples without adding counters to serialized world state. Snapshot-derived analytics cannot alter seeded outcomes, while explicit intervals and capacity prevent unbounded memory or rendering work.
