@@ -50,6 +50,7 @@ class FakeElement {
 
 class FakeDocument {
   readonly #elements = new Map<string, FakeElement>();
+  public markup = "";
   readonly root = {
     set innerHTML(markup: string) {
       fakeDocument.mount(markup);
@@ -57,6 +58,7 @@ class FakeDocument {
   };
 
   public mount(markup: string): void {
+    this.markup = markup;
     for (const match of markup.matchAll(/id="([^"]+)"/g)) {
       this.#elements.set(match[1] ?? "", new FakeElement());
     }
@@ -173,6 +175,55 @@ describe("simulation controls", () => {
     );
   });
 
+  it("supports complete keyboard organism selection without pointer input", () => {
+    const organisms = new SimulationWorld(createDefaultSimulationConfig())
+      .snapshot.organisms;
+    const first = organisms[0];
+    const second = organisms[1];
+    const last = organisms.at(-1);
+    if (first === undefined || second === undefined || last === undefined)
+      throw new Error("Expected multiple founder organisms.");
+    const keydown = (key: string): Event => {
+      const event = new Event("keydown", { cancelable: true });
+      Object.defineProperty(event, "key", { value: key });
+      find("world").dispatchEvent(event);
+      return event;
+    };
+
+    expect(keydown("ArrowRight").defaultPrevented).toBe(true);
+    expect(find("inspector-title").textContent).toBe(
+      `Organism #${first.id.toLocaleString()}`,
+    );
+    keydown("ArrowRight");
+    expect(find("inspector-title").textContent).toBe(
+      `Organism #${second.id.toLocaleString()}`,
+    );
+    keydown("ArrowLeft");
+    expect(find("inspector-title").textContent).toBe(
+      `Organism #${first.id.toLocaleString()}`,
+    );
+    keydown("End");
+    expect(find("inspector-title").textContent).toBe(
+      `Organism #${last.id.toLocaleString()}`,
+    );
+    keydown("Escape");
+    expect(find("inspector-title").textContent).toBe("None selected");
+    expect(find("message").textContent).toBe("Organism selection cleared.");
+  });
+
+  it("exposes concise accessible descriptions without continuously live metrics", () => {
+    expect(fakeDocument.markup).toContain(
+      'aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape"',
+    );
+    expect(fakeDocument.markup).toContain("Deaths — dashed");
+    expect(fakeDocument.markup).not.toContain(
+      'class="metrics" aria-live="polite"',
+    );
+    expect(fakeDocument.markup).not.toContain(
+      'class="inspector" aria-labelledby="inspector-title" aria-live',
+    );
+  });
+
   it("samples ecological trends and refreshes trait distributions", () => {
     expect(find("chart-window").textContent).toBe("Showing tick 0");
     expect(find("histogram-movement").innerHTML).toContain("<rect");
@@ -188,5 +239,10 @@ describe("simulation controls", () => {
     );
     expect(find("chart-events-value").textContent).toMatch(/^\d[\d,]* \/ \d/);
     expect(find("trait-sample-size").textContent).toContain("living organisms");
+    expect(find("population-chart-label").textContent).toContain(
+      "ticks 0 to 30",
+    );
+    expect(find("events-chart-label").textContent).toContain("solid line");
+    expect(find("events-chart-label").textContent).toContain("dashed line");
   });
 });

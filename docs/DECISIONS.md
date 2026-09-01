@@ -113,3 +113,11 @@ Organism selection maps pointer coordinates through the canvas's displayed recta
 The browser samples immutable world snapshots at the configured history interval. Population, food, and organism-identity changes form a bounded trend history; current genome values form fixed-bin distributions using the model's explicit trait bounds. Analytics remain outside the simulation core and are reset with the world.
 
 **Why:** Stable identities provide exact births and deaths between samples without adding counters to serialized world state. Snapshot-derived analytics cannot alter seeded outcomes, while explicit intervals and capacity prevent unbounded memory or rendering work.
+
+## 2026-09-01 — Keyboard-first inspection and redundant chart encoding
+
+**Status:** Accepted
+
+The habitat remains a compact canvas but exposes a complete keyboard path: arrow keys cycle through living organisms, Home and End jump to population boundaries, and Escape clears selection. Charts use text descriptions and solid-versus-dashed life-event lines in addition to color. Rapidly changing metrics and inspector values are not live regions; intentional selection and control messages use the dedicated status region.
+
+**Why:** Canvas rendering stays efficient while pointer access is no longer required. Redundant visual encodings support color-vision differences, and limiting live announcements prevents simulation ticks from overwhelming screen-reader users.
