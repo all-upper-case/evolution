@@ -22,8 +22,8 @@ app.innerHTML = `
     <section class="world-panel" aria-labelledby="world-title">
       <div class="world-heading"><div><p class="eyebrow">Live world</p><h2 id="world-title">The habitat</h2></div><div class="legend" aria-label="Map legend"><span class="food-key">Food</span><span class="organism-key">Organisms</span></div></div>
       <div class="world-layout">
-        <div><div class="world-frame"><canvas id="world" role="img" tabindex="0" aria-describedby="world-help" aria-label="World at tick 0 with 250 organisms and 12,000 food units">Your browser does not support the ecosystem canvas.</canvas></div><p id="world-help" class="world-help">Tap or click an organism to inspect it. Cyan marks the selected organism.</p></div>
-        <aside class="inspector" aria-labelledby="inspector-title" aria-live="polite">
+        <div><div class="world-frame"><canvas id="world" role="img" tabindex="0" aria-describedby="world-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape" aria-label="World at tick 0 with 250 organisms and 12,000 food units">Your browser does not support the ecosystem canvas.</canvas></div><p id="world-help" class="world-help">Tap or click an organism to inspect it. With the map focused, use the arrow keys to move through organisms, Home or End to jump, and Escape to clear selection. Cyan marks the selected organism.</p></div>
+        <aside class="inspector" aria-labelledby="inspector-title">
           <p class="eyebrow">Selected organism</p><h3 id="inspector-title">None selected</h3>
           <p id="inspector-empty">Choose an amber organism in the habitat to inspect its life and inherited traits.</p>
           <div id="inspector-details" hidden>
@@ -36,9 +36,9 @@ app.innerHTML = `
     <section class="analytics" aria-labelledby="analytics-title">
       <div class="world-heading"><div><p class="eyebrow">Ecosystem history</p><h2 id="analytics-title">Live trends</h2></div><p class="chart-window" id="chart-window">Showing tick 0</p></div>
       <div class="trend-grid">
-        <article class="chart-card"><div><h3>Population</h3><strong id="chart-population-value">250</strong></div><svg viewBox="0 0 300 100" role="img" aria-labelledby="population-chart-label"><title id="population-chart-label">Population history</title><polyline id="population-line" class="population-line" points="" /></svg></article>
-        <article class="chart-card"><div><h3>Births and deaths</h3><strong id="chart-events-value">0 / 0</strong></div><svg viewBox="0 0 300 100" role="img" aria-labelledby="events-chart-label"><title id="events-chart-label">Births in green and deaths in pink per sampling interval</title><polyline id="birth-line" class="birth-line" points="" /><polyline id="death-line" class="death-line" points="" /></svg><p class="chart-legend"><span class="birth-key">Births</span><span class="death-key">Deaths</span></p></article>
-        <article class="chart-card"><div><h3>Food resources</h3><strong id="chart-food-value">12,000</strong></div><svg viewBox="0 0 300 100" role="img" aria-labelledby="food-chart-label"><title id="food-chart-label">Food resource history</title><polyline id="food-line" class="food-line" points="" /></svg></article>
+        <article class="chart-card"><div><h3>Population</h3><strong id="chart-population-value">250</strong></div><svg viewBox="0 0 300 100" role="img" aria-labelledby="population-chart-label"><title id="population-chart-label">Population history at tick 0: 250 organisms</title><polyline id="population-line" class="population-line" points="" /></svg></article>
+        <article class="chart-card"><div><h3>Births and deaths</h3><strong id="chart-events-value">0 / 0</strong></div><svg viewBox="0 0 300 100" role="img" aria-labelledby="events-chart-label"><title id="events-chart-label">Life events at tick 0: 0 births on a solid line and 0 deaths on a dashed line</title><polyline id="birth-line" class="birth-line" points="" /><polyline id="death-line" class="death-line" points="" /></svg><p class="chart-legend"><span class="birth-key">Births — solid</span><span class="death-key">Deaths — dashed</span></p></article>
+        <article class="chart-card"><div><h3>Food resources</h3><strong id="chart-food-value">12,000</strong></div><svg viewBox="0 0 300 100" role="img" aria-labelledby="food-chart-label"><title id="food-chart-label">Food resource history at tick 0: 12,000 units</title><polyline id="food-line" class="food-line" points="" /></svg></article>
       </div>
       <div class="trait-heading"><div><h3>Inherited trait distributions</h3><p>Each chart shows how the living population is spread from the trait's minimum to maximum.</p></div><span id="trait-sample-size">250 living organisms</span></div>
       <div class="trait-charts">
@@ -51,7 +51,7 @@ app.innerHTML = `
     </section>
     <section class="panel" aria-labelledby="clock-title">
       <div class="panel-heading"><div><p class="status"><span aria-hidden="true"></span><b id="state">Paused</b></p><h2 id="clock-title">Simulation clock</h2></div><div class="tick-readout"><small>Current tick</small><output id="tick">0</output></div></div>
-      <div class="metrics" aria-live="polite"><div><small>Simulated time</small><strong id="elapsed">0.00 s</strong></div><div><small>Population</small><strong id="population">250</strong></div><div><small>Food units</small><strong id="food">12,000</strong></div><div><small>Occupied cells</small><strong id="food-cells">0</strong></div><div><small>Seed</small><strong id="seed-display">42</strong></div></div>
+      <div class="metrics"><div><small>Simulated time</small><strong id="elapsed">0.00 s</strong></div><div><small>Population</small><strong id="population">250</strong></div><div><small>Food units</small><strong id="food">12,000</strong></div><div><small>Occupied cells</small><strong id="food-cells">0</strong></div><div><small>Seed</small><strong id="seed-display">42</strong></div></div>
       <div class="controls" aria-label="Simulation controls">
         <button id="play" type="button">Play</button><button id="step" class="secondary" type="button">Step</button>
         <label>Speed<select id="speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
@@ -112,6 +112,16 @@ const renderAnalytics = (): void => {
     undefined,
     { maximumFractionDigits: 1 },
   );
+  const tickRange =
+    first.tick === latest.tick
+      ? `tick ${latest.tick.toLocaleString()}`
+      : `ticks ${first.tick.toLocaleString()} to ${latest.tick.toLocaleString()}`;
+  element("population-chart-label").textContent =
+    `Population history for ${tickRange}: latest ${latest.population.toLocaleString()} organisms`;
+  element("events-chart-label").textContent =
+    `Life events for ${tickRange}: latest ${latest.births.toLocaleString()} births on a solid line and ${latest.deaths.toLocaleString()} deaths on a dashed line`;
+  element("food-chart-label").textContent =
+    `Food resource history for ${tickRange}: latest ${latest.totalFood.toLocaleString(undefined, { maximumFractionDigits: 1 })} units`;
   setPoints(
     "population-line",
     lineChartPoints(
@@ -263,6 +273,41 @@ worldCanvas.addEventListener("pointerdown", (event) => {
     organism === null
       ? "No organism occupies that cell."
       : `Selected organism #${organism.id.toLocaleString()}.`;
+  render();
+});
+worldCanvas.addEventListener("keydown", (event) => {
+  const organisms = world.snapshot.organisms;
+  if (organisms.length === 0) {
+    message.textContent = "No living organisms are available to inspect.";
+    return;
+  }
+
+  const currentIndex = organisms.findIndex(
+    (organism) => organism.id === selectedOrganismId,
+  );
+  let nextIndex: number;
+  if (event.key === "Home") nextIndex = 0;
+  else if (event.key === "End") nextIndex = organisms.length - 1;
+  else if (event.key === "ArrowRight" || event.key === "ArrowDown")
+    nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % organisms.length;
+  else if (event.key === "ArrowLeft" || event.key === "ArrowUp")
+    nextIndex =
+      currentIndex < 0
+        ? organisms.length - 1
+        : (currentIndex - 1 + organisms.length) % organisms.length;
+  else if (event.key === "Escape") {
+    event.preventDefault();
+    selectedOrganismId = null;
+    message.textContent = "Organism selection cleared.";
+    render();
+    return;
+  } else return;
+
+  event.preventDefault();
+  const organism = organisms[nextIndex];
+  if (organism === undefined) return;
+  selectedOrganismId = organism.id;
+  message.textContent = `Selected organism #${organism.id.toLocaleString()} with the keyboard.`;
   render();
 });
 step.addEventListener("click", () => {

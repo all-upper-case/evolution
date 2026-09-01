@@ -310,3 +310,27 @@ Birth and death counts summarize each configured sampling interval rather than e
 ### Recommended next action
 
 Audit color contrast, non-color chart cues, keyboard interaction, narrow-screen layout, and live-region behavior, then complete the accessible-color and responsive-layout roadmap item only after browser-level coverage passes.
+
+## 2026-09-01 — Accessible responsive interface (development)
+
+### Changed
+
+- Added complete keyboard organism navigation on the focusable habitat with arrow-key cycling, Home/End jumps, Escape clearing, visible focus, instructions, and status feedback.
+- Added redundant solid/dashed birth and death encodings and dynamic text descriptions for population, life-event, and food charts.
+- Removed continuously changing live regions from metrics and organism details while preserving intentional action feedback through the status region.
+- Raised the remaining low-contrast footer text above WCAG AA and added automated contrast checks for every small-text palette color.
+- Added tablet and phone breakpoints, safer narrow-screen title sizing, single-column trait cards, stacked organism details, and full-width 48-pixel mobile controls.
+- Added keyboard, semantic-markup, contrast, non-color, reduced-motion, and responsive-rule regression coverage.
+- Completed the Milestone 2 accessible-color and responsive-layout roadmap item.
+
+### Validation
+
+Formatting, typed linting, strict type checking, all 68 tests, and the production build pass locally. GitHub Actions CI must also pass before merge.
+
+### Risk and follow-up
+
+Keyboard navigation follows stable organism identity order rather than spatial proximity, which is predictable and works even when organisms overlap. The two explicit responsive breakpoints cover phone and tablet layouts, while practical measurements on supported browsers remain the next roadmap item.
+
+### Recommended next action
+
+Build a repeatable browser benchmark for representative world and population sizes, record frame and tick throughput plus memory observations, and document conservative practical browser limits before completing Milestone 2.

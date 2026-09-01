@@ -59,7 +59,7 @@ footer {
 h1 {
   margin: 0.1em 0;
   color: #f4fff7;
-  font-size: clamp(4rem, 15vw, 9rem);
+  font-size: clamp(3.25rem, 15vw, 9rem);
   font-weight: 650;
   letter-spacing: -0.075em;
   line-height: 0.9;
@@ -161,6 +161,7 @@ h1 {
 
 .death-line {
   stroke: #ff7f9b;
+  stroke-dasharray: 7 5;
 }
 
 .food-line {
@@ -191,7 +192,14 @@ h1 {
 }
 
 .death-key::before {
-  background: #ff7f9b;
+  height: 0.28rem;
+  background: repeating-linear-gradient(
+    to right,
+    #ff7f9b 0,
+    #ff7f9b 0.22rem,
+    transparent 0.22rem,
+    transparent 0.34rem
+  );
 }
 
 .trait-heading {
@@ -317,6 +325,11 @@ h1 {
   image-rendering: pixelated;
   cursor: crosshair;
   touch-action: manipulation;
+}
+
+#world:focus-visible {
+  outline: 4px solid #b0f5c6;
+  outline-offset: 4px;
 }
 
 .world-help {
@@ -595,10 +608,38 @@ footer {
   justify-content: space-between;
   padding-top: 1.5rem;
   border-top: 1px solid #1d3027;
-  color: #5f806b;
+  color: #668a72;
+}
+
+@media (max-width: 58rem) {
+  .world-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .trend-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .chart-card:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .trait-charts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .inspector {
+    min-height: 11rem;
+  }
 }
 
 @media (max-width: 40rem) {
+  .shell {
+    width: min(100% - 1rem, 70rem);
+    padding-top: 1.5rem;
+    gap: 2.5rem;
+  }
+
   .world-layout {
     grid-template-columns: 1fr;
   }
@@ -607,8 +648,12 @@ footer {
     grid-template-columns: 1fr;
   }
 
+  .chart-card:last-child {
+    grid-column: auto;
+  }
+
   .trait-charts {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 
   .trait-heading {
@@ -651,6 +696,11 @@ footer {
   .controls select,
   .controls button {
     width: 100%;
+    min-height: 3rem;
+  }
+
+  .identity-grid {
+    grid-template-columns: 1fr;
   }
 
   footer {
