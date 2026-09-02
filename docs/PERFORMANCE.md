@@ -25,6 +25,29 @@ date.
 
 ## Practical limits
 
-Release measurements and conservative guidance will be recorded after the
-benchmark is exercised from the production deployment. Configuration schema
-hard caps remain safety boundaries, not performance promises.
+The production bundle was measured on 2026-09-02 in Chromium in the project's
+remote browser environment. Exact host hardware was not exposed, so these
+results are a reproducible reference point rather than a device guarantee.
+
+| Scenario            | Tick median | Frame p95 | Estimated FPS | 30 FPS budget | Heap change |
+| ------------------- | ----------: | --------: | ------------: | ------------- | ----------: |
+| Default             |      0.4 ms |    2.8 ms |           526 | Pass          |    +2.3 MiB |
+| Recommended ceiling |      1.3 ms |   16.6 ms |           164 | Pass          |    +7.5 MiB |
+| Population stress   |      5.4 ms |   18.3 ms |            72 | Pass          |    +3.5 MiB |
+
+The estimated FPS column is derived from median measured work and is not the
+browser's display refresh rate. Heap changes are noisy because garbage
+collection timing is outside the benchmark's control.
+
+For interactive experiments, use at most a **256×256 world and 1,000 living
+organisms**. This keeps the measured 95th-percentile workload below half of a
+30 FPS frame on the reference environment, leaving useful headroom for slower
+devices and future interface work. The default 128×128 world with 250 founders
+remains the appropriate choice for phones and unknown hardware.
+
+The 5,000-organism case demonstrates graceful degradation on the measured
+browser, but is a stress test rather than a support target. The configuration
+schema's 10,000-organism and 65,536-cell hard caps prevent unbounded work; they
+are safety boundaries, not performance promises. Rerun the deployed benchmark
+after major simulation, rendering, analytics, or dependency changes and revise
+the recommendation only from repeated evidence on representative devices.
