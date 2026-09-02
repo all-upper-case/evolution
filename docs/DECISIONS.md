@@ -121,3 +121,11 @@ The browser samples immutable world snapshots at the configured history interval
 The habitat remains a compact canvas but exposes a complete keyboard path: arrow keys cycle through living organisms, Home and End jump to population boundaries, and Escape clears selection. Charts use text descriptions and solid-versus-dashed life-event lines in addition to color. Rapidly changing metrics and inspector values are not live regions; intentional selection and control messages use the dedicated status region.
 
 **Why:** Canvas rendering stays efficient while pointer access is no longer required. Redundant visual encodings support color-vision differences, and limiting live announcements prevents simulation ticks from overwhelming screen-reader users.
+
+## 2026-09-02 — Conservative interactive performance ceiling
+
+**Status:** Accepted
+
+Interactive experiments should use no more than a 256×256 world and 1,000 living organisms; the 128×128, 250-founder default remains preferred for phones and unknown hardware. Larger schema limits remain safety bounds, while 5,000 organisms is a benchmark stress case rather than a supported responsiveness target.
+
+**Why:** The production Chromium benchmark kept the recommended ceiling's 95th-percentile tick-plus-render work at 16.6 ms, below half of a 30 FPS frame budget. Preserving the remaining margin accounts for slower devices, browser variation, longer sessions, and future interface work without lowering the model's explicit hard safety caps.
