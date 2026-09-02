@@ -355,3 +355,24 @@ The development environment cannot expose its local HTTP server to the remote br
 ### Recommended next action
 
 After deployment, run the benchmark in production Chromium, record its results and browser environment in `docs/PERFORMANCE.md`, set conservative supported limits from the evidence, and then complete Milestone 2.
+
+## 2026-09-02 — Practical browser limits (development)
+
+### Changed
+
+- Ran the deployed production benchmark in Chromium and recorded default, recommended-ceiling, and stress-case tick, frame, throughput, and heap observations.
+- Established 256×256 cells and 1,000 living organisms as the conservative interactive ceiling, while retaining 128×128 and 250 founders as the phone and unknown-device default.
+- Explicitly classified the 5,000-organism result as a stress observation and the 10,000-organism schema cap as a safety boundary rather than a responsiveness promise.
+- Completed the final Milestone 2 roadmap item and its watchable-simulation exit condition.
+
+### Validation
+
+The production Chromium benchmark passed its 30 FPS frame-work budget in all three scenarios: 2.8 ms p95 at the default size, 16.6 ms at the recommended ceiling, and 18.3 ms in the 5,000-organism stress case. The complete local quality gate and GitHub Actions CI must also pass before merge.
+
+### Risk and follow-up
+
+The remote browser did not expose host hardware details, and its heap readings are sensitive to garbage-collection timing. The recommendation therefore retains substantial measured headroom and does not claim equivalent results for every device. Actual phone measurements can refine, but should not automatically raise, the ceiling.
+
+### Recommended next action
+
+Begin Milestone 3 with browser-facing export and strict import of configuration, seed, and complete simulation snapshots, reusing the existing versioned serialization boundaries.
