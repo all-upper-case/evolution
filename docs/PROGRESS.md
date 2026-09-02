@@ -334,3 +334,24 @@ Keyboard navigation follows stable organism identity order rather than spatial p
 ### Recommended next action
 
 Build a repeatable browser benchmark for representative world and population sizes, record frame and tick throughput plus memory observations, and document conservative practical browser limits before completing Milestone 2.
+
+## 2026-09-02 — Production browser benchmark harness (development)
+
+### Changed
+
+- Added a production-built browser benchmark for the default 250-organism world, a proposed 1,000-organism ceiling, and a 5,000-organism stress case.
+- Measured simulation tick time separately from a representative rendered frame containing snapshot creation, canvas upload, bounded line history, and all five trait histograms.
+- Added median, 95th-percentile, estimated-frame-rate, 30 FPS budget, and optional Chromium heap observations.
+- Documented the methodology and kept timing out of CI pass/fail decisions so shared-runner variance cannot create flaky builds.
+
+### Validation
+
+The focused benchmark tests, strict type checking, and production multi-page build pass locally. The complete local quality gate and GitHub Actions CI must also pass before merge.
+
+### Risk and follow-up
+
+The development environment cannot expose its local HTTP server to the remote browser, so production-browser numbers must be collected from the deployed benchmark after this harness reaches GitHub Pages. The roadmap item and Milestone 2 remain open until those measurements and conservative limits are recorded.
+
+### Recommended next action
+
+After deployment, run the benchmark in production Chromium, record its results and browser environment in `docs/PERFORMANCE.md`, set conservative supported limits from the evidence, and then complete Milestone 2.

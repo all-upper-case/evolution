@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Evolution browser benchmark</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: system-ui, sans-serif;
+        background: #07120e;
+        color: #edf9f1;
+      }
+      body {
+        max-width: 72rem;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+      h1 {
+        font-size: clamp(2rem, 7vw, 4rem);
+        margin-bottom: 0.5rem;
+      }
+      p {
+        color: #b9c8bf;
+        line-height: 1.6;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 2rem;
+      }
+      th,
+      td {
+        border-bottom: 1px solid #294438;
+        padding: 0.8rem;
+        text-align: right;
+      }
+      th:first-child,
+      td:first-child {
+        text-align: left;
+      }
+      .pass {
+        color: #76e6a2;
+      }
+      .fail {
+        color: #ff9d87;
+      }
+      canvas {
+        position: fixed;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+      }
+      code {
+        color: #56e0ff;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p>Repeatable development diagnostic</p>
+      <h1>Browser performance benchmark</h1>
+      <p id="status" role="status">Preparing representative workloads…</p>
+      <div id="results"></div>
+      <canvas id="benchmark-canvas" aria-hidden="true"></canvas>
+    </main>
+    <script
+      type="module"
+      src="/src/performance/browser-benchmark-page.ts"
+    ></script>
+  </body>
+</html>
