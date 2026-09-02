@@ -49,6 +49,7 @@ The project has a responsive browser interface that visualizes the food field an
 - [Autonomous development policy](docs/AUTONOMY.md)
 - [Decision log](docs/DECISIONS.md)
 - [Progress log](docs/PROGRESS.md)
+- [Browser performance](docs/PERFORMANCE.md)
 
 ## License
 
