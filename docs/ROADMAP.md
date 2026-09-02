@@ -30,7 +30,7 @@ Exit condition: seeded headless simulations show reproducible population dynamic
 - [x] Add organism selection and trait/lineage inspection.
 - [x] Add population, birth, death, resource, and trait-distribution charts.
 - [x] Add accessible color choices and responsive layout.
-- [ ] Measure and document practical browser performance limits.
+- [x] Measure and document practical browser performance limits.
 
 Exit condition: a user can run, understand, and inspect an evolving ecosystem without developer tools.
 
