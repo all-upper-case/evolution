@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Evolution experiment lab</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: #edf9f1;
+        background: #07120e;
+      }
+      body {
+        max-width: 72rem;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+      h1 {
+        font:
+          700 clamp(2rem, 7vw, 4rem)/1 system-ui,
+          sans-serif;
+        margin-bottom: 0.5rem;
+      }
+      p {
+        color: #b9c8bf;
+        line-height: 1.6;
+      }
+      form {
+        display: grid;
+        gap: 0.8rem;
+        margin: 2rem 0;
+      }
+      label {
+        color: #9ed8b1;
+        font-weight: 700;
+      }
+      textarea {
+        width: 100%;
+        min-height: 15rem;
+        padding: 1rem;
+        border: 1px solid #345746;
+        border-radius: 0.5rem;
+        color: inherit;
+        background: #0a1711;
+        font: inherit;
+      }
+      button {
+        justify-self: start;
+        padding: 0.75rem 1rem;
+        border: 0;
+        border-radius: 0.5rem;
+        color: #06110c;
+        background: #83e6a6;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      pre {
+        padding: 1rem;
+        border: 1px solid #294438;
+        border-radius: 0.5rem;
+        overflow: auto;
+        background: #0a1711;
+        line-height: 1.45;
+      }
+      .error {
+        color: #ff9d87;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p>Machine-readable development diagnostic</p>
+      <h1>Experiment lab</h1>
+      <p>
+        Run a complete configuration without animation. Direct URLs accept
+        <code>ticks</code>, <code>checkpoints</code>, and any dotted numeric
+        configuration path.
+      </p>
+      <form id="lab-form">
+        <label for="lab-query">Query parameters</label>
+        <textarea id="lab-query" spellcheck="false"></textarea>
+        <button type="submit">Run experiment</button>
+      </form>
+      <p id="status" role="status">Preparing experiment…</p>
+      <pre id="report" aria-label="Machine-readable experiment report"></pre>
+    </main>
+    <script
+      type="module"
+      src="/src/development/experiment-lab-page.ts"
+    ></script>
+  </body>
+</html>

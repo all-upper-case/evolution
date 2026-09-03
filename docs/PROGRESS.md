@@ -441,3 +441,24 @@ This changes only the default configuration; the strict schema still permits bou
 ### Recommended next action
 
 Add named experiment presets that populate the existing editor and begin reproducible paused worlds, with clear descriptions of the ecological pressure each preset creates.
+
+## 2026-09-03 — Browser experiment lab (development)
+
+### Changed
+
+- Added a separate URL-driven experiment lab that runs deterministic simulations without animation or manual control sequences.
+- Added strict dotted configuration overrides, bounded tick counts, explicit checkpoints, duplicate and unknown parameter rejection, and the measured interactive workload ceiling.
+- Added a single machine-readable JSON report containing normalized inputs, checkpoint ecosystem summaries, lineage counts, energy and age means, all inherited-trait statistics, and final deterministic identity state.
+- Added an optional query editor for manual diagnosis, a root completion/error marker for automation, focused unit coverage, a production build entry, and usage documentation.
+
+### Validation
+
+Focused strict type checking, experiment-lab tests, and the three-entry production build pass locally. The complete quality gate, GitHub Actions CI, and one deployed URL-driven report remain required before merge completion.
+
+### Risk and follow-up
+
+The lab intentionally reports aggregate outcomes rather than full organism or resource arrays, keeping browser inspection compact. It is synchronous and bounded to 50,000 ticks; large performance stress cases belong in the existing benchmark.
+
+### Recommended next action
+
+Use the experiment lab while adding named presets, then give the comparison workflow a batch runner that reuses the same report schema.

@@ -50,6 +50,7 @@ The project has a responsive browser interface that visualizes the food field an
 - [Decision log](docs/DECISIONS.md)
 - [Progress log](docs/PROGRESS.md)
 - [Browser performance](docs/PERFORMANCE.md)
+- [Developer experiment lab](docs/EXPERIMENT_LAB.md)
 
 ## License
 
