@@ -33,6 +33,18 @@ describe("SimulationClock", () => {
     expect(clock.advance(0.25)).toBe(20);
     expect(() => clock.setSpeed(3)).toThrow(RangeError);
     expect(() => clock.advance(-1)).toThrow(RangeError);
+    expect(() => new SimulationClock(30, -1)).toThrow(RangeError);
+  });
+
+  it("can resume the display clock at a restored world tick", () => {
+    const clock = new SimulationClock(30, 750);
+    expect(clock.snapshot).toMatchObject({
+      tick: 750,
+      elapsedSimulationSeconds: 25,
+      running: false,
+    });
+    expect(clock.step()).toBe(1);
+    expect(clock.snapshot.tick).toBe(751);
   });
 
   it("reset restores the initial stopped state", () => {

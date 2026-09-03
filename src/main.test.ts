@@ -1,9 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createDefaultSimulationConfig } from "./simulation/configuration";
-import { SimulationWorld } from "./simulation/world";
+import {
+  createDefaultSimulationConfig,
+  serializeSimulationConfig,
+} from "./simulation/configuration";
+import {
+  deserializeWorldSnapshot,
+  serializeWorldSnapshot,
+  SimulationWorld,
+} from "./simulation/world";
 
 const renderWorld = vi.hoisted(() => vi.fn());
 vi.mock("./rendering/world-renderer", () => ({ renderWorld }));
+const fileTransfer = vi.hoisted(() => ({
+  downloadJsonFile: vi.fn(),
+  readExperimentFile: vi.fn(),
+}));
+vi.mock("./experiment/file-transfer", () => fileTransfer);
 
 class FakeElement {
   public textContent = "";
@@ -11,6 +23,7 @@ class FakeElement {
   public value = "";
   public disabled = false;
   public hidden = false;
+  public files: FileList | null = null;
   readonly attributes = new Map<string, string>();
   readonly #listeners = new Map<string, EventListener>();
 
@@ -89,6 +102,11 @@ describe("simulation controls", () => {
   beforeEach(async () => {
     vi.resetModules();
     renderWorld.mockReset();
+    fileTransfer.downloadJsonFile.mockReset();
+    fileTransfer.readExperimentFile.mockReset();
+    fileTransfer.readExperimentFile.mockImplementation(
+      (file: { text(): Promise<string> }) => file.text(),
+    );
     fakeDocument = new FakeDocument();
     vi.stubGlobal("document", fakeDocument);
     frames = [];
@@ -244,5 +262,98 @@ describe("simulation controls", () => {
     );
     expect(find("events-chart-label").textContent).toContain("solid line");
     expect(find("events-chart-label").textContent).toContain("dashed line");
+  });
+
+  it("downloads strict configuration and complete world files", () => {
+    find("step").click();
+    find("export-config").click();
+    expect(fileTransfer.downloadJsonFile).toHaveBeenCalledWith(
+      expect.stringContaining('"seed":42'),
+      "evolution-config-seed-42.json",
+    );
+    expect(find("message").textContent).toBe(
+      "Saved configuration for seed 42.",
+    );
+
+    find("export-snapshot").click();
+    const [contents, filename] = fileTransfer.downloadJsonFile.mock
+      .calls[1] as [string, string];
+    expect(filename).toBe("evolution-world-seed-42-tick-1.json");
+    const downloaded = deserializeWorldSnapshot(contents);
+    expect(downloaded.tick).toBe(1);
+    expect(typeof downloaded.randomState).toBe("number");
+    expect(find("message").textContent).toBe("Saved world at tick 1.");
+  });
+
+  it("loads a configuration into a new paused world", async () => {
+    const imported = createDefaultSimulationConfig();
+    imported.seed = 8675309;
+    const input = find("import-config-file");
+    input.files = [
+      {
+        text: () => Promise.resolve(serializeSimulationConfig(imported)),
+      },
+    ] as unknown as FileList;
+
+    input.dispatchEvent(new Event("change"));
+    await vi.waitFor(() =>
+      expect(find("message").textContent).toContain("Loaded configuration"),
+    );
+
+    expect(find("tick").value).toBe("0");
+    expect(find("seed").value).toBe("8675309");
+    expect(find("seed-display").textContent).toBe("8,675,309");
+    expect(find("state").textContent).toBe("Paused");
+    expect(input.value).toBe("");
+  });
+
+  it("restores a complete world and continues from its exact tick", async () => {
+    const source = new SimulationWorld(createDefaultSimulationConfig());
+    source.advanceTicks(75);
+    const input = find("import-snapshot-file");
+    input.files = [
+      {
+        text: () => Promise.resolve(serializeWorldSnapshot(source.snapshot)),
+      },
+    ] as unknown as FileList;
+
+    input.dispatchEvent(new Event("change"));
+    await vi.waitFor(() =>
+      expect(find("message").textContent).toContain("tick 75"),
+    );
+    expect(find("tick").value).toBe("75");
+    expect(find("population").textContent).toBe(
+      source.summary.population.toLocaleString(),
+    );
+    expect(renderWorld).toHaveBeenLastCalledWith(
+      expect.anything(),
+      source.snapshot,
+      undefined,
+    );
+
+    source.step();
+    find("step").click();
+    expect(find("tick").value).toBe("76");
+    expect(renderWorld).toHaveBeenLastCalledWith(
+      expect.anything(),
+      source.snapshot,
+      undefined,
+    );
+  });
+
+  it("reports invalid imports without replacing the current world", async () => {
+    find("step").click();
+    const input = find("import-snapshot-file");
+    input.files = [
+      {
+        text: () => Promise.resolve('{"schemaVersion":99}'),
+      },
+    ] as unknown as FileList;
+
+    input.dispatchEvent(new Event("change"));
+    await vi.waitFor(() =>
+      expect(find("message").textContent).toContain("Could not load world"),
+    );
+    expect(find("tick").value).toBe("1");
   });
 });

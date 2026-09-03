@@ -8,10 +8,23 @@ import {
 import { histogramBars, lineChartPoints } from "./rendering/chart-data";
 import { renderWorld } from "./rendering/world-renderer";
 import { organismAtCell, worldCellAtPoint } from "./rendering/world-selection";
+import {
+  downloadJsonFile,
+  readExperimentFile,
+} from "./experiment/file-transfer";
 import { SimulationClock } from "./simulation/clock";
-import { createDefaultSimulationConfig } from "./simulation/configuration";
+import {
+  createDefaultSimulationConfig,
+  deserializeSimulationConfig,
+  serializeSimulationConfig,
+  type SimulationConfig,
+} from "./simulation/configuration";
 import { GENOME_TRAIT_RANGES, type Organism } from "./simulation/organism";
-import { SimulationWorld } from "./simulation/world";
+import {
+  deserializeWorldSnapshot,
+  serializeWorldSnapshot,
+  SimulationWorld,
+} from "./simulation/world";
 
 const app = document.querySelector<HTMLElement>("#app");
 if (app === null) throw new Error("Application root was not found.");
@@ -56,11 +69,17 @@ app.innerHTML = `
         <button id="play" type="button">Play</button><button id="step" class="secondary" type="button">Step</button>
         <label>Speed<select id="speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
         <label>Seed<input id="seed" type="number" min="0" max="4294967295" step="1" value="42"></label><button id="reset" class="secondary" type="button">Reset</button>
-      </div><p id="message" class="message" role="status"></p>
-    </section><footer><span>Milestone 2</span><span>Watchable simulation</span></footer>
+      </div>
+      <div class="experiment-files" aria-labelledby="experiment-files-title">
+        <div><h3 id="experiment-files-title">Experiment files</h3><p>Save a complete living world or transfer its strict, versioned starting configuration. Files stay on this device unless you share them.</p></div>
+        <div class="file-actions"><button id="export-snapshot" class="secondary" type="button">Save world</button><button id="import-snapshot" class="secondary" type="button">Load world</button><button id="export-config" class="secondary" type="button">Save config</button><button id="import-config" class="secondary" type="button">Load config</button></div>
+        <input id="import-snapshot-file" class="visually-hidden" type="file" accept="application/json,.json"><input id="import-config-file" class="visually-hidden" type="file" accept="application/json,.json">
+      </div>
+      <p id="message" class="message" role="status"></p>
+    </section><footer><span>Milestone 3</span><span>Experiment tools</span></footer>
   </main>`;
 
-const config = createDefaultSimulationConfig();
+let config = createDefaultSimulationConfig();
 let clock = new SimulationClock(config.world.ticksPerSecond);
 let world = new SimulationWorld(config);
 let history = new EcosystemHistory(
@@ -84,6 +103,59 @@ let renderedWorldTick = -1;
 let renderedSelectionId: number | null = null;
 let selectedOrganismId: number | null = null;
 let renderedHistoryTick = -1;
+
+const replaceExperiment = (
+  nextConfig: SimulationConfig,
+  nextWorld: SimulationWorld,
+  initialTick: number,
+): void => {
+  config = nextConfig;
+  world = nextWorld;
+  clock = new SimulationClock(config.world.ticksPerSecond, initialTick);
+  history = new EcosystemHistory(
+    config.history.sampleEveryTicks,
+    config.history.maximumSamples,
+  );
+  history.observe(world.snapshot);
+  selectedOrganismId = null;
+  speed.value = "1";
+  seed.value = String(config.seed);
+  element("seed-display").textContent = config.seed.toLocaleString();
+  previousFrame = undefined;
+  renderedWorldTick = -1;
+  renderedSelectionId = null;
+  renderedHistoryTick = -1;
+};
+
+const importFile = async (
+  input: HTMLInputElement,
+  kind: "configuration" | "world",
+): Promise<void> => {
+  const file = input.files?.[0];
+  if (file === undefined) return;
+  try {
+    const contents = await readExperimentFile(file);
+    if (kind === "configuration") {
+      const importedConfig = deserializeSimulationConfig(contents);
+      replaceExperiment(importedConfig, new SimulationWorld(importedConfig), 0);
+      message.textContent = `Loaded configuration with seed ${importedConfig.seed.toLocaleString()} and started a new world.`;
+    } else {
+      const snapshot = deserializeWorldSnapshot(contents);
+      replaceExperiment(
+        snapshot.config,
+        SimulationWorld.fromSnapshot(snapshot),
+        snapshot.tick,
+      );
+      message.textContent = `Loaded world at tick ${snapshot.tick.toLocaleString()}; chart history starts from this point.`;
+    }
+    render();
+  } catch (error: unknown) {
+    const reason = error instanceof Error ? error.message : "Unknown error";
+    message.textContent = `Could not load ${kind}: ${reason}`;
+  } finally {
+    input.value = "";
+  }
+};
 
 const setPoints = (id: string, points: string): void =>
   element(id).setAttribute("points", points);
@@ -326,22 +398,46 @@ speed.addEventListener("change", () => {
     return;
   }
   config.seed = value;
-  clock = new SimulationClock(config.world.ticksPerSecond);
-  world = new SimulationWorld(config);
-  history = new EcosystemHistory(
-    config.history.sampleEveryTicks,
-    config.history.maximumSamples,
-  );
-  history.observe(world.snapshot);
-  selectedOrganismId = null;
-  speed.value = "1";
-  element("seed-display").textContent = value.toLocaleString();
+  replaceExperiment(config, new SimulationWorld(config), 0);
   message.textContent = `Reset with seed ${value.toLocaleString()}.`;
-  previousFrame = undefined;
-  renderedWorldTick = -1;
-  renderedSelectionId = null;
-  renderedHistoryTick = -1;
   render();
+});
+
+const snapshotInput = element("import-snapshot-file") as HTMLInputElement;
+const configInput = element("import-config-file") as HTMLInputElement;
+(element("export-snapshot") as HTMLButtonElement).addEventListener(
+  "click",
+  () => {
+    const snapshot = world.snapshot;
+    downloadJsonFile(
+      serializeWorldSnapshot(snapshot),
+      `evolution-world-seed-${String(snapshot.config.seed)}-tick-${String(snapshot.tick)}.json`,
+    );
+    message.textContent = `Saved world at tick ${snapshot.tick.toLocaleString()}.`;
+  },
+);
+(element("export-config") as HTMLButtonElement).addEventListener(
+  "click",
+  () => {
+    downloadJsonFile(
+      serializeSimulationConfig(config),
+      `evolution-config-seed-${String(config.seed)}.json`,
+    );
+    message.textContent = `Saved configuration for seed ${config.seed.toLocaleString()}.`;
+  },
+);
+(element("import-snapshot") as HTMLButtonElement).addEventListener(
+  "click",
+  () => snapshotInput.click(),
+);
+(element("import-config") as HTMLButtonElement).addEventListener("click", () =>
+  configInput.click(),
+);
+snapshotInput.addEventListener("change", () => {
+  void importFile(snapshotInput, "world");
+});
+configInput.addEventListener("change", () => {
+  void importFile(configInput, "configuration");
 });
 
 const frame = (timestamp: number): void => {

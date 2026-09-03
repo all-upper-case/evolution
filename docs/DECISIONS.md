@@ -129,3 +129,11 @@ The habitat remains a compact canvas but exposes a complete keyboard path: arrow
 Interactive experiments should use no more than a 256×256 world and 1,000 living organisms; the 128×128, 250-founder default remains preferred for phones and unknown hardware. Larger schema limits remain safety bounds, while 5,000 organisms is a benchmark stress case rather than a supported responsiveness target.
 
 **Why:** The production Chromium benchmark kept the recommended ceiling's 95th-percentile tick-plus-render work at 16.6 ms, below half of a 30 FPS frame budget. Preserving the remaining margin accounts for slower devices, browser variation, longer sessions, and future interface work without lowering the model's explicit hard safety caps.
+
+## 2026-09-03 — Local JSON experiment files
+
+**Status:** Accepted
+
+The browser exports canonical JSON configuration files and complete world snapshots through local downloads. Imports are limited to 16 MiB, parsed through the existing strict versioned boundaries, and must validate completely before replacing the current experiment. Loading a configuration begins a new paused world; loading a snapshot restores its exact tick and future state while beginning a fresh observational chart history.
+
+**Why:** Plain local files provide portable, inspectable, backend-free experiments without adding a second serialization format. Atomic validation prevents a malformed file from partly changing the running world, and excluding derived chart history keeps snapshots focused on state that affects deterministic continuation.

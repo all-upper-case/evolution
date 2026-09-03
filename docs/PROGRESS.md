@@ -376,3 +376,26 @@ The remote browser did not expose host hardware details, and its heap readings a
 ### Recommended next action
 
 Begin Milestone 3 with browser-facing export and strict import of configuration, seed, and complete simulation snapshots, reusing the existing versioned serialization boundaries.
+
+## 2026-09-03 — Portable experiment files (development)
+
+### Changed
+
+- Added local JSON downloads for the current strict configuration and complete evolving world snapshot, with descriptive seed/tick filenames.
+- Added browser file pickers that validate configurations and snapshots completely before atomically replacing the current experiment.
+- Restored snapshot clock position so a loaded world displays and continues from its exact saved tick; configuration imports intentionally begin a new paused world.
+- Added a 16 MiB import ceiling, clear success/error status, fresh post-load chart history, responsive file controls, and explicit local-data guidance.
+- Added bounded file-reading, restored-clock, export, configuration-import, snapshot-import, deterministic continuation, and invalid-file regression coverage.
+- Completed Milestone 3's export/import roadmap item.
+
+### Validation
+
+Focused strict type checking and all 17 experiment-file, clock, and browser-interface tests pass locally. The complete formatting, linting, test, build, and GitHub CI gates must also pass before merge.
+
+### Risk and follow-up
+
+Snapshots intentionally omit derived chart history because it does not affect future simulation behavior; charts restart from the loaded state. Schema migrations remain deferred until a second format version exists. Very large but valid snapshots are bounded at import time and may still take noticeable time to validate on slow phones.
+
+### Recommended next action
+
+Add safe browser controls for environment, population, food, organism, and mutation settings, using the strict configuration limits and conservative performance guidance.
