@@ -506,6 +506,46 @@ button:disabled {
   font-size: 0.85rem;
 }
 
+.experiment-files {
+  display: grid;
+  padding-top: 1.25rem;
+  border-top: 1px solid #294838;
+  gap: 1rem;
+}
+
+.experiment-files h3 {
+  margin: 0;
+  color: #d9eee0;
+  font-size: 1rem;
+}
+
+.experiment-files p {
+  font-size: 0.82rem;
+}
+
+.file-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.file-actions button {
+  padding: 0.65rem 0.9rem;
+  font-size: 0.82rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .status {
   margin: 0 0 1rem;
 }
@@ -691,6 +731,14 @@ footer {
   .controls {
     align-items: stretch;
     flex-direction: column;
+  }
+  .file-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .file-actions button {
+    width: 100%;
+    min-height: 3rem;
   }
   .controls input,
   .controls select,
