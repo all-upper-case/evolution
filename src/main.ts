@@ -16,6 +16,7 @@ import { SimulationClock } from "./simulation/clock";
 import {
   createDefaultSimulationConfig,
   deserializeSimulationConfig,
+  parseSimulationConfig,
   serializeSimulationConfig,
   type SimulationConfig,
 } from "./simulation/configuration";
@@ -70,6 +71,17 @@ app.innerHTML = `
         <label>Speed<select id="speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
         <label>Seed<input id="seed" type="number" min="0" max="4294967295" step="1" value="42"></label><button id="reset" class="secondary" type="button">Reset</button>
       </div>
+      <details class="experiment-settings">
+        <summary><span>Experiment settings</span><small>Changing these starts a new world</small></summary>
+        <div class="settings-groups">
+          <fieldset><legend>Environment</legend><label>Width <input id="setting-width" type="number" min="16" max="256" step="1"></label><label>Height <input id="setting-height" type="number" min="16" max="256" step="1"></label></fieldset>
+          <fieldset><legend>Population</legend><label>Starting organisms <input id="setting-initial-population" type="number" min="1" max="1000" step="1"></label><label>Population ceiling <input id="setting-maximum-population" type="number" min="1" max="1000" step="1"></label></fieldset>
+          <fieldset><legend>Food</legend><label>Starting units <input id="setting-initial-food" type="number" min="0" max="1000000" step="1"></label><label>Maximum units <input id="setting-maximum-food" type="number" min="1" max="1000000" step="1"></label><label>Regrowth per tick <input id="setting-food-regrowth" type="number" min="0" max="10000" step="0.1"></label><label>Energy per unit <input id="setting-food-energy" type="number" min="0.001" max="10000" step="0.1"></label></fieldset>
+          <fieldset><legend>Life cycle</legend><label>Metabolism per tick <input id="setting-metabolism" type="number" min="0.000001" max="1000" step="0.01"></label><label>Reproduction energy <input id="setting-reproduction" type="number" min="0.001" max="10000" step="1"></label><label>Offspring energy <input id="setting-offspring" type="number" min="0.001" max="10000" step="1"></label></fieldset>
+          <fieldset><legend>Evolution</legend><label>Mutation chance <span><input id="setting-mutation-probability" type="number" min="0" max="1" step="0.01"><small>0–1</small></span></label><label>Mutation size <span><input id="setting-mutation-magnitude" type="number" min="0" max="1" step="0.01"><small>0–1</small></span></label></fieldset>
+        </div>
+        <div class="settings-action"><p>For responsive experiments, this editor limits worlds to 256×256 cells and populations to 1,000. Imported files may use the larger safety bounds.</p><button id="apply-settings" type="button">Apply and restart</button></div>
+      </details>
       <div class="experiment-files" aria-labelledby="experiment-files-title">
         <div><h3 id="experiment-files-title">Experiment files</h3><p>Save a complete living world or transfer its strict, versioned starting configuration. Files stay on this device unless you share them.</p></div>
         <div class="file-actions"><button id="export-snapshot" class="secondary" type="button">Save world</button><button id="import-snapshot" class="secondary" type="button">Load world</button><button id="export-config" class="secondary" type="button">Save config</button><button id="import-config" class="secondary" type="button">Load config</button></div>
@@ -104,6 +116,31 @@ let renderedSelectionId: number | null = null;
 let selectedOrganismId: number | null = null;
 let renderedHistoryTick = -1;
 
+const setting = (id: string): HTMLInputElement =>
+  element(`setting-${id}`) as HTMLInputElement;
+
+const syncSettings = (): void => {
+  setting("width").value = String(config.world.width);
+  setting("height").value = String(config.world.height);
+  setting("initial-population").value = String(config.population.initialCount);
+  setting("maximum-population").value = String(config.population.maximumCount);
+  setting("initial-food").value = String(config.food.initialUnits);
+  setting("maximum-food").value = String(config.food.maximumUnits);
+  setting("food-regrowth").value = String(config.food.regrowthUnitsPerTick);
+  setting("food-energy").value = String(config.food.energyPerUnit);
+  setting("metabolism").value = String(config.organisms.metabolismPerTick);
+  setting("reproduction").value = String(
+    config.organisms.reproductionThreshold,
+  );
+  setting("offspring").value = String(config.organisms.offspringEnergy);
+  setting("mutation-probability").value = String(
+    config.evolution.mutationProbability,
+  );
+  setting("mutation-magnitude").value = String(
+    config.evolution.mutationMagnitude,
+  );
+};
+
 const replaceExperiment = (
   nextConfig: SimulationConfig,
   nextWorld: SimulationWorld,
@@ -121,6 +158,7 @@ const replaceExperiment = (
   speed.value = "1";
   seed.value = String(config.seed);
   element("seed-display").textContent = config.seed.toLocaleString();
+  syncSettings();
   previousFrame = undefined;
   renderedWorldTick = -1;
   renderedSelectionId = null;
@@ -403,6 +441,57 @@ speed.addEventListener("change", () => {
   render();
 });
 
+(element("apply-settings") as HTMLButtonElement).addEventListener(
+  "click",
+  () => {
+    try {
+      const width = Number(setting("width").value);
+      const height = Number(setting("height").value);
+      const initialCount = Number(setting("initial-population").value);
+      const maximumCount = Number(setting("maximum-population").value);
+      if (
+        width > 256 ||
+        height > 256 ||
+        initialCount > 1_000 ||
+        maximumCount > 1_000
+      ) {
+        throw new Error(
+          "The settings editor supports at most 256×256 cells and 1,000 organisms.",
+        );
+      }
+      const nextConfig = parseSimulationConfig({
+        ...config,
+        world: { ...config.world, width, height },
+        population: { ...config.population, initialCount, maximumCount },
+        food: {
+          ...config.food,
+          initialUnits: Number(setting("initial-food").value),
+          maximumUnits: Number(setting("maximum-food").value),
+          regrowthUnitsPerTick: Number(setting("food-regrowth").value),
+          energyPerUnit: Number(setting("food-energy").value),
+        },
+        organisms: {
+          ...config.organisms,
+          metabolismPerTick: Number(setting("metabolism").value),
+          reproductionThreshold: Number(setting("reproduction").value),
+          offspringEnergy: Number(setting("offspring").value),
+        },
+        evolution: {
+          mutationProbability: Number(setting("mutation-probability").value),
+          mutationMagnitude: Number(setting("mutation-magnitude").value),
+        },
+      });
+      replaceExperiment(nextConfig, new SimulationWorld(nextConfig), 0);
+      message.textContent =
+        "Applied experiment settings and started a new world.";
+      render();
+    } catch (error: unknown) {
+      const reason = error instanceof Error ? error.message : "Unknown error";
+      message.textContent = `Could not apply settings: ${reason}`;
+    }
+  },
+);
+
 const snapshotInput = element("import-snapshot-file") as HTMLInputElement;
 const configInput = element("import-config-file") as HTMLInputElement;
 (element("export-snapshot") as HTMLButtonElement).addEventListener(
@@ -449,5 +538,6 @@ const frame = (timestamp: number): void => {
   render();
   requestAnimationFrame(frame);
 };
+syncSettings();
 render();
 requestAnimationFrame(frame);

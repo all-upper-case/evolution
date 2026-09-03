@@ -137,3 +137,11 @@ Interactive experiments should use no more than a 256×256 world and 1,000 livin
 The browser exports canonical JSON configuration files and complete world snapshots through local downloads. Imports are limited to 16 MiB, parsed through the existing strict versioned boundaries, and must validate completely before replacing the current experiment. Loading a configuration begins a new paused world; loading a snapshot restores its exact tick and future state while beginning a fresh observational chart history.
 
 **Why:** Plain local files provide portable, inspectable, backend-free experiments without adding a second serialization format. Atomic validation prevents a malformed file from partly changing the running world, and excluding derived chart history keeps snapshots focused on state that affects deterministic continuation.
+
+## 2026-09-03 — Conservative interactive settings editor
+
+**Status:** Accepted
+
+The browser settings editor exposes world dimensions, founder and maximum populations, food supply and renewal, key organism energy costs, and mutation probability and magnitude. Applying settings validates a complete configuration and begins a new paused world. The editor caps dimensions at 256×256 cells and both population values at 1,000 organisms, while strict file imports retain the larger schema safety bounds.
+
+**Why:** Restart semantics make controlled experiments explicit and prevent settings from partly altering an evolving world. The measured interactive ceiling is an appropriate limit for ordinary browser controls, while preserving broader import support keeps stress tests and advanced hand-authored experiments possible.

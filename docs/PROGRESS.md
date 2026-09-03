@@ -399,3 +399,26 @@ Snapshots intentionally omit derived chart history because it does not affect fu
 ### Recommended next action
 
 Add safe browser controls for environment, population, food, organism, and mutation settings, using the strict configuration limits and conservative performance guidance.
+
+## 2026-09-03 — Controlled experiment settings (development)
+
+### Changed
+
+- Added a responsive settings editor for world dimensions, starting and maximum population, food supply and regrowth, food energy, metabolism, reproduction and offspring energy, and mutation chance and size.
+- Made settings changes atomic: a complete strict configuration is validated before a clean paused world replaces the current experiment.
+- Limited ordinary browser controls to the measured 256×256-cell and 1,000-organism interactive ceiling while preserving the larger strict import bounds for advanced experiments.
+- Kept settings synchronized after configuration and world imports, and added clear restart and safety guidance.
+- Added browser-interface coverage for successful application, import synchronization, conservative limits, relational validation, and preservation of the current world after invalid input.
+- Completed Milestone 3's environment and mutation controls roadmap item.
+
+### Validation
+
+Formatting, linting, strict type checking, all 81 tests, and the production build pass locally. GitHub Actions CI must also pass before merge.
+
+### Risk and follow-up
+
+The controls intentionally expose the variables most useful for early ecological experiments rather than every schema field. Advanced configurations remain editable through exported JSON. The next increment should establish named, understandable bundles of these settings without duplicating validation logic.
+
+### Recommended next action
+
+Add named experiment presets that populate the existing editor and begin reproducible paused worlds, with clear descriptions of the ecological pressure each preset creates.
