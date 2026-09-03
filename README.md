@@ -43,7 +43,7 @@ Individual commands are also available for tests, type checking, linting, format
 
 ## Project status
 
-The project has a responsive browser interface that visualizes the food field and living organisms while a deterministic ecological core advances beneath it. Organisms seek food, spend energy, reproduce with bounded mutation, and die. A user can select a living organism by pointer or keyboard to inspect its identity, ancestry, age, energy, position, and inherited traits. Accessible bounded charts show population, births, deaths, food resources, and the current distribution of every inherited trait. Starting configurations and complete evolving worlds can be downloaded as local JSON files, strictly validated, reloaded, and continued without changing future outcomes. See:
+The project has a responsive browser interface that visualizes the food field and living organisms while a deterministic ecological core advances beneath it. Organisms seek food, spend energy, reproduce with bounded mutation, and die. A user can select a living organism by pointer or keyboard to inspect its identity, ancestry, age, energy, position, and inherited traits. Accessible bounded charts show population, births, deaths, food resources, and the current distribution of every inherited trait. Safe experiment controls expose world size, population, food, life-cycle, and mutation settings. Starting configurations and complete evolving worlds can be downloaded as local JSON files, strictly validated, reloaded, and continued without changing future outcomes. See:
 
 - [Roadmap](docs/ROADMAP.md)
 - [Autonomous development policy](docs/AUTONOMY.md)
