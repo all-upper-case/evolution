@@ -422,3 +422,22 @@ The controls intentionally expose the variables most useful for early ecological
 ### Recommended next action
 
 Add named experiment presets that populate the existing editor and begin reproducible paused worlds, with clear descriptions of the ecological pressure each preset creates.
+
+## 2026-09-03 — Default population ceiling alignment (recovery)
+
+### Changed
+
+- Lowered the default world's population ceiling from the 5,000-organism stress workload to the documented 1,000-organism interactive ceiling.
+- Added a regression assertion that the settings editor opens with a valid default population ceiling.
+
+### Validation
+
+Formatting, linting, strict type checking, all 81 tests, and the production build pass locally. GitHub Actions CI must also pass before merge.
+
+### Risk and follow-up
+
+This changes only the default configuration; the strict schema still permits bounded larger populations for imported stress experiments. Existing saved configurations and world snapshots remain compatible and unchanged.
+
+### Recommended next action
+
+Add named experiment presets that populate the existing editor and begin reproducible paused worlds, with clear descriptions of the ecological pressure each preset creates.

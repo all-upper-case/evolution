@@ -312,6 +312,7 @@ describe("simulation controls", () => {
   });
 
   it("applies bounded experiment settings to a fresh paused world", () => {
+    expect(find("setting-maximum-population").value).toBe("1000");
     find("step").click();
     find("setting-width").value = "64";
     find("setting-height").value = "96";

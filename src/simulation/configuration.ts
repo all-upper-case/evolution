@@ -97,7 +97,7 @@ const DEFAULT_CONFIG: SimulationConfig = {
   },
   population: {
     initialCount: 250,
-    maximumCount: 5_000,
+    maximumCount: 1_000,
   },
   food: {
     initialUnits: 12_000,
