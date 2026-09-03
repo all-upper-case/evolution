@@ -15,11 +15,15 @@ export class SimulationClock {
   #running = false;
   #speed = 1;
 
-  public constructor(ticksPerSecond: number) {
+  public constructor(ticksPerSecond: number, initialTick = 0) {
     if (!Number.isSafeInteger(ticksPerSecond) || ticksPerSecond <= 0) {
       throw new RangeError("Ticks per second must be a positive safe integer.");
     }
+    if (!Number.isSafeInteger(initialTick) || initialTick < 0) {
+      throw new RangeError("Initial tick must be a non-negative safe integer.");
+    }
     this.#ticksPerSecond = ticksPerSecond;
+    this.#tick = initialTick;
   }
 
   public get snapshot(): ClockSnapshot {
