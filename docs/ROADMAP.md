@@ -36,7 +36,7 @@ Exit condition: a user can run, understand, and inspect an evolving ecosystem wi
 
 ## Milestone 3 — Experiment tools
 
-- [ ] Export/import configuration, seed, and simulation snapshot.
+- [x] Export/import configuration, seed, and simulation snapshot.
 - [ ] Add environment and mutation controls with safe ranges.
 - [ ] Add named experiment presets.
 - [ ] Compare repeated runs and summarize outcomes.
