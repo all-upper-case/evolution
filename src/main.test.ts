@@ -304,7 +304,61 @@ describe("simulation controls", () => {
     expect(find("seed").value).toBe("8675309");
     expect(find("seed-display").textContent).toBe("8,675,309");
     expect(find("state").textContent).toBe("Paused");
+    expect(find("setting-width").value).toBe(String(imported.world.width));
+    expect(find("setting-mutation-magnitude").value).toBe(
+      String(imported.evolution.mutationMagnitude),
+    );
     expect(input.value).toBe("");
+  });
+
+  it("applies bounded experiment settings to a fresh paused world", () => {
+    find("step").click();
+    find("setting-width").value = "64";
+    find("setting-height").value = "96";
+    find("setting-initial-population").value = "120";
+    find("setting-maximum-population").value = "600";
+    find("setting-initial-food").value = "5000";
+    find("setting-maximum-food").value = "20000";
+    find("setting-food-regrowth").value = "12.5";
+    find("setting-food-energy").value = "6";
+    find("setting-metabolism").value = "0.2";
+    find("setting-reproduction").value = "70";
+    find("setting-offspring").value = "25";
+    find("setting-mutation-probability").value = "0.25";
+    find("setting-mutation-magnitude").value = "0.3";
+
+    find("apply-settings").click();
+
+    expect(find("tick").value).toBe("0");
+    expect(find("population").textContent).toBe("120");
+    expect(find("state").textContent).toBe("Paused");
+    expect(find("message").textContent).toContain(
+      "Applied experiment settings",
+    );
+    find("export-config").click();
+    const [contents] = fileTransfer.downloadJsonFile.mock.calls[0] as [string];
+    expect(JSON.parse(contents)).toMatchObject({
+      world: { width: 64, height: 96 },
+      population: { initialCount: 120, maximumCount: 600 },
+      food: { regrowthUnitsPerTick: 12.5, energyPerUnit: 6 },
+      organisms: { metabolismPerTick: 0.2 },
+      evolution: { mutationProbability: 0.25, mutationMagnitude: 0.3 },
+    });
+  });
+
+  it("rejects unsafe or inconsistent settings without replacing the world", () => {
+    find("step").click();
+    find("setting-width").value = "257";
+    find("apply-settings").click();
+    expect(find("message").textContent).toContain("at most 256×256");
+    expect(find("tick").value).toBe("1");
+
+    find("setting-width").value = "128";
+    find("setting-initial-population").value = "900";
+    find("setting-maximum-population").value = "200";
+    find("apply-settings").click();
+    expect(find("message").textContent).toContain("must not exceed");
+    expect(find("tick").value).toBe("1");
   });
 
   it("restores a complete world and continues from its exact tick", async () => {
