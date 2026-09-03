@@ -145,3 +145,11 @@ The browser exports canonical JSON configuration files and complete world snapsh
 The browser settings editor exposes world dimensions, founder and maximum populations, food supply and renewal, key organism energy costs, and mutation probability and magnitude. Applying settings validates a complete configuration and begins a new paused world. The editor caps dimensions at 256×256 cells and both population values at 1,000 organisms, while strict file imports retain the larger schema safety bounds.
 
 **Why:** Restart semantics make controlled experiments explicit and prevent settings from partly altering an evolving world. The measured interactive ceiling is an appropriate limit for ordinary browser controls, while preserving broader import support keeps stress tests and advanced hand-authored experiments possible.
+
+## 2026-09-03 — URL-driven development experiment lab
+
+**Status:** Accepted
+
+A separate `lab.html` build entry accepts strict numeric configuration overrides, a bounded tick count, and explicit checkpoints through URL parameters. It runs synchronously without animation and publishes a compact JSON report plus a machine-readable completion state in the DOM. It shares the simulation configuration parser and conservative interactive limits; larger performance workloads remain in the benchmark.
+
+**Why:** A URL is reproducible, easy for browser automation to construct, and eliminates fragile sequences of expanding panels and editing individual inputs. Keeping this diagnostic separate avoids exposing test-oriented complexity in the main experience, while DOM JSON permits one-read verification without privileged page scripting.
