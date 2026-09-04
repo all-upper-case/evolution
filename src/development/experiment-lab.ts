@@ -150,6 +150,8 @@ interface TraitStats {
 export interface LabCheckpoint {
   tick: number;
   population: number;
+  cumulativeBirths: number;
+  cumulativeDeaths: number;
   totalFood: number;
   occupiedFoodCells: number;
   lineages: number;
@@ -170,7 +172,11 @@ const stats = (values: readonly number[]): TraitStats =>
         maximum: round(Math.max(...values)),
       };
 
-const summarize = (snapshot: WorldSnapshot): LabCheckpoint => {
+const summarize = (
+  snapshot: WorldSnapshot,
+  cumulativeBirths: number,
+  cumulativeDeaths: number,
+): LabCheckpoint => {
   const organisms = snapshot.organisms;
   const traits = Object.fromEntries(
     Object.keys(GENOME_TRAIT_RANGES).map((trait) => [
@@ -183,6 +189,8 @@ const summarize = (snapshot: WorldSnapshot): LabCheckpoint => {
   return {
     tick: snapshot.tick,
     population: snapshot.population,
+    cumulativeBirths,
+    cumulativeDeaths,
     totalFood: round(snapshot.totalFood),
     occupiedFoodCells: snapshot.occupiedFoodCells,
     lineages: new Set(organisms.map((organism) => organism.lineageId)).size,
@@ -216,15 +224,23 @@ export const runLabExperiment = (request: LabRequest): LabReport => {
   const world = new SimulationWorld(request.config);
   const checkpoints: LabCheckpoint[] = [];
   let currentTick = 0;
+  let cumulativeBirths = 0;
+  let cumulativeDeaths = 0;
   for (const checkpoint of request.checkpoints) {
-    world.advanceTicks(checkpoint - currentTick);
-    checkpoints.push(summarize(world.snapshot));
+    const events = world.advanceTicks(checkpoint - currentTick);
+    cumulativeBirths += events.births;
+    cumulativeDeaths += events.deaths;
+    checkpoints.push(
+      summarize(world.snapshot, cumulativeBirths, cumulativeDeaths),
+    );
     currentTick = checkpoint;
   }
-  world.advanceTicks(request.ticks - currentTick);
+  const finalEvents = world.advanceTicks(request.ticks - currentTick);
+  cumulativeBirths += finalEvents.births;
+  cumulativeDeaths += finalEvents.deaths;
   const final = world.snapshot;
   if (request.checkpoints.at(-1) !== request.ticks)
-    checkpoints.push(summarize(final));
+    checkpoints.push(summarize(final, cumulativeBirths, cumulativeDeaths));
   return {
     schemaVersion: 1,
     request,
