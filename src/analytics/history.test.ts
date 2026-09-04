@@ -10,12 +10,14 @@ describe("ecosystem history", () => {
     const history = new EcosystemHistory(2, 2);
     expect(history.observe(world.snapshot)).toBe(true);
     expect(history.observe(world.snapshot)).toBe(false);
-    world.step();
-    expect(history.observe(world.snapshot)).toBe(false);
-    world.step();
-    expect(history.observe(world.snapshot)).toBe(true);
-    world.advanceTicks(2);
-    expect(history.observe(world.snapshot)).toBe(true);
+    let events = world.step();
+    expect(history.observe(world.snapshot, events)).toBe(false);
+    events = world.step();
+    expect(history.observe(world.snapshot, events)).toBe(true);
+    events = world.step();
+    expect(history.observe(world.snapshot, events)).toBe(false);
+    events = world.step();
+    expect(history.observe(world.snapshot, events)).toBe(true);
     expect(history.samples.map((sample) => sample.tick)).toEqual([2, 4]);
   });
 
@@ -31,14 +33,70 @@ describe("ecosystem history", () => {
       id: initial.nextOrganismId,
       parentId: survivor.id,
     };
-    history.observe({
-      ...initial,
-      tick: 1,
-      population: initial.population,
-      organisms: Object.freeze([...initial.organisms.slice(1), replacement]),
-      nextOrganismId: initial.nextOrganismId + 1,
-    });
+    history.observe(
+      {
+        ...initial,
+        tick: 1,
+        population: initial.population,
+        organisms: Object.freeze([...initial.organisms.slice(1), replacement]),
+        nextOrganismId: initial.nextOrganismId + 1,
+      },
+      { tick: 1, births: 1, deaths: 1 },
+    );
     expect(history.samples[1]).toMatchObject({ births: 1, deaths: 1 });
+  });
+
+  it("retains short-lived organisms in exact interval totals", () => {
+    const world = new SimulationWorld(createDefaultSimulationConfig());
+    const history = new EcosystemHistory(2, 10);
+    const initial = world.snapshot;
+    const founder = initial.organisms[0];
+    if (founder === undefined) throw new Error("Expected a founder.");
+    const transient = {
+      ...founder,
+      id: initial.nextOrganismId,
+      parentId: founder.id,
+    };
+    history.observe(initial);
+    history.observe(
+      {
+        ...initial,
+        tick: 1,
+        population: initial.population + 1,
+        organisms: Object.freeze([...initial.organisms, transient]),
+        nextOrganismId: initial.nextOrganismId + 1,
+      },
+      { tick: 1, births: 1, deaths: 0 },
+    );
+    history.observe(
+      { ...initial, tick: 2, nextOrganismId: initial.nextOrganismId + 1 },
+      { tick: 2, births: 0, deaths: 1 },
+    );
+
+    expect(history.samples[1]).toMatchObject({ births: 1, deaths: 1 });
+  });
+
+  it("starts restored history at a non-aligned tick", () => {
+    const world = new SimulationWorld(createDefaultSimulationConfig());
+    world.advanceTicks(75);
+    const history = new EcosystemHistory(30, 10);
+
+    expect(history.observe(world.snapshot)).toBe(true);
+    expect(history.samples[0]?.tick).toBe(75);
+  });
+
+  it("rejects missing or misaligned lifecycle events", () => {
+    const world = new SimulationWorld(createDefaultSimulationConfig());
+    const history = new EcosystemHistory(2, 10);
+    history.observe(world.snapshot);
+    world.step();
+
+    expect(() => history.observe(world.snapshot)).toThrow(
+      "Lifecycle events are required",
+    );
+    expect(() =>
+      history.observe(world.snapshot, { tick: 2, births: 0, deaths: 0 }),
+    ).toThrow("consecutive and aligned");
   });
 });
 
