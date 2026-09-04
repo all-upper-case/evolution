@@ -54,7 +54,18 @@ describe("experiment lab", () => {
     expect(first.checkpoints[0]).toMatchObject({
       population: 20,
       lineages: 20,
+      cumulativeBirths: 0,
+      cumulativeDeaths: 0,
     });
+    const final = first.checkpoints[2];
+    expect(final).toBeDefined();
+    if (final === undefined) throw new Error("Expected a final checkpoint.");
+    expect(final.cumulativeBirths).toBeGreaterThanOrEqual(0);
+    expect(final.cumulativeDeaths).toBeGreaterThanOrEqual(0);
+    expect(20 + final.cumulativeBirths - final.cumulativeDeaths).toBe(
+      final.population,
+    );
+    expect(first.nextOrganismId).toBe(21 + final.cumulativeBirths);
     expect(first.checkpoints[2]?.traits.movementSpeed.mean).toEqual(
       expect.any(Number),
     );
