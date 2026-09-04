@@ -34,6 +34,10 @@ Choose workload from evidence:
 
 Do not manufacture changes merely to fill an activation. If no safe implementation is ready, improve the roadmap or test coverage.
 
+## Evaluation cadence
+
+At milestone boundaries, and at least once every four completed development increments, use the experiment lab and deployed application to evaluate actual product and model behavior. Green engineering gates establish implementation quality, not scientific usefulness. Evidence of misleading metrics, degenerate ecological dynamics, or a workflow bottleneck may reorder unchecked roadmap work when the rationale is recorded in the decision and progress logs.
+
 ## Priority order
 
 1. Security or data-loss risk.

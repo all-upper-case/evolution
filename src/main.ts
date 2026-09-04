@@ -270,9 +270,8 @@ const renderAnalytics = (): void => {
 
 const advanceWorld = (ticks: number): void => {
   for (let index = 0; index < ticks; index += 1) {
-    world.step();
-    if (world.summary.tick % config.history.sampleEveryTicks === 0)
-      history.observe(world.snapshot);
+    const events = world.step();
+    history.observe(world.snapshot, events);
   }
 };
 

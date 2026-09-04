@@ -27,6 +27,18 @@ export interface WorldSnapshot extends WorldSummary {
   nextOrganismId: number;
 }
 
+export interface WorldTickEvents {
+  tick: number;
+  births: number;
+  deaths: number;
+}
+
+export interface WorldAdvanceEvents {
+  ticks: number;
+  births: number;
+  deaths: number;
+}
+
 type UnknownRecord = Record<string, unknown>;
 
 export class WorldSnapshotError extends Error {
@@ -323,17 +335,25 @@ export class SimulationWorld {
     return this.#foodByCell[y * this.#config.world.width + x] ?? 0;
   }
 
-  public step(): void {
+  public step(): WorldTickEvents {
     this.#depositFood(this.#config.food.regrowthUnitsPerTick);
-    this.#advanceOrganisms();
+    const events = this.#advanceOrganisms();
     this.#tick += 1;
+    return Object.freeze({ tick: this.#tick, ...events });
   }
 
-  public advanceTicks(count: number): void {
+  public advanceTicks(count: number): WorldAdvanceEvents {
     if (!Number.isSafeInteger(count) || count < 0) {
       throw new RangeError("Tick count must be a non-negative safe integer.");
     }
-    for (let index = 0; index < count; index += 1) this.step();
+    let births = 0;
+    let deaths = 0;
+    for (let index = 0; index < count; index += 1) {
+      const events = this.step();
+      births += events.births;
+      deaths += events.deaths;
+    }
+    return Object.freeze({ ticks: count, births, deaths });
   }
 
   #depositFood(requestedUnits: number): void {
@@ -352,9 +372,10 @@ export class SimulationWorld {
     }
   }
 
-  #advanceOrganisms(): void {
+  #advanceOrganisms(): Pick<WorldTickEvents, "births" | "deaths"> {
     const survivors: Organism[] = [];
     const offspring: Organism[] = [];
+    let deaths = 0;
 
     // The current array is always in identity order. Newborns are appended only
     // after every organism that existed at tick start has taken its turn.
@@ -375,6 +396,7 @@ export class SimulationWorld {
         afterMetabolism <= 0 ||
         ageTicks >= this.#config.organisms.maximumAgeTicks
       ) {
+        deaths += 1;
         continue;
       }
 
@@ -420,6 +442,7 @@ export class SimulationWorld {
       ...survivors,
       ...offspring,
     );
+    return { births: offspring.length, deaths };
   }
 
   #moveTowardFood(organism: Organism): { x: number; y: number } {

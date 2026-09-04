@@ -1,5 +1,5 @@
 import type { Genome } from "../simulation/organism";
-import type { WorldSnapshot } from "../simulation/world";
+import type { WorldSnapshot, WorldTickEvents } from "../simulation/world";
 
 export type GenomeTrait = keyof Genome;
 
@@ -16,7 +16,10 @@ export class EcosystemHistory {
   readonly #sampleEveryTicks: number;
   readonly #maximumSamples: number;
   readonly #samples: EcosystemSample[] = [];
-  #knownOrganismIds = new Set<number>();
+  #lastObservedTick: number | null = null;
+  #lastSampleTick: number | null = null;
+  #pendingBirths = 0;
+  #pendingDeaths = 0;
 
   public constructor(sampleEveryTicks: number, maximumSamples: number) {
     if (!Number.isSafeInteger(sampleEveryTicks) || sampleEveryTicks < 1)
@@ -31,23 +34,48 @@ export class EcosystemHistory {
     return this.#samples;
   }
 
-  public observe(snapshot: WorldSnapshot): boolean {
-    if (snapshot.tick !== 0 && snapshot.tick % this.#sampleEveryTicks !== 0)
-      return false;
-    if (this.#samples.at(-1)?.tick === snapshot.tick) return false;
-
-    const currentIds = new Set(
-      snapshot.organisms.map((organism) => organism.id),
-    );
-    let births = 0;
-    let deaths = 0;
-    if (this.#samples.length > 0) {
-      for (const id of currentIds)
-        if (!this.#knownOrganismIds.has(id)) births += 1;
-      for (const id of this.#knownOrganismIds)
-        if (!currentIds.has(id)) deaths += 1;
+  public observe(snapshot: WorldSnapshot, events?: WorldTickEvents): boolean {
+    if (this.#lastObservedTick === null) {
+      this.#lastObservedTick = snapshot.tick;
+      this.#lastSampleTick = snapshot.tick;
+      this.#record(snapshot, 0, 0);
+      return true;
     }
+    if (snapshot.tick === this.#lastObservedTick) return false;
+    if (events === undefined)
+      throw new Error(
+        "Lifecycle events are required after the first observation.",
+      );
+    if (
+      events.tick !== snapshot.tick ||
+      snapshot.tick !== this.#lastObservedTick + 1
+    )
+      throw new Error("History observations must be consecutive and aligned.");
+    if (
+      !Number.isSafeInteger(events.births) ||
+      events.births < 0 ||
+      !Number.isSafeInteger(events.deaths) ||
+      events.deaths < 0
+    )
+      throw new Error("Lifecycle event counts must be non-negative integers.");
 
+    this.#lastObservedTick = snapshot.tick;
+    this.#pendingBirths += events.births;
+    this.#pendingDeaths += events.deaths;
+    if (
+      this.#lastSampleTick !== null &&
+      snapshot.tick - this.#lastSampleTick < this.#sampleEveryTicks
+    )
+      return false;
+
+    this.#record(snapshot, this.#pendingBirths, this.#pendingDeaths);
+    this.#lastSampleTick = snapshot.tick;
+    this.#pendingBirths = 0;
+    this.#pendingDeaths = 0;
+    return true;
+  }
+
+  #record(snapshot: WorldSnapshot, births: number, deaths: number): void {
     this.#samples.push(
       Object.freeze({
         tick: snapshot.tick,
@@ -58,8 +86,6 @@ export class EcosystemHistory {
       }),
     );
     if (this.#samples.length > this.#maximumSamples) this.#samples.shift();
-    this.#knownOrganismIds = currentIds;
-    return true;
   }
 }
 

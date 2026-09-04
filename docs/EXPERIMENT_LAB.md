@@ -13,9 +13,11 @@ The document sets `data-lab-status="complete"` or `"error"` on its root element.
 - the complete normalized configuration;
 - requested tick count;
 - summaries at requested checkpoints and the final tick;
-- population, food, occupied cells, living lineages, mean age, and mean energy;
+- population, cumulative births and deaths, food, occupied cells, living lineages, mean age, and mean energy;
 - minimum, mean, and maximum values for every inherited trait;
 - final random state and next organism identity for deterministic comparison.
+
+Birth and death totals come directly from every simulated lifecycle rather than differences between checkpoint populations. They therefore include organisms that are born and die between two requested checkpoints.
 
 ## Parameters
 
