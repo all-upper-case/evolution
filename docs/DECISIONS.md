@@ -153,3 +153,13 @@ The browser settings editor exposes world dimensions, founder and maximum popula
 A separate `lab.html` build entry accepts strict numeric configuration overrides, a bounded tick count, and explicit checkpoints through URL parameters. It runs synchronously without animation and publishes a compact JSON report plus a machine-readable completion state in the DOM. It shares the simulation configuration parser and conservative interactive limits; larger performance workloads remain in the benchmark.
 
 **Why:** A URL is reproducible, easy for browser automation to construct, and eliminates fragile sequences of expanding panels and editing individual inputs. Keeping this diagnostic separate avoids exposing test-oriented complexity in the main experience, while DOM JSON permits one-read verification without privileged page scripting.
+
+## 2026-09-04 — Exact lifecycle events and evidence-led experiment planning
+
+**Status:** Accepted
+
+Every world tick returns immutable birth and death counts, and multi-tick headless runs return their exact aggregate. Observational history consumes consecutive tick events and rolls them into its bounded sampling intervals; the experiment lab publishes cumulative totals at checkpoints. These derived events are not serialized because they do not affect continuation. A restored world begins a new observational baseline with zero prior events, regardless of its tick alignment.
+
+The remaining Milestone 3 order now places multi-seed characterization, explicit trait tradeoffs, and ecological diagnostics before named presets and comparison presentation. Milestone boundaries and every four development increments trigger an evidence-based product/model review.
+
+**Why:** Comparing live identities only at sample boundaries misses organisms that are both born and die inside an interval, making lifecycle charts scientifically misleading. Exact transient counts belong at the lifecycle boundary. Separately, current lab observations show the default population quickly presses against its ceiling and movement, perception, and lower metabolism lack balancing costs. Presets should describe demonstrated ecological regimes, not canonize insufficiently characterized settings. Engineering health alone cannot establish that the model produces useful evolution.
