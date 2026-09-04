@@ -462,3 +462,26 @@ The lab intentionally reports aggregate outcomes rather than full organism or re
 ### Recommended next action
 
 Use the experiment lab while adding named presets, then give the comparison workflow a batch runner that reuses the same report schema.
+
+## 2026-09-04 — Exact lifecycle accounting and roadmap review (development)
+
+### Changed
+
+- Replaced sampled organism-ID differencing with exact birth and death events emitted by every deterministic world tick.
+- Added exact aggregate lifecycle totals to headless multi-tick runs and cumulative birth/death counts to every experiment-lab checkpoint.
+- Made bounded browser history consume consecutive tick events, preserving short-lived organisms that appear and disappear between chart samples.
+- Made the first observation an explicit baseline at any tick so restored worlds begin charting immediately rather than waiting for a globally aligned interval.
+- Reordered the rest of Milestone 3 around scientific validity: multi-seed characterization, explicit trait tradeoffs and calibration, and diagnostics now precede presets and comparison presentation.
+- Added a periodic evidence-based evaluation cadence to the autonomous workflow.
+
+### Validation
+
+Formatting, linting, strict type checking, all 88 tests, and the three-entry production build pass locally. Coverage includes transient lifecycle accounting, population-flow invariants, non-aligned restored baselines, and unchanged deterministic replay. GitHub Actions CI and deployed lab verification remain required before merge completion.
+
+### Risk and follow-up
+
+Lifecycle totals begin at zero when a saved world is loaded because earlier event history is intentionally not part of deterministic snapshot state. The present ecological rules still reward faster movement, broader perception, and lower metabolism without explicit counter-costs, and the default population reaches its ceiling quickly in observed runs. Those are now visible model-design priorities rather than assumptions hidden behind presets.
+
+### Recommended next action
+
+Use the lab to characterize the default across multiple seeds and resource regimes, define measurable healthy-dynamics criteria, then introduce and calibrate explicit energetic costs for advantageous traits before naming presets.
