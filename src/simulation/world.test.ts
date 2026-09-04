@@ -140,9 +140,10 @@ describe("SimulationWorld", () => {
     config.organisms.offspringEnergy = 5;
     const world = new SimulationWorld(config);
 
-    world.step();
+    const events = world.step();
 
     expect(world.summary.population).toBe(5);
+    expect(events).toEqual({ tick: 1, births: 2, deaths: 0 });
     const children = world.snapshot.organisms.filter(
       ({ parentId }) => parentId !== null,
     );
@@ -219,10 +220,34 @@ describe("SimulationWorld", () => {
     config.organisms.maximumAgeTicks = 1;
     const world = new SimulationWorld(config);
 
-    world.step();
+    const events = world.step();
 
     expect(world.summary.population).toBe(0);
+    expect(events).toEqual({ tick: 1, births: 0, deaths: 4 });
     expect(world.snapshot.organisms).toEqual([]);
+  });
+
+  it("aggregates exact lifecycle events without changing replay", () => {
+    const config = smallConfig(8675309);
+    config.population.initialCount = 20;
+    config.population.maximumCount = 100;
+    config.food.initialUnits = 100;
+    config.food.maximumUnits = 200;
+    config.food.regrowthUnitsPerTick = 4;
+    const aggregateWorld = new SimulationWorld(config);
+    const steppedWorld = new SimulationWorld(config);
+    const aggregate = aggregateWorld.advanceTicks(500);
+    let births = 0;
+    let deaths = 0;
+    for (let tick = 0; tick < 500; tick += 1) {
+      const events = steppedWorld.step();
+      births += events.births;
+      deaths += events.deaths;
+    }
+
+    expect(aggregate).toEqual({ ticks: 500, births, deaths });
+    expect(aggregate.births).toBeGreaterThan(0);
+    expect(aggregateWorld.snapshot).toEqual(steppedWorld.snapshot);
   });
 
   it("replays the complete ecological lifecycle deterministically", () => {
