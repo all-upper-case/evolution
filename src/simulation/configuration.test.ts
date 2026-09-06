@@ -102,7 +102,7 @@ describe("simulation configuration", () => {
   });
 
   it.each([
-    ["unsupported schema", alter((config) => (config.schemaVersion = 2 as 1))],
+    ["unsupported schema", alter((config) => (config.schemaVersion = 3 as 2))],
     ["negative seed", alter((config) => (config.seed = -1))],
     [
       "non-finite food",
