@@ -40,7 +40,8 @@ Exit condition: a user can run, understand, and inspect an evolving ecosystem wi
 - [x] Add environment and mutation controls with safe ranges.
 - [x] Establish exact lifecycle-event accounting for analytics and experiments.
 - [x] Characterize default dynamics across seeds and representative environments.
-- [ ] Add explicit trait costs/tradeoffs and calibrate default dynamics.
+- [x] Add configurable movement and perception energy costs with legacy replay compatibility.
+- [ ] Complete default calibration, including balanced perception and metabolism selection.
 - [ ] Add extinction, equilibrium, and runaway-population diagnostics.
 - [ ] Add named experiment presets based on demonstrated ecological regimes.
 - [ ] Compare repeated runs and summarize outcomes.
