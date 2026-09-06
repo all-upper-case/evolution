@@ -485,3 +485,25 @@ Lifecycle totals begin at zero when a saved world is loaded because earlier even
 ### Recommended next action
 
 Use the lab to characterize the default across multiple seeds and resource regimes, define measurable healthy-dynamics criteria, then introduce and calibrate explicit energetic costs for advantageous traits before naming presets.
+
+## 2026-09-06 — Multi-seed ecosystem characterization (development)
+
+### Changed
+
+- Added a deterministic production-built characterization matrix covering three seeds, default resources, half-resource pressure, and double-resource abundance over 2,000 ticks.
+- Added machine-readable per-run and aggregate population, lifecycle, lineage-retention, cap-saturation, food, and normalized trait-shift results.
+- Recorded the baseline evidence and six explicit calibration criteria in `docs/CHARACTERIZATION.md`.
+- Confirmed that the current default persists and turns over but is usually cap-limited, while movement and low metabolism experience strong unbalanced selection.
+- Completed the Milestone 3 multi-seed characterization roadmap item.
+
+### Validation
+
+Formatting, linting, strict type checking, all 89 tests, and the four-entry production build pass locally. Coverage includes the complete fixed matrix, population-flow identities, aggregate ordering, and bounded lineage/cap metrics. GitHub Actions CI and the deployed characterization report remain required before merge completion.
+
+### Risk and follow-up
+
+Three fixed seeds and 2,000 ticks form a regression-sized calibration baseline, not a comprehensive statistical study or evidence of biological realism. The synchronous diagnostic takes several seconds and is intentionally separate from the main simulator. The population safety ceiling still regulates default and resource-rich outcomes enough to obscure environmental response.
+
+### Recommended next action
+
+Add explicit energetic costs for movement speed and perception range, then tune those costs and default resource flow against the unchanged characterization matrix until it retains persistence, turnover, diversity, population headroom, balanced selection, and visible resource sensitivity.

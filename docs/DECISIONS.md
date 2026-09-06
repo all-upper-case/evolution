@@ -163,3 +163,11 @@ Every world tick returns immutable birth and death counts, and multi-tick headle
 The remaining Milestone 3 order now places multi-seed characterization, explicit trait tradeoffs, and ecological diagnostics before named presets and comparison presentation. Milestone boundaries and every four development increments trigger an evidence-based product/model review.
 
 **Why:** Comparing live identities only at sample boundaries misses organisms that are both born and die inside an interval, making lifecycle charts scientifically misleading. Exact transient counts belong at the lifecycle boundary. Separately, current lab observations show the default population quickly presses against its ceiling and movement, perception, and lower metabolism lack balancing costs. Presets should describe demonstrated ecological regimes, not canonize insufficiently characterized settings. Engineering health alone cannot establish that the model produces useful evolution.
+
+## 2026-09-06 — Fixed model-characterization matrix
+
+**Status:** Accepted
+
+Early ecological calibration will use a fixed deterministic matrix of three seeds, three resource regimes, 2,000 ticks, and 250-tick checkpoints. The resource-poor and resource-rich regimes change initial food, food capacity, and regrowth together to one-half and twice their default values. A production-built diagnostic reports per-run outcomes and aggregate ranges; `docs/CHARACTERIZATION.md` records the current baseline and explicit healthy-dynamics targets.
+
+**Why:** A small fixed matrix detects seed-specific failures, cap saturation, environmental sensitivity, lineage loss, turnover, and directional trait pressure without making routine validation prohibitively slow. Keeping the matrix unchanged across calibration increments makes before-and-after effects attributable. The criteria define useful model behavior without claiming biological realism or turning exact stochastic outcomes into brittle pass/fail tests.
