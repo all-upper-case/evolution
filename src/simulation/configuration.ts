@@ -1,4 +1,4 @@
-export const CONFIG_SCHEMA_VERSION = 1 as const;
+export const CONFIG_SCHEMA_VERSION = 2 as const;
 
 export interface SimulationConfig {
   schemaVersion: typeof CONFIG_SCHEMA_VERSION;
@@ -24,6 +24,8 @@ export interface SimulationConfig {
     reproductionThreshold: number;
     offspringEnergy: number;
     metabolismPerTick: number;
+    movementCostPerTick: number;
+    perceptionCostPerTick: number;
     maximumAgeTicks: number;
   };
   evolution: {
@@ -65,6 +67,7 @@ export const SIMULATION_LIMITS = Object.freeze({
   foodEnergy: numericLimit(0.001, 10_000, false),
   organismEnergy: numericLimit(0.001, 10_000, false),
   metabolism: numericLimit(0.000_001, 1_000, false),
+  traitCost: numericLimit(0, 1_000, false),
   maximumAgeTicks: numericLimit(1, 10_000_000, true),
   probability: numericLimit(0, 1, false),
   mutationMagnitude: numericLimit(0, 1, false),
@@ -111,6 +114,8 @@ const DEFAULT_CONFIG: SimulationConfig = {
     reproductionThreshold: 80,
     offspringEnergy: 30,
     metabolismPerTick: 0.1,
+    movementCostPerTick: 0.1,
+    perceptionCostPerTick: 0.001,
     maximumAgeTicks: 30_000,
   },
   evolution: {
@@ -243,6 +248,9 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
       "reproductionThreshold",
       "offspringEnergy",
       "metabolismPerTick",
+      ...(root.schemaVersion === 1
+        ? []
+        : ["movementCostPerTick", "perceptionCostPerTick"]),
       "maximumAgeTicks",
     ],
     issues,
@@ -265,7 +273,7 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
     "schemaVersion",
     "$.schemaVersion",
     {
-      minimum: CONFIG_SCHEMA_VERSION,
+      minimum: 1,
       maximum: CONFIG_SCHEMA_VERSION,
       integer: true,
     },
@@ -383,6 +391,26 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
     SIMULATION_LIMITS.maximumAgeTicks,
     issues,
   );
+  const movementCostPerTick =
+    schemaVersion === 1
+      ? 0
+      : readNumber(
+          organisms,
+          "movementCostPerTick",
+          "$.organisms.movementCostPerTick",
+          SIMULATION_LIMITS.traitCost,
+          issues,
+        );
+  const perceptionCostPerTick =
+    schemaVersion === 1
+      ? 0
+      : readNumber(
+          organisms,
+          "perceptionCostPerTick",
+          "$.organisms.perceptionCostPerTick",
+          SIMULATION_LIMITS.traitCost,
+          issues,
+        );
   const mutationProbability = readNumber(
     evolution,
     "mutationProbability",
@@ -454,7 +482,7 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
   }
 
   return {
-    schemaVersion: schemaVersion as typeof CONFIG_SCHEMA_VERSION,
+    schemaVersion: CONFIG_SCHEMA_VERSION,
     seed,
     world: { width, height, ticksPerSecond },
     population: { initialCount, maximumCount },
@@ -465,6 +493,8 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
       reproductionThreshold,
       offspringEnergy,
       metabolismPerTick,
+      movementCostPerTick,
+      perceptionCostPerTick,
       maximumAgeTicks,
     },
     evolution: { mutationProbability, mutationMagnitude },
