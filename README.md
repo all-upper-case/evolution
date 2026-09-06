@@ -51,6 +51,7 @@ The project has a responsive browser interface that visualizes the food field an
 - [Progress log](docs/PROGRESS.md)
 - [Browser performance](docs/PERFORMANCE.md)
 - [Developer experiment lab](docs/EXPERIMENT_LAB.md)
+- [Ecosystem characterization](docs/CHARACTERIZATION.md)
 
 ## License
 

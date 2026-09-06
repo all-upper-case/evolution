@@ -26,3 +26,5 @@ Birth and death totals come directly from every simulated lifecycle rather than 
 - Any complete configuration numeric field except `schemaVersion`, written as a dotted path. Examples: `food.regrowthUnitsPerTick`, `organisms.metabolismPerTick`, and `evolution.mutationMagnitude`.
 
 Unknown and duplicate parameters are rejected. Configuration overrides pass through the same strict parser as saved experiment files. Lab runs additionally enforce the supported interactive ceiling of 256×256 cells and 1,000 organisms. This prevents an accidental diagnostic URL from locking up an ordinary browser; larger stress work remains in the dedicated benchmark.
+
+For repeatable multi-seed calibration rather than a single custom run, use `characterization.html` and see [Ecosystem characterization](CHARACTERIZATION.md).

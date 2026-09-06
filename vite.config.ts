@@ -9,6 +9,7 @@ export default defineConfig({
         main: resolve(import.meta.dirname, "index.html"),
         benchmark: resolve(import.meta.dirname, "benchmark.html"),
         lab: resolve(import.meta.dirname, "lab.html"),
+        characterization: resolve(import.meta.dirname, "characterization.html"),
       },
     },
   },
