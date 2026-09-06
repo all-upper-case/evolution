@@ -57,3 +57,17 @@ The baseline passes persistence, turnover, and diversity. It fails headroom, bal
 ## Reproduction
 
 Run locally with `npm run dev` and open `/characterization.html`, or open that path on the deployed project. The report includes every per-seed outcome and aggregate minimum, median, and maximum values. Because the matrix uses the deterministic core and fixed seeds, identical code and configuration must produce identical JSON.
+
+## First trait-cost increment — 2026-09-06
+
+The unchanged nine-run matrix now uses speed cost 0.1 and perception cost 0.001. All other defaults, seeds, resource multipliers, durations, and checkpoints remain unchanged. The original baseline above is retained for comparison.
+
+| Regime        | Final population (min / median / max) | Median births / deaths | Median lineage retention | Sampled cap fraction | Extinctions |
+| ------------- | ------------------------------------: | ---------------------: | -----------------------: | -------------------: | ----------: |
+| Resource-poor |                       116 / 123 / 125 |              549 / 676 |                    10.8% |      0% in every run |       0 / 3 |
+| Default       |                       226 / 240 / 263 |            1110 / 1097 |                    27.6% |      0% in every run |       0 / 3 |
+| Resource-rich |                       456 / 472 / 529 |            1559 / 1335 |                    43.2% |      0% in every run |       0 / 3 |
+
+Default median normalized shifts are movement +4.1%, perception +21.7%, metabolism -24.2%, reproduction threshold +5.3%, and mutation tendency -2.0%. Five criteria pass: persistence, headroom, turnover, diversity, and environmental sensitivity. Balanced selection still fails. The cap fraction only describes 250-tick observations; it does not rule out brief saturation between samples or establish long-term equilibrium.
+
+A preliminary speed cost of 0.04 with the same perception cost gave default median population 307 and movement shift +26.9%; increasing the speed cost to 0.1 reduced that directional advantage. These two trials establish a useful first increment, not a completed calibration. Low metabolism still has no compensating disadvantage, and perception remains strongly favored in sparse environments. Next, investigate these mechanisms with controlled comparisons before further default tuning; do not relax the acceptance criteria to fit the results.
