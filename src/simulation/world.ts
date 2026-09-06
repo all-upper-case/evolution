@@ -389,7 +389,11 @@ export class SimulationWorld {
       const afterMetabolism =
         energy -
         this.#config.organisms.metabolismPerTick *
-          organism.genome.metabolismScale;
+          organism.genome.metabolismScale -
+        this.#config.organisms.movementCostPerTick *
+          organism.genome.movementSpeed ** 2 -
+        this.#config.organisms.perceptionCostPerTick *
+          organism.genome.perceptionRange ** 2;
       const ageTicks = organism.ageTicks + 1;
 
       if (
