@@ -78,6 +78,7 @@ app.innerHTML = `
           <fieldset><legend>Population</legend><label>Starting organisms <input id="setting-initial-population" type="number" min="1" max="1000" step="1"></label><label>Population ceiling <input id="setting-maximum-population" type="number" min="1" max="1000" step="1"></label></fieldset>
           <fieldset><legend>Food</legend><label>Starting units <input id="setting-initial-food" type="number" min="0" max="1000000" step="1"></label><label>Maximum units <input id="setting-maximum-food" type="number" min="1" max="1000000" step="1"></label><label>Regrowth per tick <input id="setting-food-regrowth" type="number" min="0" max="10000" step="0.1"></label><label>Energy per unit <input id="setting-food-energy" type="number" min="0.001" max="10000" step="0.1"></label></fieldset>
           <fieldset><legend>Life cycle</legend><label>Metabolism per tick <input id="setting-metabolism" type="number" min="0.000001" max="1000" step="0.01"></label><label>Reproduction energy <input id="setting-reproduction" type="number" min="0.001" max="10000" step="1"></label><label>Offspring energy <input id="setting-offspring" type="number" min="0.001" max="10000" step="1"></label></fieldset>
+          <fieldset><legend>Trait energy costs</legend><label>Speed cost <input id="setting-movement-cost" type="number" min="0" max="1000" step="0.001"></label><label>Perception cost <input id="setting-perception-cost" type="number" min="0" max="1000" step="0.0001"></label><p>Each tick, each cost is multiplied by its inherited trait squared. Zero disables that cost.</p></fieldset>
           <fieldset><legend>Evolution</legend><label>Mutation chance <span><input id="setting-mutation-probability" type="number" min="0" max="1" step="0.01"><small>0–1</small></span></label><label>Mutation size <span><input id="setting-mutation-magnitude" type="number" min="0" max="1" step="0.01"><small>0–1</small></span></label></fieldset>
         </div>
         <div class="settings-action"><p>For responsive experiments, this editor limits worlds to 256×256 cells and populations to 1,000. Imported files may use the larger safety bounds.</p><button id="apply-settings" type="button">Apply and restart</button></div>
@@ -128,6 +129,10 @@ const syncSettings = (): void => {
   setting("maximum-food").value = String(config.food.maximumUnits);
   setting("food-regrowth").value = String(config.food.regrowthUnitsPerTick);
   setting("food-energy").value = String(config.food.energyPerUnit);
+  setting("movement-cost").value = String(config.organisms.movementCostPerTick);
+  setting("perception-cost").value = String(
+    config.organisms.perceptionCostPerTick,
+  );
   setting("metabolism").value = String(config.organisms.metabolismPerTick);
   setting("reproduction").value = String(
     config.organisms.reproductionThreshold,
@@ -471,6 +476,8 @@ speed.addEventListener("change", () => {
         },
         organisms: {
           ...config.organisms,
+          movementCostPerTick: Number(setting("movement-cost").value),
+          perceptionCostPerTick: Number(setting("perception-cost").value),
           metabolismPerTick: Number(setting("metabolism").value),
           reproductionThreshold: Number(setting("reproduction").value),
           offspringEnergy: Number(setting("offspring").value),

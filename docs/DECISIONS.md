@@ -171,3 +171,13 @@ The remaining Milestone 3 order now places multi-seed characterization, explicit
 Early ecological calibration will use a fixed deterministic matrix of three seeds, three resource regimes, 2,000 ticks, and 250-tick checkpoints. The resource-poor and resource-rich regimes change initial food, food capacity, and regrowth together to one-half and twice their default values. A production-built diagnostic reports per-run outcomes and aggregate ranges; `docs/CHARACTERIZATION.md` records the current baseline and explicit healthy-dynamics targets.
 
 **Why:** A small fixed matrix detects seed-specific failures, cap saturation, environmental sensitivity, lineage loss, turnover, and directional trait pressure without making routine validation prohibitively slow. Keeping the matrix unchanged across calibration increments makes before-and-after effects attributable. The criteria define useful model behavior without claiming biological realism or turning exact stochastic outcomes into brittle pass/fail tests.
+
+## 2026-09-06 — Configurable quadratic trait maintenance costs
+
+**Status:** Accepted
+
+Each acting organism pays base metabolism plus movementCostPerTick times movementSpeed squared plus perceptionCostPerTick times perceptionRange squared after feeding and before death/reproduction. These are maintenance costs of inherited capacity, charged even while stationary and independent of metabolismScale. They are not distance-traveled costs. Squared costs make extreme capacity increasingly expensive; fractional perception retains its existing floored search radius but incurs a continuous capacity cost. No random draws or update-order rules are added.
+
+Configuration schema 2 requires both bounded, nonnegative coefficients. Strict schema-1 inputs migrate to schema 2 with both costs zero, including configurations embedded in version-1 world snapshots. This preserves their ecological continuation while future exports use the normalized new configuration schema. New defaults are 0.1 for speed and 0.001 for perception; the settings editor and URL lab expose both controls.
+
+**Why:** Free movement and perception produced unbalanced selection and cap-regulated populations. The fixed matrix now passes five of six targets and sharply reduces speed selection, but calibration remains incomplete. Independent trait costs avoid making lower metabolism also discount these new tradeoffs.

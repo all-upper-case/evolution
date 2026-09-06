@@ -28,3 +28,5 @@ Birth and death totals come directly from every simulated lifecycle rather than 
 Unknown and duplicate parameters are rejected. Configuration overrides pass through the same strict parser as saved experiment files. Lab runs additionally enforce the supported interactive ceiling of 256×256 cells and 1,000 organisms. This prevents an accidental diagnostic URL from locking up an ordinary browser; larger stress work remains in the dedicated benchmark.
 
 For repeatable multi-seed calibration rather than a single custom run, use `characterization.html` and see [Ecosystem characterization](CHARACTERIZATION.md).
+
+Trait maintenance costs can be overridden with `organisms.movementCostPerTick` and `organisms.perceptionCostPerTick` (each 0–1000). Set both to zero to reproduce the pre-tradeoff rules with otherwise identical settings. Defaults are 0.1 and 0.001; each coefficient multiplies the corresponding inherited trait squared every acting tick, including while stationary.

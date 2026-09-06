@@ -507,3 +507,20 @@ Three fixed seeds and 2,000 ticks form a regression-sized calibration baseline, 
 ### Recommended next action
 
 Add explicit energetic costs for movement speed and perception range, then tune those costs and default resource flow against the unchanged characterization matrix until it retains persistence, turnover, diversity, population headroom, balanced selection, and visible resource sensitivity.
+
+## 2026-09-06 — Energetic trait costs (development)
+
+### Changed
+
+- Added independent quadratic maintenance costs for speed and perception, exposed in the ordinary settings editor and experiment lab.
+- Added strict configuration schema 2 with explicit zero-cost migration of schema-1 configurations and saved worlds.
+- Evaluated two speed-cost trials against the unchanged nine-run matrix. The selected defaults remove sampled cap saturation and reduce default movement selection from +30.7% to +4.1% of its trait range.
+- Split completed trait-cost work from unfinished calibration in the roadmap.
+
+### Validation
+
+All 93 tests, formatting, linting, strict type checking, and the four-entry production build pass. Coverage includes cost accounting, stationary capacity costs, starvation events, strict validation, legacy continuation, settings export, and lab overrides. A real-browser check confirmed both new defaults, applying custom costs, restarting, and advancing the world. GitHub CI and deployed verification are required before completion.
+
+### Risk and next action
+
+Five of six ecological criteria pass; perception (+21.7%) and metabolism (-24.2%) still exceed the default balanced-selection threshold. Evaluate a meaningful metabolism benefit/cost tradeoff and perception efficiency before further calibration or named presets. The matrix does not establish long-term equilibrium or biological realism.
