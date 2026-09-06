@@ -323,6 +323,8 @@ describe("simulation controls", () => {
     find("setting-food-regrowth").value = "12.5";
     find("setting-food-energy").value = "6";
     find("setting-metabolism").value = "0.2";
+    find("setting-movement-cost").value = "0.15";
+    find("setting-perception-cost").value = "0.002";
     find("setting-reproduction").value = "70";
     find("setting-offspring").value = "25";
     find("setting-mutation-probability").value = "0.25";
@@ -342,7 +344,11 @@ describe("simulation controls", () => {
       world: { width: 64, height: 96 },
       population: { initialCount: 120, maximumCount: 600 },
       food: { regrowthUnitsPerTick: 12.5, energyPerUnit: 6 },
-      organisms: { metabolismPerTick: 0.2 },
+      organisms: {
+        metabolismPerTick: 0.2,
+        movementCostPerTick: 0.15,
+        perceptionCostPerTick: 0.002,
+      },
       evolution: { mutationProbability: 0.25, mutationMagnitude: 0.3 },
     });
   });
