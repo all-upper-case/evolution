@@ -18,6 +18,15 @@ describe("ecosystem characterization", () => {
       "default",
       "resource-rich",
     ]);
+    expect(report.assessment).toEqual({
+      persistence: true,
+      headroom: true,
+      turnover: true,
+      diversity: true,
+      balancedSelection: true,
+      environmentalSensitivity: true,
+      allPassed: true,
+    });
     for (const run of report.runs) {
       expect(
         run.initialPopulation + run.cumulativeBirths - run.cumulativeDeaths,

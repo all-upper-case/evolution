@@ -325,6 +325,7 @@ describe("simulation controls", () => {
     find("setting-metabolism").value = "0.2";
     find("setting-movement-cost").value = "0.15";
     find("setting-perception-cost").value = "0.002";
+    find("setting-metabolism-food-influence").value = "0.6";
     find("setting-reproduction").value = "70";
     find("setting-offspring").value = "25";
     find("setting-mutation-probability").value = "0.25";
@@ -348,6 +349,7 @@ describe("simulation controls", () => {
         metabolismPerTick: 0.2,
         movementCostPerTick: 0.15,
         perceptionCostPerTick: 0.002,
+        metabolismFoodEnergyInfluence: 0.6,
       },
       evolution: { mutationProbability: 0.25, mutationMagnitude: 0.3 },
     });

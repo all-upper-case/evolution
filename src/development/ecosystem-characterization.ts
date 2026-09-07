@@ -99,6 +99,17 @@ export interface CharacterizationReport {
   regimes: readonly Pick<CharacterizationRegime, "id" | "description">[];
   runs: readonly CharacterizationRun[];
   summaries: readonly CharacterizationRegimeSummary[];
+  assessment: CharacterizationAssessment;
+}
+
+export interface CharacterizationAssessment {
+  persistence: boolean;
+  headroom: boolean;
+  turnover: boolean;
+  diversity: boolean;
+  balancedSelection: boolean;
+  environmentalSensitivity: boolean;
+  allPassed: boolean;
 }
 
 const round = (value: number): number => Number(value.toFixed(6));
@@ -239,9 +250,55 @@ const summarizeRegime = (
   });
 };
 
+const assess = (
+  runs: readonly CharacterizationRun[],
+  summaries: readonly CharacterizationRegimeSummary[],
+): CharacterizationAssessment => {
+  const summary = (regime: CharacterizationRegime["id"]) => {
+    const found = summaries.find((candidate) => candidate.regime === regime);
+    if (found === undefined)
+      throw new Error(`Missing characterization summary: ${regime}`);
+    return found;
+  };
+  const defaultRuns = runs.filter((run) => run.regime === "default");
+  const richRuns = runs.filter((run) => run.regime === "resource-rich");
+  const defaultSummary = summary("default");
+  const initialPopulation = defaultRuns[0]?.initialPopulation;
+  if (initialPopulation === undefined)
+    throw new Error("Characterization requires default runs.");
+  const traitShifts = Object.values(
+    defaultSummary.medianNormalizedTraitShifts,
+  ).filter((value): value is number => value !== null);
+  const results = {
+    persistence: defaultRuns.every(
+      (run) => run.extinctAtOrBeforeTick === null && run.finalPopulation > 0,
+    ),
+    headroom:
+      defaultSummary.sampledCapFraction.median <= 0.25 &&
+      richRuns.every((run) => run.sampledCapFraction < 1),
+    turnover:
+      defaultSummary.cumulativeBirths.median > initialPopulation &&
+      defaultSummary.cumulativeDeaths.median > initialPopulation,
+    diversity: defaultSummary.lineageRetentionFraction.median >= 0.2,
+    balancedSelection: traitShifts.every((shift) => Math.abs(shift) <= 0.2),
+    environmentalSensitivity:
+      summary("resource-poor").finalPopulation.median <
+        defaultSummary.finalPopulation.median &&
+      defaultSummary.finalPopulation.median <
+        summary("resource-rich").finalPopulation.median,
+  };
+  return Object.freeze({
+    ...results,
+    allPassed: Object.values(results).every(Boolean),
+  });
+};
+
 export const runEcosystemCharacterization = (): CharacterizationReport => {
   const runs = CHARACTERIZATION_REGIMES.flatMap((regime) =>
     CHARACTERIZATION_SEEDS.map((seed) => runOne(regime, seed)),
+  );
+  const summaries = CHARACTERIZATION_REGIMES.map((regime) =>
+    summarizeRegime(regime.id, runs),
   );
   return Object.freeze({
     schemaVersion: 1,
@@ -254,10 +311,7 @@ export const runEcosystemCharacterization = (): CharacterizationReport => {
       ),
     ),
     runs: Object.freeze(runs),
-    summaries: Object.freeze(
-      CHARACTERIZATION_REGIMES.map((regime) =>
-        summarizeRegime(regime.id, runs),
-      ),
-    ),
+    summaries: Object.freeze(summaries),
+    assessment: assess(runs, summaries),
   });
 };

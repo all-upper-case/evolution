@@ -9,6 +9,11 @@ import {
 } from "./organism";
 import { SeededRandom } from "./random";
 
+export const foodEnergyMultiplier = (
+  metabolismScale: number,
+  influence: number,
+): number => 1 + (metabolismScale - 1) * influence;
+
 export interface WorldSummary {
   tick: number;
   width: number;
@@ -384,7 +389,13 @@ export class SimulationWorld {
       const eaten = this.#consumeFood(position.x, position.y, 1);
       const energy = Math.min(
         this.#config.organisms.maximumEnergy,
-        organism.energy + eaten * this.#config.food.energyPerUnit,
+        organism.energy +
+          eaten *
+            this.#config.food.energyPerUnit *
+            foodEnergyMultiplier(
+              organism.genome.metabolismScale,
+              this.#config.organisms.metabolismFoodEnergyInfluence,
+            ),
       );
       const afterMetabolism =
         energy -

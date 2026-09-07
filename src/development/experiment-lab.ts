@@ -24,6 +24,7 @@ type ConfigNumberPath =
   | "organisms.reproductionThreshold"
   | "organisms.offspringEnergy"
   | "organisms.metabolismPerTick"
+  | "organisms.metabolismFoodEnergyInfluence"
   | "organisms.movementCostPerTick"
   | "organisms.perceptionCostPerTick"
   | "organisms.maximumAgeTicks"
@@ -48,6 +49,7 @@ export const LAB_CONFIG_PATHS: readonly ConfigNumberPath[] = Object.freeze([
   "organisms.reproductionThreshold",
   "organisms.offspringEnergy",
   "organisms.metabolismPerTick",
+  "organisms.metabolismFoodEnergyInfluence",
   "organisms.movementCostPerTick",
   "organisms.perceptionCostPerTick",
   "organisms.maximumAgeTicks",
