@@ -542,3 +542,11 @@ Formatting, linting, strict type checking, all 96 tests, and the four-entry prod
 ### Risk and next action
 
 The calibration window is finite and deterministic; it does not prove long-term equilibrium, robustness beyond the representative resource gradient, or biological realism. Threshold checks deliberately protect broad behavior rather than exact stochastic outcomes. Add extinction, equilibrium, and runaway-population diagnostics next so longer experiments can classify failure modes directly.
+
+## 2026-09-07 — Environmental and biological diversity priority (planning)
+
+Reordered active development following owner direction. Milestone 4 now precedes the remaining experiment-tool work and has ordered, concrete acceptance criteria for habitat/resource patches, diet specialization, predation/defense, and terrain constraints. Recorded the superseding decision; no ecological feature is marked implemented.
+
+Verified the healthy default branch and absence of open issues/PRs. Confirmed current death rules include energy depletion and maximum age. Documentation-only change; the complete project validation and GitHub CI are required before merge.
+
+Next action: implement seeded habitat patches with two distinct renewable foods, visible rendering, per-resource lab summaries, and deterministic legacy-compatible save/load. Add focused measurements alongside each mechanic; avoid another planning-only run in place of implementation.
