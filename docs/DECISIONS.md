@@ -181,3 +181,13 @@ Each acting organism pays base metabolism plus movementCostPerTick times movemen
 Configuration schema 2 requires both bounded, nonnegative coefficients. Strict schema-1 inputs migrate to schema 2 with both costs zero, including configurations embedded in version-1 world snapshots. This preserves their ecological continuation while future exports use the normalized new configuration schema. New defaults are 0.1 for speed and 0.001 for perception; the settings editor and URL lab expose both controls.
 
 **Why:** Free movement and perception produced unbalanced selection and cap-regulated populations. The fixed matrix now passes five of six targets and sharply reduces speed selection, but calibration remains incomplete. Independent trait costs avoid making lower metabolism also discount these new tradeoffs.
+
+## 2026-09-07 — Metabolism yield tradeoff and calibrated defaults
+
+**Status:** Accepted
+
+Configuration schema 3 adds `metabolismFoodEnergyInfluence`, a bounded coefficient from zero through one. Food energy is multiplied by `1 + (metabolismScale - 1) * influence`; base metabolic expenditure continues to scale directly with the same inherited trait. Schema-one and schema-two configurations migrate with zero influence, preserving their earlier food-yield behavior. New defaults use influence 0.4, perception maintenance cost 0.0018, and food regrowth 23 units per tick; movement cost remains 0.1.
+
+The fixed characterization report now evaluates the six previously declared calibration criteria as threshold-based booleans. Exact populations are not regression assertions, but all six thresholds must remain explicit and reviewable when model behavior changes.
+
+**Why:** Lower metabolism previously reduced expense without any countervailing disadvantage. Partial food-yield scaling creates a legible conservation-versus-assimilation tradeoff without adding randomness or coupling to rendering. The selected defaults are the simplest tested combination that passes persistence, headroom, turnover, diversity, balanced-selection, and environmental-sensitivity criteria across the unchanged matrix. Versioned migration prevents the new mechanic from silently changing imported historical experiments.

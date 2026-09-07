@@ -70,4 +70,20 @@ The unchanged nine-run matrix now uses speed cost 0.1 and perception cost 0.001.
 
 Default median normalized shifts are movement +4.1%, perception +21.7%, metabolism -24.2%, reproduction threshold +5.3%, and mutation tendency -2.0%. Five criteria pass: persistence, headroom, turnover, diversity, and environmental sensitivity. Balanced selection still fails. The cap fraction only describes 250-tick observations; it does not rule out brief saturation between samples or establish long-term equilibrium.
 
-A preliminary speed cost of 0.04 with the same perception cost gave default median population 307 and movement shift +26.9%; increasing the speed cost to 0.1 reduced that directional advantage. These two trials establish a useful first increment, not a completed calibration. Low metabolism still has no compensating disadvantage, and perception remains strongly favored in sparse environments. Next, investigate these mechanisms with controlled comparisons before further default tuning; do not relax the acceptance criteria to fit the results.
+A preliminary speed cost of 0.04 with the same perception cost gave default median population 307 and movement shift +26.9%; increasing the speed cost to 0.1 reduced that directional advantage. These two trials established a useful first increment rather than completed calibration. Low metabolism still had no compensating disadvantage, and perception remained strongly favored in sparse environments.
+
+## Completed default calibration — 2026-09-07
+
+The calibrated default keeps speed cost 0.1, raises perception cost from 0.001 to 0.0018, and raises food regrowth from 20 to 23 units per tick. The metabolism trait now controls both sides of a tradeoff: base energy expense still scales directly with metabolic rate, while food-energy yield uses the multiplier `1 + (metabolismScale − 1) × 0.4`. This gives a 0.5 metabolism trait 80% food yield and a 1.5 trait 120% yield. Older configuration schemas migrate with zero food-yield influence, preserving their historical energy rule.
+
+The fixed seeds, resource multipliers, duration, and checkpoints remain unchanged.
+
+| Regime        | Final population (min / median / max) | Median births / deaths | Median lineage retention | Sampled cap fraction | Extinctions |
+| ------------- | ------------------------------------: | ---------------------: | -----------------------: | -------------------: | ----------: |
+| Resource-poor |                        94 / 105 / 109 |              534 / 680 |                    11.6% |      0% in every run |       0 / 3 |
+| Default       |                       203 / 210 / 218 |          1,163 / 1,209 |                    22.0% |      0% in every run |       0 / 3 |
+| Resource-rich |                       428 / 459 / 473 |          1,737 / 1,514 |                    40.8% |      0% in every run |       0 / 3 |
+
+Default median normalized shifts are movement +14.7%, perception +18.0%, metabolism +18.0%, reproduction threshold +7.2%, and mutation tendency +6.2%. All six declared criteria pass without changing their thresholds: persistence, headroom, turnover, diversity, balanced selection, and environmental sensitivity. The characterization report now publishes this assessment directly, and automated coverage protects the threshold logic.
+
+Passing these finite-run criteria does not establish long-term equilibrium or biological realism. It demonstrates that the default is no longer primarily regulated by its population safety cap, that resource regimes produce visibly separated outcomes, and that no measured default trait is undergoing the previously observed one-way shift beyond the declared tolerance. The next increment should add explicit extinction, equilibrium, and runaway-population diagnostics rather than continue tuning against the same finite window.

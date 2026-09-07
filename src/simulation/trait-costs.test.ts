@@ -3,7 +3,7 @@ import {
   createDefaultSimulationConfig,
   parseSimulationConfig,
 } from "./configuration";
-import { SimulationWorld } from "./world";
+import { foodEnergyMultiplier, SimulationWorld } from "./world";
 
 const firstOrganism = (world: SimulationWorld) => {
   const organism = world.snapshot.organisms[0];
@@ -14,13 +14,25 @@ const firstOrganism = (world: SimulationWorld) => {
 const legacyConfig = () => {
   const config = createDefaultSimulationConfig();
   const {
+    metabolismFoodEnergyInfluence: _metabolismInfluence,
     movementCostPerTick: _movement,
     perceptionCostPerTick: _perception,
     ...organisms
   } = config.organisms;
   void _movement;
   void _perception;
+  void _metabolismInfluence;
   return { ...config, schemaVersion: 1, organisms };
+};
+
+const versionTwoConfig = () => {
+  const config = createDefaultSimulationConfig();
+  config.food.regrowthUnitsPerTick = 20;
+  config.organisms.perceptionCostPerTick = 0.001;
+  const { metabolismFoodEnergyInfluence: _influence, ...organisms } =
+    config.organisms;
+  void _influence;
+  return { ...config, schemaVersion: 2, organisms };
 };
 
 const controlledWorld = (
@@ -58,6 +70,47 @@ const controlledWorld = (
 };
 
 describe("energetic trait costs", () => {
+  it("gives faster metabolisms greater food yield while retaining higher base cost", () => {
+    expect(foodEnergyMultiplier(0.5, 0.4)).toBeCloseTo(0.8, 10);
+    expect(foodEnergyMultiplier(1, 0.4)).toBe(1);
+    expect(foodEnergyMultiplier(1.5, 0.4)).toBeCloseTo(1.2, 10);
+    expect(foodEnergyMultiplier(0.5, 0)).toBe(1);
+
+    const fedWorld = (metabolismScale: number) => {
+      const config = createDefaultSimulationConfig();
+      config.population.initialCount = 1;
+      config.population.maximumCount = 1;
+      config.food.initialUnits = 0;
+      config.food.regrowthUnitsPerTick = 0;
+      config.organisms.movementCostPerTick = 0;
+      config.organisms.perceptionCostPerTick = 0;
+      const snapshot = new SimulationWorld(config).snapshot;
+      const founder = snapshot.organisms[0];
+      if (founder === undefined) throw new Error("Expected founder");
+      const cell = founder.y * snapshot.width + founder.x;
+      const foodByCell = [...snapshot.foodByCell];
+      foodByCell[cell] = 1;
+      return SimulationWorld.fromSnapshot({
+        ...snapshot,
+        totalFood: 1,
+        occupiedFoodCells: 1,
+        foodByCell,
+        organisms: [
+          {
+            ...founder,
+            genome: { ...founder.genome, metabolismScale },
+          },
+        ],
+      });
+    };
+    const slow = fedWorld(0.5);
+    const fast = fedWorld(1.5);
+    slow.step();
+    fast.step();
+    expect(firstOrganism(slow).energy).toBeCloseTo(43.15, 10);
+    expect(firstOrganism(fast).energy).toBeCloseTo(44.65, 10);
+  });
+
   it("charges squared speed and perception capacity even when stationary", () => {
     const slow = controlledWorld(1, 2, 0.1, 0.01);
     const fast = controlledWorld(2, 2, 0.1, 0.01);
@@ -95,6 +148,7 @@ describe("energetic trait costs", () => {
     expect(parseSimulationConfig(legacy).organisms).toMatchObject({
       movementCostPerTick: 0,
       perceptionCostPerTick: 0,
+      metabolismFoodEnergyInfluence: 0,
     });
     const world = new SimulationWorld(legacy);
     world.advanceTicks(100);
@@ -111,7 +165,15 @@ describe("energetic trait costs", () => {
     ).toThrow();
   });
 
-  it("rejects missing, negative, non-finite, and excessive costs in version two", () => {
+  it("migrates version-two files with neutral food yield", () => {
+    const migrated = parseSimulationConfig(versionTwoConfig());
+    expect(migrated.schemaVersion).toBe(3);
+    expect(migrated.organisms.metabolismFoodEnergyInfluence).toBe(0);
+    expect(migrated.organisms.movementCostPerTick).toBe(0.1);
+    expect(migrated.organisms.perceptionCostPerTick).toBe(0.001);
+  });
+
+  it("rejects missing, negative, non-finite, and excessive costs in version three", () => {
     for (const field of [
       "movementCostPerTick",
       "perceptionCostPerTick",
@@ -125,6 +187,21 @@ describe("energetic trait costs", () => {
           }),
         ).toThrow();
       }
+    }
+  });
+
+  it("rejects invalid metabolism food influence in version three", () => {
+    for (const value of [undefined, -0.01, 1.01, NaN, Infinity]) {
+      const config = createDefaultSimulationConfig();
+      expect(() =>
+        parseSimulationConfig({
+          ...config,
+          organisms: {
+            ...config.organisms,
+            metabolismFoodEnergyInfluence: value,
+          },
+        }),
+      ).toThrow();
     }
   });
 });

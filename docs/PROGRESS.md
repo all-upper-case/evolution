@@ -524,3 +524,21 @@ All 93 tests, formatting, linting, strict type checking, and the four-entry prod
 ### Risk and next action
 
 Five of six ecological criteria pass; perception (+21.7%) and metabolism (-24.2%) still exceed the default balanced-selection threshold. Evaluate a meaningful metabolism benefit/cost tradeoff and perception efficiency before further calibration or named presets. The matrix does not establish long-term equilibrium or biological realism.
+
+## 2026-09-07 — Completed default calibration (development)
+
+### Changed
+
+- Made metabolic rate influence both base energy expenditure and food-energy extraction, creating an explicit conservation-versus-assimilation tradeoff.
+- Added strict configuration schema 3 with a bounded metabolism food-yield influence and neutral migrations for version-one and version-two experiments.
+- Calibrated new defaults to 0.4 metabolism food influence, 0.0018 perception cost, and 23 food units of regrowth per tick while retaining the 0.1 movement cost.
+- Added a machine-readable assessment of the six previously declared ecological criteria and completed the default-calibration roadmap item only after every criterion passed unchanged.
+- Exposed the metabolism tradeoff in experiment settings and URL-driven lab overrides.
+
+### Validation
+
+Formatting, linting, strict type checking, all 96 tests, and the four-entry production build pass locally. The unchanged nine-run matrix confirms all six criteria pass: default median final population is 210, median lineage retention is 22.0%, and normalized median trait shifts range from +6.2% to +18.0%. GitHub CI and deployed verification remain required before merge completion.
+
+### Risk and next action
+
+The calibration window is finite and deterministic; it does not prove long-term equilibrium, robustness beyond the representative resource gradient, or biological realism. Threshold checks deliberately protect broad behavior rather than exact stochastic outcomes. Add extinction, equilibrium, and runaway-population diagnostics next so longer experiments can classify failure modes directly.

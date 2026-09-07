@@ -1,4 +1,4 @@
-export const CONFIG_SCHEMA_VERSION = 2 as const;
+export const CONFIG_SCHEMA_VERSION = 3 as const;
 
 export interface SimulationConfig {
   schemaVersion: typeof CONFIG_SCHEMA_VERSION;
@@ -24,6 +24,7 @@ export interface SimulationConfig {
     reproductionThreshold: number;
     offspringEnergy: number;
     metabolismPerTick: number;
+    metabolismFoodEnergyInfluence: number;
     movementCostPerTick: number;
     perceptionCostPerTick: number;
     maximumAgeTicks: number;
@@ -105,7 +106,7 @@ const DEFAULT_CONFIG: SimulationConfig = {
   food: {
     initialUnits: 12_000,
     maximumUnits: 50_000,
-    regrowthUnitsPerTick: 20,
+    regrowthUnitsPerTick: 23,
     energyPerUnit: 4,
   },
   organisms: {
@@ -114,8 +115,9 @@ const DEFAULT_CONFIG: SimulationConfig = {
     reproductionThreshold: 80,
     offspringEnergy: 30,
     metabolismPerTick: 0.1,
+    metabolismFoodEnergyInfluence: 0.4,
     movementCostPerTick: 0.1,
-    perceptionCostPerTick: 0.001,
+    perceptionCostPerTick: 0.0018,
     maximumAgeTicks: 30_000,
   },
   evolution: {
@@ -248,6 +250,7 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
       "reproductionThreshold",
       "offspringEnergy",
       "metabolismPerTick",
+      ...(root.schemaVersion === 3 ? ["metabolismFoodEnergyInfluence"] : []),
       ...(root.schemaVersion === 1
         ? []
         : ["movementCostPerTick", "perceptionCostPerTick"]),
@@ -384,6 +387,16 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
     SIMULATION_LIMITS.metabolism,
     issues,
   );
+  const metabolismFoodEnergyInfluence =
+    schemaVersion <= 2
+      ? 0
+      : readNumber(
+          organisms,
+          "metabolismFoodEnergyInfluence",
+          "$.organisms.metabolismFoodEnergyInfluence",
+          SIMULATION_LIMITS.probability,
+          issues,
+        );
   const maximumAgeTicks = readNumber(
     organisms,
     "maximumAgeTicks",
@@ -493,6 +506,7 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
       reproductionThreshold,
       offspringEnergy,
       metabolismPerTick,
+      metabolismFoodEnergyInfluence,
       movementCostPerTick,
       perceptionCostPerTick,
       maximumAgeTicks,

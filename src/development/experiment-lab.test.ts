@@ -8,7 +8,7 @@ import {
 describe("experiment lab", () => {
   it("parses complete dotted overrides and ordered checkpoints", () => {
     const request = parseLabRequest(
-      "?ticks=20&checkpoints=20,0,10,10&seed=77&world.width=32&world.height=48&population.initialCount=12&population.maximumCount=50&evolution.mutationProbability=0.25&organisms.movementCostPerTick=0&organisms.perceptionCostPerTick=0.002",
+      "?ticks=20&checkpoints=20,0,10,10&seed=77&world.width=32&world.height=48&population.initialCount=12&population.maximumCount=50&evolution.mutationProbability=0.25&organisms.movementCostPerTick=0&organisms.perceptionCostPerTick=0.002&organisms.metabolismFoodEnergyInfluence=0.6",
     );
     expect(request).toMatchObject({
       ticks: 20,
@@ -18,7 +18,11 @@ describe("experiment lab", () => {
         world: { width: 32, height: 48 },
         population: { initialCount: 12, maximumCount: 50 },
         evolution: { mutationProbability: 0.25 },
-        organisms: { movementCostPerTick: 0, perceptionCostPerTick: 0.002 },
+        organisms: {
+          movementCostPerTick: 0,
+          perceptionCostPerTick: 0.002,
+          metabolismFoodEnergyInfluence: 0.6,
+        },
       },
     });
   });
