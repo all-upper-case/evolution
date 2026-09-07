@@ -1,6 +1,12 @@
 # Roadmap
 
-This is the source of truth for autonomous development. Work from the earliest incomplete milestone unless a defect or dependency requires otherwise.
+This is the source of truth for autonomous development. Follow the active priority below; completed foundation work remains recorded in milestone order.
+
+## Active priority — Environmental and biological diversity
+
+Owner direction, 2026-09-07: prioritize richer habitats, food sources, and predator–prey relationships now. The remaining Milestone 3 presentation and diagnostic tools are deferred unless needed to validate a specific ecological mechanic. Do not require completion of Milestone 3 before starting the ordered Milestone 4 increments below.
+
+Next implementation: seeded habitat patches supporting two renewable food types with distinct renewal/energy properties, visible terrain/resource encoding, strict snapshot compatibility, and per-resource lab summaries. This is an end-to-end feature, not a generic terrain framework.
 
 ## Milestone 0 — Project foundation
 
@@ -50,16 +56,23 @@ Exit condition: users can reproduce and compare controlled experiments.
 
 ## Milestone 4 — Richer evolution
 
-Introduce these incrementally and only with tests and visible metrics:
+Implement in this order, with tests, visible behavior, and focused metrics:
 
-- [ ] Sensor and behavior genes.
-- [ ] Predation and defense.
-- [ ] Sexual reproduction or mate selection.
-- [ ] Environmental variation and distinct resource types.
+- [ ] Seeded habitat patches and two distinct renewable food types.
+      Acceptance: habitat changes resource availability; types differ in renewal or energy yield; both are distinguishable in the world view and lab; same-seed generation and save/load continuation are deterministic; legacy worlds retain their old rules.
+- [ ] Inherited diet specialization with a cost to generalism or specialization.
+      Acceptance: feeding preferences and efficiencies affect behavior; controlled opposing resource environments favor different strategies; diets are inspectable rather than just different creature colors.
+- [ ] Predation and defense, including pursuit and escape.
+      Acceptance: predators gain bounded energy from successful attacks; attacks carry costs and defense has a tradeoff; killed prey cannot act again or be eaten twice; starvation, age, and predation deaths are counted separately; multi-seed experiments demonstrate viable predator/prey interaction over a documented window.
+- [ ] Obstacles, movement costs, and refuges that deepen spatial niches.
+      Acceptance: terrain affects movement or exposure; route/target selection is deterministic and bounded; spatial behavior is visible and performance remains within interactive limits.
+- [ ] Additional sensor and behavior genes motivated by the new ecology.
 - [ ] Species/lineage clustering based on genomic distance.
-- [ ] Spatial niches, obstacles, and biome variation.
+- [ ] Sexual reproduction or mate selection.
 
-Exit condition: multiple ecological strategies can emerge and remain explainable.
+Exit condition: multiple ecological strategies can emerge and remain explainable across heterogeneous habitats and food-web interactions. Short finite-run coexistence must not be described as proven long-term stability.
+
+Retain the existing simple-world calibration as a compatibility baseline. Add mechanic-specific experiments for the richer model; do not assume that its trait shifts or population patterns must match the old single-resource model.
 
 ## Continuous work
 

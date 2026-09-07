@@ -191,3 +191,13 @@ Configuration schema 3 adds `metabolismFoodEnergyInfluence`, a bounded coefficie
 The fixed characterization report now evaluates the six previously declared calibration criteria as threshold-based booleans. Exact populations are not regression assertions, but all six thresholds must remain explicit and reviewable when model behavior changes.
 
 **Why:** Lower metabolism previously reduced expense without any countervailing disadvantage. Partial food-yield scaling creates a legible conservation-versus-assimilation tradeoff without adding randomness or coupling to rendering. The selected defaults are the simplest tested combination that passes persistence, headroom, turnover, diversity, balanced-selection, and environmental-sensitivity criteria across the unchanged matrix. Versioned migration prevents the new mechanic from silently changing imported historical experiments.
+
+## 2026-09-07 — Prioritize environmental and biological diversity
+
+**Status:** Accepted; supersedes the remaining diagnostics-first ordering.
+
+The owner requests richer environments, food types, and predation. Begin Milestone 4 before completing the remaining Milestone 3 tools: habitat/resource heterogeneity, inherited diet specialization, predation/defense, then deeper terrain constraints. Include only the observability needed to validate each feature alongside its implementation. Do not repeatedly defer visible ecological features for generic infrastructure or further tuning of the simple model.
+
+Current organisms die from energy depletion or maximum age. Predation will add a distinct interaction and death cause. Ecological roles should be grounded in inherited capabilities and tradeoffs rather than cosmetic labels. New state must preserve deterministic ordering, explicit bounds, and versioned legacy continuation.
+
+**Why:** The calibrated single-resource world is a useful foundation but offers too few distinct ways to live. Spatially different resources create the first niches; diet specialization and predator–prey interactions build on those niches. This is within the original ecosystem mission and explicitly authorized by the owner.
