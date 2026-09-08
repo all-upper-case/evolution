@@ -201,3 +201,11 @@ The owner requests richer environments, food types, and predation. Begin Milesto
 Current organisms die from energy depletion or maximum age. Predation will add a distinct interaction and death cause. Ecological roles should be grounded in inherited capabilities and tradeoffs rather than cosmetic labels. New state must preserve deterministic ordering, explicit bounds, and versioned legacy continuation.
 
 **Why:** The calibrated single-resource world is a useful foundation but offers too few distinct ways to live. Spatially different resources create the first niches; diet specialization and predator–prey interactions build on those niches. This is within the original ecosystem mission and explicitly authorized by the owner.
+
+## 2026-09-07 — Seeded habitats and typed renewable resources
+
+**Status:** Accepted
+
+Configuration schema 4 can enable a heterogeneous world divided into deterministic meadow and grove patches by seeded nearest-center assignment. Meadow and grove food occupy separate bounded grids, grow only in their matching habitat, and have independent initial supply, capacity, renewal, and energy yield. Organisms currently value either food by obtainable energy; diet specialization remains the next mechanic. World snapshot schema 2 captures both resource grids and the habitat map, while schema-1 snapshots and configuration schemas 1–3 migrate into a disabled-ecology compatibility mode that retains their single-resource rules.
+
+**Why:** Habitat-bound resources provide visible spatial niches and a concrete substrate for heritable diets without prematurely adding a generic terrain engine. Separate arrays keep resource accounting, rendering, save/load validation, and future feeding efficiencies explicit. Opt-in versioning prevents richer defaults from changing historical deterministic experiments.
