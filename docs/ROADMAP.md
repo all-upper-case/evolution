@@ -6,7 +6,7 @@ This is the source of truth for autonomous development. Follow the active priori
 
 Owner direction, 2026-09-07: prioritize richer habitats, food sources, and predator–prey relationships now. The remaining Milestone 3 presentation and diagnostic tools are deferred unless needed to validate a specific ecological mechanic. Do not require completion of Milestone 3 before starting the ordered Milestone 4 increments below.
 
-Next implementation: seeded habitat patches supporting two renewable food types with distinct renewal/energy properties, visible terrain/resource encoding, strict snapshot compatibility, and per-resource lab summaries. This is an end-to-end feature, not a generic terrain framework.
+Next implementation: inherited diet specialization with opposing resource experiments, inspectable feeding efficiency, and a documented cost to being either a specialist or generalist.
 
 ## Milestone 0 — Project foundation
 
@@ -58,7 +58,7 @@ Exit condition: users can reproduce and compare controlled experiments.
 
 Implement in this order, with tests, visible behavior, and focused metrics:
 
-- [ ] Seeded habitat patches and two distinct renewable food types.
+- [x] Seeded habitat patches and two distinct renewable food types.
       Acceptance: habitat changes resource availability; types differ in renewal or energy yield; both are distinguishable in the world view and lab; same-seed generation and save/load continuation are deterministic; legacy worlds retain their old rules.
 - [ ] Inherited diet specialization with a cost to generalism or specialization.
       Acceptance: feeding preferences and efficiencies affect behavior; controlled opposing resource environments favor different strategies; diets are inspectable rather than just different creature colors.
