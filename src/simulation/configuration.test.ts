@@ -103,7 +103,7 @@ describe("simulation configuration", () => {
   });
 
   it.each([
-    ["unsupported schema", alter((config) => (config.schemaVersion = 5 as 4))],
+    ["unsupported schema", alter((config) => (config.schemaVersion = 6 as 5))],
     ["negative seed", alter((config) => (config.seed = -1))],
     [
       "non-finite food",
@@ -153,6 +153,37 @@ describe("simulation configuration", () => {
         }),
       ),
     ).toThrow(SimulationConfigError);
+    expect(() =>
+      parseSimulationConfig(
+        alter((config) => {
+          config.ecology.oppositeFoodEfficiency =
+            config.ecology.specialistFoodEfficiency;
+        }),
+      ),
+    ).toThrow(SimulationConfigError);
+  });
+
+  it("migrates schema-four ecology with neutral disabled diets", () => {
+    const current = createDefaultSimulationConfig();
+    const {
+      dietSpecializationEnabled: _dietEnabled,
+      specialistFoodEfficiency: _specialist,
+      oppositeFoodEfficiency: _opposite,
+      ...legacyEcology
+    } = current.ecology;
+    void _dietEnabled;
+    void _specialist;
+    void _opposite;
+    const migrated = parseSimulationConfig({
+      ...current,
+      schemaVersion: 4,
+      ecology: legacyEcology,
+    });
+
+    expect(migrated.schemaVersion).toBe(5);
+    expect(migrated.ecology.dietSpecializationEnabled).toBe(false);
+    expect(migrated.ecology.specialistFoodEfficiency).toBe(1);
+    expect(migrated.ecology.oppositeFoodEfficiency).toBe(1);
   });
 
   it.each([

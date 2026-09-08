@@ -1,4 +1,4 @@
-export const CONFIG_SCHEMA_VERSION = 4 as const;
+export const CONFIG_SCHEMA_VERSION = 5 as const;
 
 export interface SimulationConfig {
   schemaVersion: typeof CONFIG_SCHEMA_VERSION;
@@ -20,12 +20,15 @@ export interface SimulationConfig {
   };
   ecology: {
     enabled: boolean;
+    dietSpecializationEnabled: boolean;
     habitatPatchCount: number;
     groveFraction: number;
     secondaryInitialUnits: number;
     secondaryMaximumUnits: number;
     secondaryRegrowthUnitsPerTick: number;
     secondaryEnergyPerUnit: number;
+    specialistFoodEfficiency: number;
+    oppositeFoodEfficiency: number;
   };
   organisms: {
     initialEnergy: number;
@@ -84,6 +87,7 @@ export const SIMULATION_LIMITS = Object.freeze({
   historyInterval: numericLimit(1, 1_000_000, true),
   historySamples: numericLimit(1, 100_000, true),
   habitatPatchCount: numericLimit(2, 64, true),
+  foodEfficiency: numericLimit(0.01, 2, false),
 } satisfies Readonly<Record<string, NumericLimit | number>>);
 
 export class SimulationConfigError extends Error {
@@ -121,12 +125,15 @@ const DEFAULT_CONFIG: SimulationConfig = {
   },
   ecology: {
     enabled: true,
+    dietSpecializationEnabled: true,
     habitatPatchCount: 12,
     groveFraction: 0.38,
     secondaryInitialUnits: 4_000,
     secondaryMaximumUnits: 18_000,
     secondaryRegrowthUnitsPerTick: 7,
     secondaryEnergyPerUnit: 7,
+    specialistFoodEfficiency: 1.25,
+    oppositeFoodEfficiency: 0.25,
   },
   organisms: {
     initialEnergy: 40,
@@ -251,7 +258,9 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
       "world",
       "population",
       "food",
-      ...(inputSchemaVersion === 4 ? ["ecology"] : []),
+      ...(inputSchemaVersion === 4 || inputSchemaVersion === 5
+        ? ["ecology"]
+        : []),
       "organisms",
       "evolution",
       "history",
@@ -277,18 +286,22 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
     issues,
   );
   const ecology =
-    root.schemaVersion === 4
+    root.schemaVersion === 4 || root.schemaVersion === 5
       ? readRecord(
           root.ecology,
           "$.ecology",
           [
             "enabled",
+            ...(root.schemaVersion === 5 ? ["dietSpecializationEnabled"] : []),
             "habitatPatchCount",
             "groveFraction",
             "secondaryInitialUnits",
             "secondaryMaximumUnits",
             "secondaryRegrowthUnitsPerTick",
             "secondaryEnergyPerUnit",
+            ...(root.schemaVersion === 5
+              ? ["specialistFoodEfficiency", "oppositeFoodEfficiency"]
+              : []),
           ],
           issues,
         )
@@ -302,7 +315,9 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
       "reproductionThreshold",
       "offspringEnergy",
       "metabolismPerTick",
-      ...(root.schemaVersion === 3 || root.schemaVersion === 4
+      ...(root.schemaVersion === 3 ||
+      root.schemaVersion === 4 ||
+      root.schemaVersion === 5
         ? ["metabolismFoodEnergyInfluence"]
         : []),
       ...(root.schemaVersion === 1
@@ -410,6 +425,15 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
     schemaVersion < 4
       ? false
       : readBoolean(ecology, "enabled", "$.ecology.enabled", issues);
+  const dietSpecializationEnabled =
+    schemaVersion < 5
+      ? false
+      : readBoolean(
+          ecology,
+          "dietSpecializationEnabled",
+          "$.ecology.dietSpecializationEnabled",
+          issues,
+        );
   const habitatPatchCount =
     schemaVersion < 4
       ? DEFAULT_CONFIG.ecology.habitatPatchCount
@@ -468,6 +492,26 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
           "secondaryEnergyPerUnit",
           "$.ecology.secondaryEnergyPerUnit",
           SIMULATION_LIMITS.foodEnergy,
+          issues,
+        );
+  const specialistFoodEfficiency =
+    schemaVersion < 5
+      ? 1
+      : readNumber(
+          ecology,
+          "specialistFoodEfficiency",
+          "$.ecology.specialistFoodEfficiency",
+          SIMULATION_LIMITS.foodEfficiency,
+          issues,
+        );
+  const oppositeFoodEfficiency =
+    schemaVersion < 5
+      ? 1
+      : readNumber(
+          ecology,
+          "oppositeFoodEfficiency",
+          "$.ecology.oppositeFoodEfficiency",
+          SIMULATION_LIMITS.foodEfficiency,
           issues,
         );
   const initialEnergy = readNumber(
@@ -602,6 +646,13 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
     issues,
   );
   addRelationalIssue(
+    dietSpecializationEnabled &&
+      oppositeFoodEfficiency >= specialistFoodEfficiency,
+    "$.ecology.oppositeFoodEfficiency",
+    "must be less than specialistFoodEfficiency when diet specialization is enabled",
+    issues,
+  );
+  addRelationalIssue(
     initialEnergy > maximumEnergy,
     "$.organisms.initialEnergy",
     "must not exceed maximumEnergy",
@@ -632,12 +683,15 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
     food: { initialUnits, maximumUnits, regrowthUnitsPerTick, energyPerUnit },
     ecology: {
       enabled: ecologyEnabled,
+      dietSpecializationEnabled,
       habitatPatchCount,
       groveFraction,
       secondaryInitialUnits,
       secondaryMaximumUnits,
       secondaryRegrowthUnitsPerTick,
       secondaryEnergyPerUnit,
+      specialistFoodEfficiency,
+      oppositeFoodEfficiency,
     },
     organisms: {
       initialEnergy,

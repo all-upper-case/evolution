@@ -20,12 +20,15 @@ type ConfigNumberPath =
   | "food.regrowthUnitsPerTick"
   | "food.energyPerUnit"
   | "ecology.enabled"
+  | "ecology.dietSpecializationEnabled"
   | "ecology.habitatPatchCount"
   | "ecology.groveFraction"
   | "ecology.secondaryInitialUnits"
   | "ecology.secondaryMaximumUnits"
   | "ecology.secondaryRegrowthUnitsPerTick"
   | "ecology.secondaryEnergyPerUnit"
+  | "ecology.specialistFoodEfficiency"
+  | "ecology.oppositeFoodEfficiency"
   | "organisms.initialEnergy"
   | "organisms.maximumEnergy"
   | "organisms.reproductionThreshold"
@@ -52,12 +55,15 @@ export const LAB_CONFIG_PATHS: readonly ConfigNumberPath[] = Object.freeze([
   "food.regrowthUnitsPerTick",
   "food.energyPerUnit",
   "ecology.enabled",
+  "ecology.dietSpecializationEnabled",
   "ecology.habitatPatchCount",
   "ecology.groveFraction",
   "ecology.secondaryInitialUnits",
   "ecology.secondaryMaximumUnits",
   "ecology.secondaryRegrowthUnitsPerTick",
   "ecology.secondaryEnergyPerUnit",
+  "ecology.specialistFoodEfficiency",
+  "ecology.oppositeFoodEfficiency",
   "organisms.initialEnergy",
   "organisms.maximumEnergy",
   "organisms.reproductionThreshold",
@@ -103,10 +109,14 @@ const assignPath = (
     config.seed = value;
     return;
   }
-  if (path === "ecology.enabled") {
+  if (
+    path === "ecology.enabled" ||
+    path === "ecology.dietSpecializationEnabled"
+  ) {
     if (value !== 0 && value !== 1)
-      throw new RangeError("ecology.enabled must equal 0 or 1.");
-    config.ecology.enabled = value === 1;
+      throw new RangeError(`${path} must equal 0 or 1.`);
+    if (path === "ecology.enabled") config.ecology.enabled = value === 1;
+    else config.ecology.dietSpecializationEnabled = value === 1;
     return;
   }
   const [section, key] = parts;

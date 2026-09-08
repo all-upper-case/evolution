@@ -22,6 +22,7 @@ class FakeElement {
   public innerHTML = "";
   public value = "";
   public disabled = false;
+  public checked = false;
   public hidden = false;
   public files: FileList | null = null;
   readonly attributes = new Map<string, string>();
@@ -184,6 +185,12 @@ describe("simulation controls", () => {
     expect(find("inspect-position").textContent).toBe(
       `${founder.x.toLocaleString()}, ${founder.y.toLocaleString()}`,
     );
+    expect(find("inspect-diet").textContent).toMatch(
+      /(?:Meadow specialist|Generalist|Grove specialist) \(0\.\d{2}\)/,
+    );
+    expect(find("inspect-diet-efficiency").textContent).toMatch(
+      /^\d\.\d{2}× \/ \d\.\d{2}×$/,
+    );
     expect(find("inspector-details").hidden).toBe(false);
     expect(find("message").textContent).toContain("Selected organism");
     expect(renderWorld).toHaveBeenLastCalledWith(
@@ -326,6 +333,9 @@ describe("simulation controls", () => {
     find("setting-movement-cost").value = "0.15";
     find("setting-perception-cost").value = "0.002";
     find("setting-metabolism-food-influence").value = "0.6";
+    find("setting-diet-specialization").checked = true;
+    find("setting-specialist-efficiency").value = "1.4";
+    find("setting-opposite-efficiency").value = "0.2";
     find("setting-reproduction").value = "70";
     find("setting-offspring").value = "25";
     find("setting-mutation-probability").value = "0.25";
@@ -345,6 +355,11 @@ describe("simulation controls", () => {
       world: { width: 64, height: 96 },
       population: { initialCount: 120, maximumCount: 600 },
       food: { regrowthUnitsPerTick: 12.5, energyPerUnit: 6 },
+      ecology: {
+        dietSpecializationEnabled: true,
+        specialistFoodEfficiency: 1.4,
+        oppositeFoodEfficiency: 0.2,
+      },
       organisms: {
         metabolismPerTick: 0.2,
         movementCostPerTick: 0.15,
