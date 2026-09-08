@@ -44,6 +44,12 @@ describe("experiment lab", () => {
     expect(() => parseLabRequest("?population.maximumCount=1001")).toThrow(
       "at most 256×256",
     );
+    expect(() => parseLabRequest("?ecology.enabled=2")).toThrow(
+      "must equal 0 or 1",
+    );
+    expect(parseLabRequest("?ecology.enabled=0").config.ecology.enabled).toBe(
+      false,
+    );
   });
 
   it("produces compact deterministic checkpoint reports", () => {
@@ -74,5 +80,8 @@ describe("experiment lab", () => {
     expect(first.checkpoints[2]?.traits.movementSpeed.mean).toEqual(
       expect.any(Number),
     );
+    expect(first.checkpoints[0]?.foodByType.meadow).toBe(500);
+    expect(typeof first.checkpoints[0]?.foodByType.grove).toBe("number");
+    expect(first.checkpoints[0]?.habitatCells.grove).toBeGreaterThan(0);
   });
 });
