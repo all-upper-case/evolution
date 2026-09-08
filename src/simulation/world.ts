@@ -14,6 +14,19 @@ export const foodEnergyMultiplier = (
   influence: number,
 ): number => 1 + (metabolismScale - 1) * influence;
 
+export const dietEfficiency = (
+  dietPreference: number,
+  habitat: 0 | 1,
+  specialistEfficiency: number,
+  oppositeEfficiency: number,
+): number => {
+  const preferenceForFood = habitat === 0 ? 1 - dietPreference : dietPreference;
+  return (
+    oppositeEfficiency +
+    preferenceForFood * (specialistEfficiency - oppositeEfficiency)
+  );
+};
+
 export interface WorldSummary {
   tick: number;
   width: number;
@@ -28,7 +41,7 @@ export interface WorldSummary {
 }
 
 export interface WorldSnapshot extends WorldSummary {
-  schemaVersion: 1 | 2;
+  schemaVersion: 1 | 2 | 3;
   config: SimulationConfig;
   foodByCell: readonly number[];
   habitatByCell?: readonly number[];
@@ -100,6 +113,7 @@ const parseOrganism = (
   value: unknown,
   index: number,
   config: SimulationConfig,
+  snapshotVersion: number,
 ): Organism => {
   const path = `$.organisms[${String(index)}]`;
   const record = asRecord(value, path);
@@ -131,9 +145,17 @@ const parseOrganism = (
 
   const genomeRecord = asRecord(record.genome, `${path}.genome`);
   const traits = Object.keys(GENOME_TRAIT_RANGES) as (keyof Genome)[];
-  requireKeys(genomeRecord, traits, `${path}.genome`);
+  const serializedTraits =
+    snapshotVersion < 3
+      ? traits.filter((trait) => trait !== "dietPreference")
+      : traits;
+  requireKeys(genomeRecord, serializedTraits, `${path}.genome`);
   const genome = {} as Genome;
   for (const trait of traits) {
+    if (trait === "dietPreference" && snapshotVersion < 3) {
+      genome[trait] = 0.5;
+      continue;
+    }
     const traitValue = finiteNumber(
       genomeRecord[trait],
       `${path}.genome.${trait}`,
@@ -159,8 +181,18 @@ const parseOrganism = (
 const parseWorldSnapshot = (value: unknown): WorldSnapshot => {
   const root = asRecord(value, "$");
   const snapshotVersion = safeInteger(root.schemaVersion, "$.schemaVersion", 1);
-  if (snapshotVersion !== 1 && snapshotVersion !== 2)
-    throw new WorldSnapshotError("$.schemaVersion must equal 1 or 2");
+  if (snapshotVersion !== 1 && snapshotVersion !== 2 && snapshotVersion !== 3)
+    throw new WorldSnapshotError("$.schemaVersion must equal 1, 2, or 3");
+  const serializedConfig = asRecord(root.config, "$.config");
+  const serializedConfigVersion = safeInteger(
+    serializedConfig.schemaVersion,
+    "$.config.schemaVersion",
+    1,
+  );
+  if (snapshotVersion < 3 && serializedConfigVersion >= 5)
+    throw new WorldSnapshotError(
+      "legacy world snapshots cannot contain diet-enabled configuration schemas",
+    );
   requireKeys(
     root,
     [
@@ -176,13 +208,13 @@ const parseWorldSnapshot = (value: unknown): WorldSnapshot => {
       "organisms",
       "randomState",
       "nextOrganismId",
-      ...(snapshotVersion === 2
+      ...(snapshotVersion >= 2
         ? ["habitatByCell", "secondaryFoodByCell", "foodTotals"]
         : []),
     ],
     "$",
   );
-  const config = parseSimulationConfig(root.config);
+  const config = parseSimulationConfig(serializedConfig);
   const tick = safeInteger(root.tick, "$.tick");
   const width = safeInteger(root.width, "$.width", 1);
   const height = safeInteger(root.height, "$.height", 1);
@@ -220,7 +252,7 @@ const parseWorldSnapshot = (value: unknown): WorldSnapshot => {
   let habitatByCell: readonly number[] | undefined;
   let secondaryFoodByCell: readonly number[] | undefined;
   let foodTotals = { meadow: computedTotal, grove: 0 };
-  if (snapshotVersion === 2) {
+  if (snapshotVersion >= 2) {
     if (!Array.isArray(root.habitatByCell))
       throw new WorldSnapshotError("$.habitatByCell must be an array");
     if (!Array.isArray(root.secondaryFoodByCell))
@@ -297,7 +329,7 @@ const parseWorldSnapshot = (value: unknown): WorldSnapshot => {
   if (root.organisms.length > config.population.maximumCount)
     throw new WorldSnapshotError("$.organisms exceeds the population cap");
   const organisms = root.organisms.map((organism, index) =>
-    parseOrganism(organism, index, config),
+    parseOrganism(organism, index, config, snapshotVersion),
   );
   for (let index = 1; index < organisms.length; index += 1) {
     if ((organisms[index - 1]?.id ?? 0) >= (organisms[index]?.id ?? 0))
@@ -396,7 +428,7 @@ export class SimulationWorld {
 
   public get snapshot(): WorldSnapshot {
     return {
-      schemaVersion: 2,
+      schemaVersion: 3,
       config: parseSimulationConfig(this.#config),
       ...this.summary,
       foodByCell: Object.freeze(Array.from(this.#foodByCell)),
@@ -551,7 +583,7 @@ export class SimulationWorld {
     // after every organism that existed at tick start has taken its turn.
     for (const organism of this.#organisms) {
       const position = this.#moveTowardFood(organism);
-      const foodEnergy = this.#consumeFood(position.x, position.y, 1);
+      const foodEnergy = this.#consumeFood(position.x, position.y, 1, organism);
       const energy = Math.min(
         this.#config.organisms.maximumEnergy,
         organism.energy +
@@ -636,6 +668,7 @@ export class SimulationWorld {
         x,
         y,
         Math.floor(organism.genome.perceptionRange),
+        organism,
       );
       if (target.x !== x) x += Math.sign(target.x - x);
       else if (target.y !== y) y += Math.sign(target.y - y);
@@ -648,11 +681,13 @@ export class SimulationWorld {
     originX: number,
     originY: number,
     range: number,
+    organism: Organism,
   ): { x: number; y: number } {
     let bestX = originX;
     let bestY = originY;
     let bestFood = this.#foodValueAt(
       originY * this.#config.world.width + originX,
+      organism,
     );
     let bestDistance = 0;
 
@@ -666,7 +701,10 @@ export class SimulationWorld {
       for (let x = minimumX; x <= maximumX; x += 1) {
         const distance = Math.abs(x - originX) + Math.abs(y - originY);
         if (distance > range) continue;
-        const food = this.#foodValueAt(y * this.#config.world.width + x);
+        const food = this.#foodValueAt(
+          y * this.#config.world.width + x,
+          organism,
+        );
         if (
           food > bestFood ||
           (food === bestFood && food > 0 && distance < bestDistance)
@@ -682,7 +720,12 @@ export class SimulationWorld {
     return { x: bestX, y: bestY };
   }
 
-  #consumeFood(x: number, y: number, maximum: number): number {
+  #consumeFood(
+    x: number,
+    y: number,
+    maximum: number,
+    organism: Organism,
+  ): number {
     const cell = y * this.#config.world.width + x;
     const habitat = this.#habitatByCell[cell] ?? 0;
     const grid = habitat === 1 ? this.#secondaryFoodByCell : this.#foodByCell;
@@ -696,19 +739,39 @@ export class SimulationWorld {
     if (habitat === 1) this.#secondaryFood -= consumed;
     else this.#primaryFood -= consumed;
     if (remaining === 0) this.#occupiedFoodCells -= 1;
-    return (
+    const baseEnergy =
       consumed *
       (habitat === 1
         ? this.#config.ecology.secondaryEnergyPerUnit
-        : this.#config.food.energyPerUnit)
-    );
+        : this.#config.food.energyPerUnit);
+    return this.#config.ecology.enabled &&
+      this.#config.ecology.dietSpecializationEnabled
+      ? baseEnergy *
+          dietEfficiency(
+            organism.genome.dietPreference,
+            habitat === 1 ? 1 : 0,
+            this.#config.ecology.specialistFoodEfficiency,
+            this.#config.ecology.oppositeFoodEfficiency,
+          )
+      : baseEnergy;
   }
 
-  #foodValueAt(cell: number): number {
-    return (
-      (this.#foodByCell[cell] ?? 0) * this.#config.food.energyPerUnit +
-      (this.#secondaryFoodByCell[cell] ?? 0) *
-        this.#config.ecology.secondaryEnergyPerUnit
-    );
+  #foodValueAt(cell: number, organism: Organism): number {
+    const habitat = this.#habitatByCell[cell] === 1 ? 1 : 0;
+    const baseValue =
+      habitat === 1
+        ? (this.#secondaryFoodByCell[cell] ?? 0) *
+          this.#config.ecology.secondaryEnergyPerUnit
+        : (this.#foodByCell[cell] ?? 0) * this.#config.food.energyPerUnit;
+    return this.#config.ecology.enabled &&
+      this.#config.ecology.dietSpecializationEnabled
+      ? baseValue *
+          dietEfficiency(
+            organism.genome.dietPreference,
+            habitat,
+            this.#config.ecology.specialistFoodEfficiency,
+            this.#config.ecology.oppositeFoodEfficiency,
+          )
+      : baseValue;
   }
 }

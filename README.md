@@ -43,7 +43,7 @@ Individual commands are also available for tests, type checking, linting, format
 
 ## Project status
 
-The project has a responsive browser interface that visualizes seeded meadow and grove patches, two habitat-bound renewable foods, and living organisms while a deterministic ecological core advances beneath it. The foods renew at different rates and provide different energy yields. Organisms seek food, pay calibrated energetic tradeoffs for inherited capacities, reproduce with bounded mutation, and die. A user can select a living organism by pointer or keyboard to inspect its identity, ancestry, age, energy, position, and inherited traits. Accessible bounded charts show population, exact births and deaths, food resources, and the current distribution of every inherited trait. Safe experiment controls expose world size, population, habitats, both food sources, life-cycle, trait-tradeoff, and mutation settings. Starting configurations and complete evolving worlds can be downloaded as local JSON files, strictly validated, reloaded, and continued without changing future outcomes. See:
+The project has a responsive browser interface that visualizes seeded meadow and grove patches, two habitat-bound renewable foods, and living organisms while a deterministic ecological core advances beneath it. The foods renew at different rates and provide different energy yields. Organisms inherit a meadow-to-grove diet preference, seek food according to the energy they can extract, pay explicit costs for specialization or generalism, reproduce with bounded mutation, and die. A user can select a living organism by pointer or keyboard to inspect its identity, ancestry, age, energy, position, diet efficiencies, and other inherited traits. Accessible bounded charts show population, exact births and deaths, food resources, and the current distribution of every inherited trait. Safe experiment controls expose world size, population, habitats, both food sources, life-cycle, trait-tradeoff, and mutation settings. Starting configurations and complete evolving worlds can be downloaded as local JSON files, strictly validated, reloaded, and continued without changing future outcomes. See:
 
 - [Roadmap](docs/ROADMAP.md)
 - [Autonomous development policy](docs/AUTONOMY.md)
@@ -52,6 +52,7 @@ The project has a responsive browser interface that visualizes seeded meadow and
 - [Browser performance](docs/PERFORMANCE.md)
 - [Developer experiment lab](docs/EXPERIMENT_LAB.md)
 - [Ecosystem characterization](docs/CHARACTERIZATION.md)
+- [Diet-specialization characterization](docs/DIET_SPECIALIZATION.md)
 
 ## License
 

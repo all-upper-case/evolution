@@ -7,6 +7,8 @@ export interface Genome {
   metabolismScale: number;
   reproductionThresholdScale: number;
   mutationRateScale: number;
+  /** 0 is meadow-specialized, 0.5 is generalist, and 1 is grove-specialized. */
+  dietPreference: number;
 }
 
 export interface Organism {
@@ -35,12 +37,16 @@ export const GENOME_TRAIT_RANGES = Object.freeze({
   metabolismScale: traitRange(0.5, 1.5),
   reproductionThresholdScale: traitRange(0.75, 1.25),
   mutationRateScale: traitRange(0.5, 1.5),
+  dietPreference: traitRange(0, 1),
 });
 
 const sampleTrait = (random: SeededRandom, range: TraitRange): number =>
   range.minimum + random.next() * (range.maximum - range.minimum);
 
-const createFounderGenome = (random: SeededRandom): Genome =>
+const createFounderGenome = (
+  config: SimulationConfig,
+  random: SeededRandom,
+): Genome =>
   Object.freeze({
     movementSpeed: sampleTrait(random, GENOME_TRAIT_RANGES.movementSpeed),
     perceptionRange: sampleTrait(random, GENOME_TRAIT_RANGES.perceptionRange),
@@ -53,6 +59,10 @@ const createFounderGenome = (random: SeededRandom): Genome =>
       random,
       GENOME_TRAIT_RANGES.mutationRateScale,
     ),
+    dietPreference:
+      config.ecology.enabled && config.ecology.dietSpecializationEnabled
+        ? sampleTrait(random, GENOME_TRAIT_RANGES.dietPreference)
+        : 0.5,
   });
 
 const clamp = (value: number, range: TraitRange): number =>
@@ -67,6 +77,13 @@ export const inheritGenome = (
   const inherited = {} as Genome;
 
   for (const trait of Object.keys(GENOME_TRAIT_RANGES) as (keyof Genome)[]) {
+    if (
+      trait === "dietPreference" &&
+      !(config.ecology.enabled && config.ecology.dietSpecializationEnabled)
+    ) {
+      inherited[trait] = 0.5;
+      continue;
+    }
     const parentValue = parent[trait];
     const probability = Math.min(
       1,
@@ -105,7 +122,7 @@ export const createFounderPopulation = (
         y: random.integer(0, config.world.height),
         ageTicks: 0,
         energy: config.organisms.initialEnergy,
-        genome: createFounderGenome(random),
+        genome: createFounderGenome(config, random),
       }),
     );
   }

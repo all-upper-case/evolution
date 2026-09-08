@@ -567,3 +567,26 @@ Focused type checking and all 98 tests pass during implementation. Coverage incl
 ### Risk and next action
 
 The two foods currently create spatially and energetically different opportunities, but all organisms can consume both equally. Implement an inherited diet-specialization trait with a legible generalist/specialist tradeoff, then demonstrate opposing selection in meadow-heavy and grove-heavy experiments before adding predation.
+
+## 2026-09-08 — Inherited diet specialization (development)
+
+### Changed
+
+- Added a bounded inherited meadow-to-grove diet preference that changes both food targeting and extracted energy.
+- Added an explicit symmetric tradeoff: specialists receive 1.25× from preferred food and 0.25× from the other food, while generalists receive 0.75× from either.
+- Made diet strategy, preference, and exact meadow/grove efficiencies inspectable; added a live diet-distribution chart and safe experiment controls.
+- Added schema-5 configuration and schema-3 world persistence with deterministic neutral migration for older experiments.
+- Added a six-run opposing-resource characterization. All three meadow-rich seeds shifted preference downward (-0.304 to -0.348); all three grove-rich seeds shifted upward (+0.244 to +0.418), and every population persisted for 2,000 ticks.
+- Completed the diet-specialization roadmap increment.
+
+### Validation
+
+Formatting, linting, strict type checking, all 105 tests, and the four-entry production build pass locally. Coverage includes efficiency endpoints, bounded mutation, neutral legacy random behavior, schema-4 configuration migration, schema-2 world continuation, the unchanged nine-run compatibility characterization, browser inspection/settings, and the new six-run diet characterization. GitHub CI is required before merge.
+
+### Risk and follow-up
+
+The opposing experiments demonstrate directional selection only over a bounded deterministic window; they do not prove equilibrium or biological realism. Preference currently affects plant-food use only. Add predation and defense next, with distinct predation death accounting and multi-seed evidence of viable interaction.
+
+### Recommended next action
+
+Implement the first bounded predator/prey interaction: inherited attack and defense tradeoffs, deterministic pursuit/escape, single-consumption protection, separate death causes, visible inspection, and a mechanic-specific multi-seed experiment.

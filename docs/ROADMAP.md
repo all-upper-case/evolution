@@ -60,7 +60,7 @@ Implement in this order, with tests, visible behavior, and focused metrics:
 
 - [x] Seeded habitat patches and two distinct renewable food types.
       Acceptance: habitat changes resource availability; types differ in renewal or energy yield; both are distinguishable in the world view and lab; same-seed generation and save/load continuation are deterministic; legacy worlds retain their old rules.
-- [ ] Inherited diet specialization with a cost to generalism or specialization.
+- [x] Inherited diet specialization with a cost to generalism or specialization.
       Acceptance: feeding preferences and efficiencies affect behavior; controlled opposing resource environments favor different strategies; diets are inspectable rather than just different creature colors.
 - [ ] Predation and defense, including pursuit and escape.
       Acceptance: predators gain bounded energy from successful attacks; attacks carry costs and defense has a tradeoff; killed prey cannot act again or be eaten twice; starvation, age, and predation deaths are counted separately; multi-seed experiments demonstrate viable predator/prey interaction over a documented window.

@@ -44,7 +44,7 @@ describe("SimulationWorld", () => {
     const snapshot = first.snapshot;
 
     expect(snapshot).toEqual(second.snapshot);
-    expect(snapshot.schemaVersion).toBe(2);
+    expect(snapshot.schemaVersion).toBe(3);
     expect(new Set(snapshot.habitatByCell)).toEqual(new Set([0, 1]));
     expect(snapshot.foodTotals).toEqual({ meadow: 100, grove: 60 });
     expect(
@@ -337,6 +337,51 @@ describe("SimulationWorld", () => {
     );
   });
 
+  it("migrates schema-two worlds to a neutral diet without changing continuation", () => {
+    const config = smallConfig(20260908);
+    config.population.initialCount = 24;
+    config.population.maximumCount = 120;
+    config.food.initialUnits = 120;
+    config.food.maximumUnits = 240;
+    config.food.regrowthUnitsPerTick = 4.5;
+    config.ecology.dietSpecializationEnabled = false;
+    const uninterrupted = new SimulationWorld(config);
+    uninterrupted.advanceTicks(200);
+    const current = JSON.parse(
+      serializeWorldSnapshot(uninterrupted.snapshot),
+    ) as Record<string, unknown>;
+    const legacyConfig = current.config as Record<string, unknown>;
+    const legacyEcology = legacyConfig.ecology as Record<string, unknown>;
+    delete legacyEcology.dietSpecializationEnabled;
+    delete legacyEcology.specialistFoodEfficiency;
+    delete legacyEcology.oppositeFoodEfficiency;
+    legacyConfig.schemaVersion = 4;
+    for (const organism of current.organisms as Record<string, unknown>[]) {
+      delete (organism.genome as Record<string, unknown>).dietPreference;
+    }
+    current.schemaVersion = 2;
+
+    const restored = SimulationWorld.fromSnapshot(current);
+    expect(
+      restored.snapshot.organisms.every(
+        ({ genome }) => genome.dietPreference === 0.5,
+      ),
+    ).toBe(true);
+    expect(restored.snapshot.config.ecology.dietSpecializationEnabled).toBe(
+      false,
+    );
+
+    uninterrupted.advanceTicks(800);
+    restored.advanceTicks(800);
+    const expected = uninterrupted.snapshot;
+    const actual = restored.snapshot;
+    expect(actual.organisms).toEqual(expected.organisms);
+    expect(actual.foodByCell).toEqual(expected.foodByCell);
+    expect(actual.secondaryFoodByCell).toEqual(expected.secondaryFoodByCell);
+    expect(actual.randomState).toBe(expected.randomState);
+    expect(actual.nextOrganismId).toBe(expected.nextOrganismId);
+  });
+
   it("rejects malformed, inconsistent, and unsafe snapshots", () => {
     const world = new SimulationWorld(smallConfig(17));
     world.advanceTicks(10);
@@ -346,7 +391,7 @@ describe("SimulationWorld", () => {
       WorldSnapshotError,
     );
     expect(() =>
-      SimulationWorld.fromSnapshot({ ...valid, schemaVersion: 3 }),
+      SimulationWorld.fromSnapshot({ ...valid, schemaVersion: 4 }),
     ).toThrow(WorldSnapshotError);
     expect(() =>
       SimulationWorld.fromSnapshot({

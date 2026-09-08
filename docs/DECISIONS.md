@@ -209,3 +209,11 @@ Current organisms die from energy depletion or maximum age. Predation will add a
 Configuration schema 4 can enable a heterogeneous world divided into deterministic meadow and grove patches by seeded nearest-center assignment. Meadow and grove food occupy separate bounded grids, grow only in their matching habitat, and have independent initial supply, capacity, renewal, and energy yield. Organisms currently value either food by obtainable energy; diet specialization remains the next mechanic. World snapshot schema 2 captures both resource grids and the habitat map, while schema-1 snapshots and configuration schemas 1–3 migrate into a disabled-ecology compatibility mode that retains their single-resource rules.
 
 **Why:** Habitat-bound resources provide visible spatial niches and a concrete substrate for heritable diets without prematurely adding a generic terrain engine. Separate arrays keep resource accounting, rendering, save/load validation, and future feeding efficiencies explicit. Opt-in versioning prevents richer defaults from changing historical deterministic experiments.
+
+## 2026-09-08 — Symmetric inherited diet specialization
+
+**Status:** Accepted
+
+Configuration schema 5 adds an inherited diet preference from meadow (0) through generalist (0.5) to grove (1), plus explicit specialist and opposite-food efficiency endpoints. Preference linearly changes both perceived food value and energy extraction. Defaults give complete specialists 1.25× preferred-food efficiency and 0.25× opposite-food efficiency, while generalists receive 0.75× from either food. World snapshot schema 3 stores the new trait. Schema-4 configurations and schema-1/2 worlds migrate with diet specialization disabled, neutral 0.5 preferences, and no extra diet-related random draws.
+
+**Why:** A continuous preference produces inspectable ecological strategies without cosmetic species labels. Specialists gain peak efficiency but are vulnerable to scarcity of their preferred food; generalists avoid that vulnerability but cannot reach the peak. Separate opposing-resource experiments demonstrate selection in both directions while the existing calibrated matrix remains a compatibility baseline.

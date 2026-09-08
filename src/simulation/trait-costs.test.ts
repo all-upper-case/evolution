@@ -178,8 +178,9 @@ describe("energetic trait costs", () => {
 
   it("migrates version-two files with neutral food yield", () => {
     const migrated = parseSimulationConfig(versionTwoConfig());
-    expect(migrated.schemaVersion).toBe(4);
+    expect(migrated.schemaVersion).toBe(5);
     expect(migrated.ecology.enabled).toBe(false);
+    expect(migrated.ecology.dietSpecializationEnabled).toBe(false);
     expect(migrated.organisms.metabolismFoodEnergyInfluence).toBe(0);
     expect(migrated.organisms.movementCostPerTick).toBe(0.1);
     expect(migrated.organisms.perceptionCostPerTick).toBe(0.001);

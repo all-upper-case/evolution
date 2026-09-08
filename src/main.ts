@@ -42,7 +42,7 @@ app.innerHTML = `
           <p id="inspector-empty">Choose an amber organism in the habitat to inspect its life and inherited traits.</p>
           <div id="inspector-details" hidden>
             <dl class="identity-grid"><div><dt>Lineage</dt><dd id="inspect-lineage">—</dd></div><div><dt>Parent</dt><dd id="inspect-parent">—</dd></div><div><dt>Age</dt><dd id="inspect-age">—</dd></div><div><dt>Energy</dt><dd id="inspect-energy">—</dd></div><div><dt>Position</dt><dd id="inspect-position">—</dd></div></dl>
-            <h4>Inherited traits</h4><dl class="trait-list"><div><dt>Movement speed</dt><dd id="inspect-movement">—</dd></div><div><dt>Perception range</dt><dd id="inspect-perception">—</dd></div><div><dt>Metabolism</dt><dd id="inspect-metabolism">—</dd></div><div><dt>Reproduction threshold</dt><dd id="inspect-reproduction">—</dd></div><div><dt>Mutation tendency</dt><dd id="inspect-mutation">—</dd></div></dl>
+            <h4>Inherited traits</h4><dl class="trait-list"><div><dt>Diet</dt><dd id="inspect-diet">—</dd></div><div><dt>Meadow / grove efficiency</dt><dd id="inspect-diet-efficiency">—</dd></div><div><dt>Movement speed</dt><dd id="inspect-movement">—</dd></div><div><dt>Perception range</dt><dd id="inspect-perception">—</dd></div><div><dt>Metabolism</dt><dd id="inspect-metabolism">—</dd></div><div><dt>Reproduction threshold</dt><dd id="inspect-reproduction">—</dd></div><div><dt>Mutation tendency</dt><dd id="inspect-mutation">—</dd></div></dl>
           </div>
         </aside>
       </div>
@@ -61,6 +61,7 @@ app.innerHTML = `
         <article><h4>Metabolism</h4><svg viewBox="0 0 120 54" role="img" aria-label="Metabolism distribution"><g id="histogram-metabolism"></g></svg><p><span>Low</span><span>High</span></p></article>
         <article><h4>Reproduction threshold</h4><svg viewBox="0 0 120 54" role="img" aria-label="Reproduction threshold distribution"><g id="histogram-reproduction"></g></svg><p><span>Low</span><span>High</span></p></article>
         <article><h4>Mutation tendency</h4><svg viewBox="0 0 120 54" role="img" aria-label="Mutation tendency distribution"><g id="histogram-mutation"></g></svg><p><span>Low</span><span>High</span></p></article>
+        <article><h4>Diet preference</h4><svg viewBox="0 0 120 54" role="img" aria-label="Diet preference distribution"><g id="histogram-diet"></g></svg><p><span>Meadow</span><span>Grove</span></p></article>
       </div>
     </section>
     <section class="panel" aria-labelledby="clock-title">
@@ -79,7 +80,7 @@ app.innerHTML = `
           <fieldset><legend>Meadow food</legend><label>Starting units <input id="setting-initial-food" type="number" min="0" max="1000000" step="1"></label><label>Maximum units <input id="setting-maximum-food" type="number" min="1" max="1000000" step="1"></label><label>Regrowth per tick <input id="setting-food-regrowth" type="number" min="0" max="10000" step="0.1"></label><label>Energy per unit <input id="setting-food-energy" type="number" min="0.001" max="10000" step="0.1"></label></fieldset>
           <fieldset><legend>Grove habitat & food</legend><label><span>Enable two habitats</span> <input id="setting-rich-ecology" type="checkbox"></label><label>Habitat patches <input id="setting-habitat-patches" type="number" min="2" max="64" step="1"></label><label>Grove proportion <input id="setting-grove-fraction" type="number" min="0.01" max="0.99" step="0.01"></label><label>Starting units <input id="setting-secondary-initial-food" type="number" min="0" max="1000000" step="1"></label><label>Maximum units <input id="setting-secondary-maximum-food" type="number" min="0" max="1000000" step="1"></label><label>Regrowth per tick <input id="setting-secondary-food-regrowth" type="number" min="0" max="10000" step="0.1"></label><label>Energy per unit <input id="setting-secondary-food-energy" type="number" min="0.001" max="10000" step="0.1"></label></fieldset>
           <fieldset><legend>Life cycle</legend><label>Metabolism per tick <input id="setting-metabolism" type="number" min="0.000001" max="1000" step="0.01"></label><label>Reproduction energy <input id="setting-reproduction" type="number" min="0.001" max="10000" step="1"></label><label>Offspring energy <input id="setting-offspring" type="number" min="0.001" max="10000" step="1"></label></fieldset>
-          <fieldset><legend>Trait tradeoffs</legend><label>Speed cost <input id="setting-movement-cost" type="number" min="0" max="1000" step="0.001"></label><label>Perception cost <input id="setting-perception-cost" type="number" min="0" max="1000" step="0.0001"></label><label>Metabolism food influence <span><input id="setting-metabolism-food-influence" type="number" min="0" max="1" step="0.01"><small>0–1</small></span></label><p>Speed and perception costs scale with inherited capacity squared. Metabolism influence controls how strongly metabolic rate changes energy extracted from food.</p></fieldset>
+          <fieldset><legend>Trait tradeoffs</legend><label>Speed cost <input id="setting-movement-cost" type="number" min="0" max="1000" step="0.001"></label><label>Perception cost <input id="setting-perception-cost" type="number" min="0" max="1000" step="0.0001"></label><label>Metabolism food influence <span><input id="setting-metabolism-food-influence" type="number" min="0" max="1" step="0.01"><small>0–1</small></span></label><label><span>Enable inherited diets</span> <input id="setting-diet-specialization" type="checkbox"></label><label>Specialist efficiency <input id="setting-specialist-efficiency" type="number" min="0.01" max="2" step="0.01"></label><label>Opposite-food efficiency <input id="setting-opposite-efficiency" type="number" min="0.01" max="2" step="0.01"></label><p>Diet specialists extract more energy from their preferred food but less from the other food; generalists sit midway between both efficiencies.</p></fieldset>
           <fieldset><legend>Evolution</legend><label>Mutation chance <span><input id="setting-mutation-probability" type="number" min="0" max="1" step="0.01"><small>0–1</small></span></label><label>Mutation size <span><input id="setting-mutation-magnitude" type="number" min="0" max="1" step="0.01"><small>0–1</small></span></label></fieldset>
         </div>
         <div class="settings-action"><p>For responsive experiments, this editor limits worlds to 256×256 cells and populations to 1,000. Imported files may use the larger safety bounds.</p><button id="apply-settings" type="button">Apply and restart</button></div>
@@ -123,6 +124,8 @@ const setting = (id: string): HTMLInputElement =>
 
 const syncSettings = (): void => {
   setting("rich-ecology").checked = config.ecology.enabled;
+  setting("diet-specialization").checked =
+    config.ecology.dietSpecializationEnabled;
   setting("width").value = String(config.world.width);
   setting("height").value = String(config.world.height);
   setting("initial-population").value = String(config.population.initialCount);
@@ -144,6 +147,12 @@ const syncSettings = (): void => {
   );
   setting("secondary-food-energy").value = String(
     config.ecology.secondaryEnergyPerUnit,
+  );
+  setting("specialist-efficiency").value = String(
+    config.ecology.specialistFoodEfficiency,
+  );
+  setting("opposite-efficiency").value = String(
+    config.ecology.oppositeFoodEfficiency,
   );
   setting("movement-cost").value = String(config.organisms.movementCostPerTick);
   setting("perception-cost").value = String(
@@ -227,6 +236,7 @@ const traitCharts: readonly [GenomeTrait, string][] = [
   ["metabolismScale", "histogram-metabolism"],
   ["reproductionThresholdScale", "histogram-reproduction"],
   ["mutationRateScale", "histogram-mutation"],
+  ["dietPreference", "histogram-diet"],
 ];
 
 const renderAnalytics = (): void => {
@@ -300,6 +310,11 @@ const advanceWorld = (ticks: number): void => {
 };
 
 const formatTrait = (value: number): string => value.toFixed(2);
+const dietLabel = (preference: number): string => {
+  if (preference < 0.4) return "Meadow specialist";
+  if (preference > 0.6) return "Grove specialist";
+  return "Generalist";
+};
 const renderInspector = (organism: Organism | null): void => {
   const details = element("inspector-details");
   const empty = element("inspector-empty");
@@ -324,6 +339,22 @@ const renderInspector = (organism: Organism | null): void => {
   element("inspect-energy").textContent = organism.energy.toFixed(1);
   element("inspect-position").textContent =
     `${organism.x.toLocaleString()}, ${organism.y.toLocaleString()}`;
+  element("inspect-diet").textContent =
+    `${dietLabel(organism.genome.dietPreference)} (${formatTrait(organism.genome.dietPreference)})`;
+  const preference = organism.genome.dietPreference;
+  const span =
+    config.ecology.specialistFoodEfficiency -
+    config.ecology.oppositeFoodEfficiency;
+  const dietEnabled =
+    config.ecology.enabled && config.ecology.dietSpecializationEnabled;
+  const meadowEfficiency = dietEnabled
+    ? config.ecology.oppositeFoodEfficiency + (1 - preference) * span
+    : 1;
+  const groveEfficiency = dietEnabled
+    ? config.ecology.oppositeFoodEfficiency + preference * span
+    : 1;
+  element("inspect-diet-efficiency").textContent =
+    `${formatTrait(meadowEfficiency)}× / ${formatTrait(groveEfficiency)}×`;
   element("inspect-movement").textContent = formatTrait(
     organism.genome.movementSpeed,
   );
@@ -497,6 +528,7 @@ speed.addEventListener("change", () => {
         },
         ecology: {
           enabled: setting("rich-ecology").checked,
+          dietSpecializationEnabled: setting("diet-specialization").checked,
           habitatPatchCount: Number(setting("habitat-patches").value),
           groveFraction: Number(setting("grove-fraction").value),
           secondaryInitialUnits: Number(
@@ -511,6 +543,10 @@ speed.addEventListener("change", () => {
           secondaryEnergyPerUnit: Number(
             setting("secondary-food-energy").value,
           ),
+          specialistFoodEfficiency: Number(
+            setting("specialist-efficiency").value,
+          ),
+          oppositeFoodEfficiency: Number(setting("opposite-efficiency").value),
         },
         organisms: {
           ...config.organisms,
