@@ -5,6 +5,28 @@ import { SimulationWorld } from "../simulation/world";
 import { createWorldPixels } from "./world-renderer";
 
 describe("world renderer", () => {
+  it("distinguishes empty habitats and both resource types", () => {
+    const config = createDefaultSimulationConfig();
+    config.world.width = 16;
+    config.world.height = 16;
+    config.population.initialCount = 1;
+    config.population.maximumCount = 1;
+    config.food.initialUnits = 20;
+    config.ecology.secondaryInitialUnits = 20;
+    const snapshot = new SimulationWorld(config).snapshot;
+    const pixels = createWorldPixels(snapshot);
+    const colors = new Set(
+      Array.from({ length: snapshot.width * snapshot.height }, (_, cell) =>
+        Array.from(pixels.slice(cell * 4, cell * 4 + 3)).join(","),
+      ),
+    );
+
+    expect(colors.has("7,18,14")).toBe(true);
+    expect(colors.has("22,18,38")).toBe(true);
+    expect([...colors].some((color) => color.startsWith("20,"))).toBe(true);
+    expect([...colors].some((color) => color.startsWith("90,105,"))).toBe(true);
+  });
+
   it("creates exactly one opaque pixel per world cell", () => {
     const config = createDefaultSimulationConfig();
     config.world.width = 16;
