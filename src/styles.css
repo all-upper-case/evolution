@@ -300,6 +300,10 @@ h1 {
   background: #22c965;
 }
 
+.grove-key::before {
+  background: #697dff;
+}
+
 .organism-key::before {
   background: #ffd46c;
 }

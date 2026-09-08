@@ -1,6 +1,7 @@
 import type { WorldSnapshot } from "../simulation/world";
 
 const BACKGROUND = [7, 18, 14, 255] as const;
+const GROVE_BACKGROUND = [22, 18, 38, 255] as const;
 const ORGANISM_LOW_ENERGY = [255, 171, 64] as const;
 const ORGANISM_HIGH_ENERGY = [255, 241, 168] as const;
 const SELECTED_ORGANISM = [86, 224, 255, 255] as const;
@@ -26,12 +27,19 @@ export const createWorldPixels = (
 
   for (let cell = 0; cell < snapshot.foodByCell.length; cell += 1) {
     const food = snapshot.foodByCell[cell] ?? 0;
-    if (food <= 0) {
-      writePixel(pixels, cell, BACKGROUND);
+    const groveFood = snapshot.secondaryFoodByCell?.[cell] ?? 0;
+    const isGrove = snapshot.habitatByCell?.[cell] === 1;
+    if (food <= 0 && groveFood <= 0) {
+      writePixel(pixels, cell, isGrove ? GROVE_BACKGROUND : BACKGROUND);
       continue;
     }
-    const intensity = Math.round(80 + 175 * Math.min(1, food / 4));
-    writePixel(pixels, cell, [20, intensity, 92, 255]);
+    if (groveFood > 0) {
+      const intensity = Math.round(100 + 155 * Math.min(1, groveFood / 4));
+      writePixel(pixels, cell, [90, 105, intensity, 255]);
+    } else {
+      const intensity = Math.round(80 + 175 * Math.min(1, food / 4));
+      writePixel(pixels, cell, [20, intensity, 92, 255]);
+    }
   }
 
   for (const organism of snapshot.organisms) {

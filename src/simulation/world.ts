@@ -21,12 +21,18 @@ export interface WorldSummary {
   totalFood: number;
   occupiedFoodCells: number;
   population: number;
+  foodTotals: {
+    meadow: number;
+    grove: number;
+  };
 }
 
 export interface WorldSnapshot extends WorldSummary {
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   config: SimulationConfig;
   foodByCell: readonly number[];
+  habitatByCell?: readonly number[];
+  secondaryFoodByCell?: readonly number[];
   organisms: readonly Organism[];
   randomState: number;
   nextOrganismId: number;
@@ -152,6 +158,9 @@ const parseOrganism = (
 
 const parseWorldSnapshot = (value: unknown): WorldSnapshot => {
   const root = asRecord(value, "$");
+  const snapshotVersion = safeInteger(root.schemaVersion, "$.schemaVersion", 1);
+  if (snapshotVersion !== 1 && snapshotVersion !== 2)
+    throw new WorldSnapshotError("$.schemaVersion must equal 1 or 2");
   requireKeys(
     root,
     [
@@ -167,11 +176,12 @@ const parseWorldSnapshot = (value: unknown): WorldSnapshot => {
       "organisms",
       "randomState",
       "nextOrganismId",
+      ...(snapshotVersion === 2
+        ? ["habitatByCell", "secondaryFoodByCell", "foodTotals"]
+        : []),
     ],
     "$",
   );
-  if (root.schemaVersion !== 1)
-    throw new WorldSnapshotError("$.schemaVersion must equal 1");
   const config = parseSimulationConfig(root.config);
   const tick = safeInteger(root.tick, "$.tick");
   const width = safeInteger(root.width, "$.width", 1);
@@ -207,12 +217,80 @@ const parseWorldSnapshot = (value: unknown): WorldSnapshot => {
     return amount;
   });
   const computedTotal = foodByCell.reduce((sum, food) => sum + food, 0);
-  const computedOccupied = foodByCell.filter((food) => food > 0).length;
-  if (totalFood !== computedTotal || totalFood > config.food.maximumUnits)
+  let habitatByCell: readonly number[] | undefined;
+  let secondaryFoodByCell: readonly number[] | undefined;
+  let foodTotals = { meadow: computedTotal, grove: 0 };
+  if (snapshotVersion === 2) {
+    if (!Array.isArray(root.habitatByCell))
+      throw new WorldSnapshotError("$.habitatByCell must be an array");
+    if (!Array.isArray(root.secondaryFoodByCell))
+      throw new WorldSnapshotError("$.secondaryFoodByCell must be an array");
+    if (
+      root.habitatByCell.length !== width * height ||
+      root.secondaryFoodByCell.length !== width * height
+    )
+      throw new WorldSnapshotError("ecology grids must match the world");
+    habitatByCell = Object.freeze(
+      root.habitatByCell.map((value, index) => {
+        if (value !== 0 && value !== 1)
+          throw new WorldSnapshotError(
+            `$.habitatByCell[${String(index)}] must equal 0 or 1`,
+          );
+        return Number(value);
+      }),
+    );
+    secondaryFoodByCell = Object.freeze(
+      root.secondaryFoodByCell.map((value, index) => {
+        const amount = finiteNumber(
+          value,
+          `$.secondaryFoodByCell[${String(index)}]`,
+        );
+        if (amount < 0)
+          throw new WorldSnapshotError("secondary food must be non-negative");
+        if (amount > 0 && habitatByCell?.[index] !== 1)
+          throw new WorldSnapshotError("secondary food must occur in groves");
+        return amount;
+      }),
+    );
+    if (
+      !config.ecology.enabled &&
+      (habitatByCell.some((habitat) => habitat !== 0) ||
+        secondaryFoodByCell.some((food) => food !== 0))
+    )
+      throw new WorldSnapshotError(
+        "disabled ecology cannot contain groves or grove food",
+      );
+    if (
+      foodByCell.some(
+        (amount, index) => amount > 0 && habitatByCell?.[index] !== 0,
+      )
+    )
+      throw new WorldSnapshotError("meadow food must occur in meadows");
+    const totals = asRecord(root.foodTotals, "$.foodTotals");
+    requireKeys(totals, ["meadow", "grove"], "$.foodTotals");
+    const meadow = finiteNumber(totals.meadow, "$.foodTotals.meadow");
+    const grove = finiteNumber(totals.grove, "$.foodTotals.grove");
+    const computedGrove = secondaryFoodByCell.reduce(
+      (sum, food) => sum + food,
+      0,
+    );
+    if (meadow !== computedTotal || grove !== computedGrove)
+      throw new WorldSnapshotError("$.foodTotals is inconsistent");
+    foodTotals = { meadow, grove };
+  }
+  const combinedTotal = foodTotals.meadow + foodTotals.grove;
+  const combinedOccupied = foodByCell.filter(
+    (food, index) => food > 0 || (secondaryFoodByCell?.[index] ?? 0) > 0,
+  ).length;
+  if (
+    totalFood !== combinedTotal ||
+    foodTotals.meadow > config.food.maximumUnits ||
+    foodTotals.grove > config.ecology.secondaryMaximumUnits
+  )
     throw new WorldSnapshotError(
       "$.totalFood is inconsistent or above its cap",
     );
-  if (occupiedFoodCells !== computedOccupied)
+  if (occupiedFoodCells !== combinedOccupied)
     throw new WorldSnapshotError("$.occupiedFoodCells is inconsistent");
   if (!Array.isArray(root.organisms))
     throw new WorldSnapshotError("$.organisms must be an array");
@@ -236,7 +314,7 @@ const parseWorldSnapshot = (value: unknown): WorldSnapshot => {
     );
 
   return {
-    schemaVersion: 1,
+    schemaVersion: snapshotVersion,
     config,
     tick,
     width,
@@ -245,6 +323,9 @@ const parseWorldSnapshot = (value: unknown): WorldSnapshot => {
     occupiedFoodCells,
     population,
     foodByCell: Object.freeze(foodByCell),
+    ...(habitatByCell === undefined ? {} : { habitatByCell }),
+    ...(secondaryFoodByCell === undefined ? {} : { secondaryFoodByCell }),
+    foodTotals: Object.freeze(foodTotals),
     organisms: Object.freeze(organisms),
     randomState,
     nextOrganismId,
@@ -268,10 +349,15 @@ export class SimulationWorld {
   readonly #config: SimulationConfig;
   readonly #random: SeededRandom;
   readonly #foodByCell: Float64Array;
+  readonly #habitatByCell: Uint8Array;
+  readonly #secondaryFoodByCell: Float64Array;
+  readonly #habitatCells: [number[], number[]] = [[], []];
   readonly #organisms: Organism[];
   #tick = 0;
   #totalFood = 0;
   #occupiedFoodCells = 0;
+  #primaryFood = 0;
+  #secondaryFood = 0;
   #nextOrganismId: number;
 
   public constructor(config: unknown) {
@@ -280,7 +366,15 @@ export class SimulationWorld {
     this.#foodByCell = new Float64Array(
       this.#config.world.width * this.#config.world.height,
     );
-    this.#depositFood(this.#config.food.initialUnits);
+    this.#habitatByCell = new Uint8Array(this.#foodByCell.length);
+    this.#secondaryFoodByCell = new Float64Array(this.#foodByCell.length);
+    if (this.#config.ecology.enabled) this.#generateHabitats();
+    else
+      for (let cell = 0; cell < this.#foodByCell.length; cell += 1)
+        this.#habitatCells[0].push(cell);
+    this.#depositFood(this.#config.food.initialUnits, 0);
+    if (this.#config.ecology.enabled)
+      this.#depositFood(this.#config.ecology.secondaryInitialUnits, 1);
     this.#organisms = [...createFounderPopulation(this.#config, this.#random)];
     this.#nextOrganismId = this.#organisms.length + 1;
   }
@@ -293,15 +387,21 @@ export class SimulationWorld {
       totalFood: this.#totalFood,
       occupiedFoodCells: this.#occupiedFoodCells,
       population: this.#organisms.length,
+      foodTotals: Object.freeze({
+        meadow: this.#primaryFood,
+        grove: this.#secondaryFood,
+      }),
     };
   }
 
   public get snapshot(): WorldSnapshot {
     return {
-      schemaVersion: 1,
+      schemaVersion: 2,
       config: parseSimulationConfig(this.#config),
       ...this.summary,
       foodByCell: Object.freeze(Array.from(this.#foodByCell)),
+      habitatByCell: Object.freeze(Array.from(this.#habitatByCell)),
+      secondaryFoodByCell: Object.freeze(Array.from(this.#secondaryFoodByCell)),
       organisms: Object.freeze(this.#organisms.map(cloneOrganism)),
       randomState: this.#random.state,
       nextOrganismId: this.#nextOrganismId,
@@ -313,7 +413,17 @@ export class SimulationWorld {
     const world = new SimulationWorld(restored.config);
     world.#tick = restored.tick;
     world.#foodByCell.set(restored.foodByCell);
+    if (restored.habitatByCell !== undefined)
+      world.#habitatByCell.set(restored.habitatByCell);
+    if (restored.secondaryFoodByCell !== undefined)
+      world.#secondaryFoodByCell.set(restored.secondaryFoodByCell);
     world.#totalFood = restored.totalFood;
+    world.#primaryFood = restored.foodTotals.meadow;
+    world.#secondaryFood = restored.foodTotals.grove;
+    world.#habitatCells[0].length = 0;
+    world.#habitatCells[1].length = 0;
+    for (let cell = 0; cell < world.#habitatByCell.length; cell += 1)
+      world.#habitatCells[world.#habitatByCell[cell] === 1 ? 1 : 0].push(cell);
     world.#occupiedFoodCells = restored.occupiedFoodCells;
     world.#organisms.splice(
       0,
@@ -337,11 +447,16 @@ export class SimulationWorld {
     ) {
       throw new RangeError("World coordinates are outside the bounded world.");
     }
-    return this.#foodByCell[y * this.#config.world.width + x] ?? 0;
+    const cell = y * this.#config.world.width + x;
+    return (
+      (this.#foodByCell[cell] ?? 0) + (this.#secondaryFoodByCell[cell] ?? 0)
+    );
   }
 
   public step(): WorldTickEvents {
-    this.#depositFood(this.#config.food.regrowthUnitsPerTick);
+    this.#depositFood(this.#config.food.regrowthUnitsPerTick, 0);
+    if (this.#config.ecology.enabled)
+      this.#depositFood(this.#config.ecology.secondaryRegrowthUnitsPerTick, 1);
     const events = this.#advanceOrganisms();
     this.#tick += 1;
     return Object.freeze({ tick: this.#tick, ...events });
@@ -361,18 +476,68 @@ export class SimulationWorld {
     return Object.freeze({ ticks: count, births, deaths });
   }
 
-  #depositFood(requestedUnits: number): void {
-    let remaining = Math.min(
-      requestedUnits,
-      this.#config.food.maximumUnits - this.#totalFood,
+  #generateHabitats(): void {
+    const patches = Array.from(
+      { length: this.#config.ecology.habitatPatchCount },
+      (_, index) => ({
+        x: this.#random.integer(0, this.#config.world.width),
+        y: this.#random.integer(0, this.#config.world.height),
+        habitat:
+          index <
+          Math.round(
+            this.#config.ecology.habitatPatchCount *
+              this.#config.ecology.groveFraction,
+          )
+            ? 1
+            : 0,
+      }),
     );
+    for (let cell = 0; cell < this.#habitatByCell.length; cell += 1) {
+      const x = cell % this.#config.world.width;
+      const y = Math.floor(cell / this.#config.world.width);
+      let nearest = patches[0];
+      let distance = Number.POSITIVE_INFINITY;
+      for (const patch of patches) {
+        const candidate = (patch.x - x) ** 2 + (patch.y - y) ** 2;
+        if (candidate < distance) {
+          nearest = patch;
+          distance = candidate;
+        }
+      }
+      this.#habitatByCell[cell] = nearest?.habitat ?? 0;
+      this.#habitatCells[this.#habitatByCell[cell] === 1 ? 1 : 0].push(cell);
+    }
+    for (const habitat of [0, 1] as const) {
+      if (this.#habitatCells[habitat].length > 0) continue;
+      const cell = habitat === 0 ? 0 : this.#habitatByCell.length - 1;
+      const previous = this.#habitatByCell[cell] === 1 ? 1 : 0;
+      this.#habitatCells[previous] = this.#habitatCells[previous].filter(
+        (candidate) => candidate !== cell,
+      );
+      this.#habitatByCell[cell] = habitat;
+      this.#habitatCells[habitat].push(cell);
+    }
+  }
+
+  #depositFood(requestedUnits: number, habitat: 0 | 1): void {
+    const maximum =
+      habitat === 0
+        ? this.#config.food.maximumUnits
+        : this.#config.ecology.secondaryMaximumUnits;
+    const current = habitat === 0 ? this.#primaryFood : this.#secondaryFood;
+    let remaining = Math.min(requestedUnits, maximum - current);
 
     while (remaining > 0) {
       const amount = Math.min(1, remaining);
-      const cell = this.#random.integer(0, this.#foodByCell.length);
-      if (this.#foodByCell[cell] === 0) this.#occupiedFoodCells += 1;
-      this.#foodByCell[cell] = (this.#foodByCell[cell] ?? 0) + amount;
+      const eligible = this.#habitatCells[habitat];
+      if (eligible.length === 0) return;
+      const cell = eligible[this.#random.integer(0, eligible.length)] ?? 0;
+      const grid = habitat === 0 ? this.#foodByCell : this.#secondaryFoodByCell;
+      if ((grid[cell] ?? 0) === 0) this.#occupiedFoodCells += 1;
+      grid[cell] = (grid[cell] ?? 0) + amount;
       this.#totalFood += amount;
+      if (habitat === 0) this.#primaryFood += amount;
+      else this.#secondaryFood += amount;
       remaining -= amount;
     }
   }
@@ -386,12 +551,11 @@ export class SimulationWorld {
     // after every organism that existed at tick start has taken its turn.
     for (const organism of this.#organisms) {
       const position = this.#moveTowardFood(organism);
-      const eaten = this.#consumeFood(position.x, position.y, 1);
+      const foodEnergy = this.#consumeFood(position.x, position.y, 1);
       const energy = Math.min(
         this.#config.organisms.maximumEnergy,
         organism.energy +
-          eaten *
-            this.#config.food.energyPerUnit *
+          foodEnergy *
             foodEnergyMultiplier(
               organism.genome.metabolismScale,
               this.#config.organisms.metabolismFoodEnergyInfluence,
@@ -487,8 +651,9 @@ export class SimulationWorld {
   ): { x: number; y: number } {
     let bestX = originX;
     let bestY = originY;
-    let bestFood =
-      this.#foodByCell[originY * this.#config.world.width + originX] ?? 0;
+    let bestFood = this.#foodValueAt(
+      originY * this.#config.world.width + originX,
+    );
     let bestDistance = 0;
 
     const minimumY = Math.max(0, originY - range);
@@ -501,7 +666,7 @@ export class SimulationWorld {
       for (let x = minimumX; x <= maximumX; x += 1) {
         const distance = Math.abs(x - originX) + Math.abs(y - originY);
         if (distance > range) continue;
-        const food = this.#foodByCell[y * this.#config.world.width + x] ?? 0;
+        const food = this.#foodValueAt(y * this.#config.world.width + x);
         if (
           food > bestFood ||
           (food === bestFood && food > 0 && distance < bestDistance)
@@ -519,14 +684,31 @@ export class SimulationWorld {
 
   #consumeFood(x: number, y: number, maximum: number): number {
     const cell = y * this.#config.world.width + x;
-    const available = this.#foodByCell[cell] ?? 0;
+    const habitat = this.#habitatByCell[cell] ?? 0;
+    const grid = habitat === 1 ? this.#secondaryFoodByCell : this.#foodByCell;
+    const available = grid[cell] ?? 0;
     const consumed = Math.min(maximum, available);
     if (consumed === 0) return 0;
 
     const remaining = available - consumed;
-    this.#foodByCell[cell] = remaining;
+    grid[cell] = remaining;
     this.#totalFood -= consumed;
+    if (habitat === 1) this.#secondaryFood -= consumed;
+    else this.#primaryFood -= consumed;
     if (remaining === 0) this.#occupiedFoodCells -= 1;
-    return consumed;
+    return (
+      consumed *
+      (habitat === 1
+        ? this.#config.ecology.secondaryEnergyPerUnit
+        : this.#config.food.energyPerUnit)
+    );
+  }
+
+  #foodValueAt(cell: number): number {
+    return (
+      (this.#foodByCell[cell] ?? 0) * this.#config.food.energyPerUnit +
+      (this.#secondaryFoodByCell[cell] ?? 0) *
+        this.#config.ecology.secondaryEnergyPerUnit
+    );
   }
 }

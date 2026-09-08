@@ -550,3 +550,20 @@ Reordered active development following owner direction. Milestone 4 now precedes
 Verified the healthy default branch and absence of open issues/PRs. Confirmed current death rules include energy depletion and maximum age. Documentation-only change; the complete project validation and GitHub CI are required before merge.
 
 Next action: implement seeded habitat patches with two distinct renewable foods, visible rendering, per-resource lab summaries, and deterministic legacy-compatible save/load. Add focused measurements alongside each mechanic; avoid another planning-only run in place of implementation.
+
+## 2026-09-07 — Habitat and food diversity (development)
+
+### Changed
+
+- Added deterministic meadow and grove patches and habitat-bound food grids with independent supply, renewal, capacity, and energy yield.
+- Made the live canvas distinguish both empty habitats and both foods, added a richer-ecology settings toggle, and displayed separate food totals.
+- Added strict configuration schema 4 and world snapshot schema 2, with schema-1/2/3 configurations and schema-1 worlds retaining single-resource behavior.
+- Added per-resource and per-habitat experiment-lab summaries and completed the first richer-evolution roadmap item.
+
+### Validation
+
+Focused type checking and all 98 tests pass during implementation. Coverage includes seeded generation, habitat/resource boundaries, aggregate accounting, visible encoding, strict save/load, deterministic continuation, and legacy migration. The complete local gate, GitHub CI, and deployed browser behavior remain required before merge completion.
+
+### Risk and next action
+
+The two foods currently create spatially and energetically different opportunities, but all organisms can consume both equally. Implement an inherited diet-specialization trait with a legible generalist/specialist tradeoff, then demonstrate opposing selection in meadow-heavy and grove-heavy experiments before adding predation.

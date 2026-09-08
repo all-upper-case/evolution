@@ -1,4 +1,4 @@
-export const CONFIG_SCHEMA_VERSION = 3 as const;
+export const CONFIG_SCHEMA_VERSION = 4 as const;
 
 export interface SimulationConfig {
   schemaVersion: typeof CONFIG_SCHEMA_VERSION;
@@ -17,6 +17,15 @@ export interface SimulationConfig {
     maximumUnits: number;
     regrowthUnitsPerTick: number;
     energyPerUnit: number;
+  };
+  ecology: {
+    enabled: boolean;
+    habitatPatchCount: number;
+    groveFraction: number;
+    secondaryInitialUnits: number;
+    secondaryMaximumUnits: number;
+    secondaryRegrowthUnitsPerTick: number;
+    secondaryEnergyPerUnit: number;
   };
   organisms: {
     initialEnergy: number;
@@ -74,6 +83,7 @@ export const SIMULATION_LIMITS = Object.freeze({
   mutationMagnitude: numericLimit(0, 1, false),
   historyInterval: numericLimit(1, 1_000_000, true),
   historySamples: numericLimit(1, 100_000, true),
+  habitatPatchCount: numericLimit(2, 64, true),
 } satisfies Readonly<Record<string, NumericLimit | number>>);
 
 export class SimulationConfigError extends Error {
@@ -108,6 +118,15 @@ const DEFAULT_CONFIG: SimulationConfig = {
     maximumUnits: 50_000,
     regrowthUnitsPerTick: 23,
     energyPerUnit: 4,
+  },
+  ecology: {
+    enabled: true,
+    habitatPatchCount: 12,
+    groveFraction: 0.38,
+    secondaryInitialUnits: 4_000,
+    secondaryMaximumUnits: 18_000,
+    secondaryRegrowthUnitsPerTick: 7,
+    secondaryEnergyPerUnit: 7,
   },
   organisms: {
     initialEnergy: 40,
@@ -191,6 +210,20 @@ const readNumber = (
   return value;
 };
 
+const readBoolean = (
+  record: UnknownRecord,
+  key: string,
+  path: string,
+  issues: ConfigIssue[],
+): boolean => {
+  const value = record[key];
+  if (typeof value !== "boolean") {
+    issues.push({ path, message: "must be a boolean" });
+    return false;
+  }
+  return value;
+};
+
 const addRelationalIssue = (
   condition: boolean,
   path: string,
@@ -208,6 +241,7 @@ const addRelationalIssue = (
  */
 export const parseSimulationConfig = (input: unknown): SimulationConfig => {
   const issues: ConfigIssue[] = [];
+  const inputSchemaVersion = isRecord(input) ? input.schemaVersion : undefined;
   const root = readRecord(
     input,
     "$",
@@ -217,6 +251,7 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
       "world",
       "population",
       "food",
+      ...(inputSchemaVersion === 4 ? ["ecology"] : []),
       "organisms",
       "evolution",
       "history",
@@ -241,6 +276,23 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
     ["initialUnits", "maximumUnits", "regrowthUnitsPerTick", "energyPerUnit"],
     issues,
   );
+  const ecology =
+    root.schemaVersion === 4
+      ? readRecord(
+          root.ecology,
+          "$.ecology",
+          [
+            "enabled",
+            "habitatPatchCount",
+            "groveFraction",
+            "secondaryInitialUnits",
+            "secondaryMaximumUnits",
+            "secondaryRegrowthUnitsPerTick",
+            "secondaryEnergyPerUnit",
+          ],
+          issues,
+        )
+      : {};
   const organisms = readRecord(
     root.organisms,
     "$.organisms",
@@ -250,7 +302,9 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
       "reproductionThreshold",
       "offspringEnergy",
       "metabolismPerTick",
-      ...(root.schemaVersion === 3 ? ["metabolismFoodEnergyInfluence"] : []),
+      ...(root.schemaVersion === 3 || root.schemaVersion === 4
+        ? ["metabolismFoodEnergyInfluence"]
+        : []),
       ...(root.schemaVersion === 1
         ? []
         : ["movementCostPerTick", "perceptionCostPerTick"]),
@@ -352,6 +406,70 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
     SIMULATION_LIMITS.foodEnergy,
     issues,
   );
+  const ecologyEnabled =
+    schemaVersion < 4
+      ? false
+      : readBoolean(ecology, "enabled", "$.ecology.enabled", issues);
+  const habitatPatchCount =
+    schemaVersion < 4
+      ? DEFAULT_CONFIG.ecology.habitatPatchCount
+      : readNumber(
+          ecology,
+          "habitatPatchCount",
+          "$.ecology.habitatPatchCount",
+          SIMULATION_LIMITS.habitatPatchCount,
+          issues,
+        );
+  const groveFraction =
+    schemaVersion < 4
+      ? DEFAULT_CONFIG.ecology.groveFraction
+      : readNumber(
+          ecology,
+          "groveFraction",
+          "$.ecology.groveFraction",
+          SIMULATION_LIMITS.probability,
+          issues,
+        );
+  const secondaryInitialUnits =
+    schemaVersion < 4
+      ? DEFAULT_CONFIG.ecology.secondaryInitialUnits
+      : readNumber(
+          ecology,
+          "secondaryInitialUnits",
+          "$.ecology.secondaryInitialUnits",
+          SIMULATION_LIMITS.foodUnits,
+          issues,
+        );
+  const secondaryMaximumUnits =
+    schemaVersion < 4
+      ? DEFAULT_CONFIG.ecology.secondaryMaximumUnits
+      : readNumber(
+          ecology,
+          "secondaryMaximumUnits",
+          "$.ecology.secondaryMaximumUnits",
+          SIMULATION_LIMITS.foodUnits,
+          issues,
+        );
+  const secondaryRegrowthUnitsPerTick =
+    schemaVersion < 4
+      ? DEFAULT_CONFIG.ecology.secondaryRegrowthUnitsPerTick
+      : readNumber(
+          ecology,
+          "secondaryRegrowthUnitsPerTick",
+          "$.ecology.secondaryRegrowthUnitsPerTick",
+          SIMULATION_LIMITS.foodRegrowth,
+          issues,
+        );
+  const secondaryEnergyPerUnit =
+    schemaVersion < 4
+      ? DEFAULT_CONFIG.ecology.secondaryEnergyPerUnit
+      : readNumber(
+          ecology,
+          "secondaryEnergyPerUnit",
+          "$.ecology.secondaryEnergyPerUnit",
+          SIMULATION_LIMITS.foodEnergy,
+          issues,
+        );
   const initialEnergy = readNumber(
     organisms,
     "initialEnergy",
@@ -472,6 +590,18 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
     issues,
   );
   addRelationalIssue(
+    secondaryInitialUnits > secondaryMaximumUnits,
+    "$.ecology.secondaryInitialUnits",
+    "must not exceed secondaryMaximumUnits",
+    issues,
+  );
+  addRelationalIssue(
+    ecologyEnabled && (groveFraction <= 0 || groveFraction >= 1),
+    "$.ecology.groveFraction",
+    "must be greater than 0 and less than 1 when ecology is enabled",
+    issues,
+  );
+  addRelationalIssue(
     initialEnergy > maximumEnergy,
     "$.organisms.initialEnergy",
     "must not exceed maximumEnergy",
@@ -500,6 +630,15 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
     world: { width, height, ticksPerSecond },
     population: { initialCount, maximumCount },
     food: { initialUnits, maximumUnits, regrowthUnitsPerTick, energyPerUnit },
+    ecology: {
+      enabled: ecologyEnabled,
+      habitatPatchCount,
+      groveFraction,
+      secondaryInitialUnits,
+      secondaryMaximumUnits,
+      secondaryRegrowthUnitsPerTick,
+      secondaryEnergyPerUnit,
+    },
     organisms: {
       initialEnergy,
       maximumEnergy,

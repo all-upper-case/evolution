@@ -13,6 +13,10 @@ import {
 
 const smallConfig = (seed = 42): SimulationConfig => {
   const config = createDefaultSimulationConfig();
+  config.ecology.enabled = false;
+  config.ecology.secondaryInitialUnits = 0;
+  config.ecology.secondaryMaximumUnits = 0;
+  config.ecology.secondaryRegrowthUnitsPerTick = 0;
   config.seed = seed;
   config.world.width = 16;
   config.world.height = 16;
@@ -23,6 +27,46 @@ const smallConfig = (seed = 42): SimulationConfig => {
 };
 
 describe("SimulationWorld", () => {
+  it("creates deterministic habitat patches with two habitat-bound foods", () => {
+    const config = createDefaultSimulationConfig();
+    config.world.width = 32;
+    config.world.height = 32;
+    config.population.initialCount = 10;
+    config.population.maximumCount = 20;
+    config.food.initialUnits = 100;
+    config.food.maximumUnits = 200;
+    config.food.regrowthUnitsPerTick = 2;
+    config.ecology.secondaryInitialUnits = 60;
+    config.ecology.secondaryMaximumUnits = 120;
+    config.ecology.secondaryRegrowthUnitsPerTick = 1;
+    const first = new SimulationWorld(config);
+    const second = new SimulationWorld(config);
+    const snapshot = first.snapshot;
+
+    expect(snapshot).toEqual(second.snapshot);
+    expect(snapshot.schemaVersion).toBe(2);
+    expect(new Set(snapshot.habitatByCell)).toEqual(new Set([0, 1]));
+    expect(snapshot.foodTotals).toEqual({ meadow: 100, grove: 60 });
+    expect(
+      snapshot.foodByCell.every(
+        (food, cell) => food === 0 || snapshot.habitatByCell?.[cell] === 0,
+      ),
+    ).toBe(true);
+    expect(
+      snapshot.secondaryFoodByCell?.every(
+        (food, cell) => food === 0 || snapshot.habitatByCell?.[cell] === 1,
+      ),
+    ).toBe(true);
+
+    first.advanceTicks(100);
+    const restored = SimulationWorld.fromSnapshot(
+      deserializeWorldSnapshot(serializeWorldSnapshot(first.snapshot)),
+    );
+    first.advanceTicks(200);
+    restored.advanceTicks(200);
+    expect(restored.snapshot).toEqual(first.snapshot);
+  });
+
   it("creates a bounded two-dimensional seeded food field", () => {
     const first = new SimulationWorld(smallConfig());
     const second = new SimulationWorld(smallConfig());
@@ -302,7 +346,7 @@ describe("SimulationWorld", () => {
       WorldSnapshotError,
     );
     expect(() =>
-      SimulationWorld.fromSnapshot({ ...valid, schemaVersion: 2 }),
+      SimulationWorld.fromSnapshot({ ...valid, schemaVersion: 3 }),
     ).toThrow(WorldSnapshotError);
     expect(() =>
       SimulationWorld.fromSnapshot({
@@ -318,6 +362,14 @@ describe("SimulationWorld", () => {
     ).toThrow(WorldSnapshotError);
     expect(() =>
       SimulationWorld.fromSnapshot({ ...valid, unexpected: true }),
+    ).toThrow(WorldSnapshotError);
+    expect(() =>
+      SimulationWorld.fromSnapshot({
+        ...valid,
+        habitatByCell: valid.habitatByCell?.map((habitat, index) =>
+          index === 0 ? 1 : habitat,
+        ),
+      }),
     ).toThrow(WorldSnapshotError);
   });
 });

@@ -54,6 +54,7 @@ describe("simulation configuration", () => {
       history: config.history,
       evolution: config.evolution,
       organisms: config.organisms,
+      ecology: config.ecology,
       food: config.food,
       population: config.population,
       world: config.world,
@@ -102,7 +103,7 @@ describe("simulation configuration", () => {
   });
 
   it.each([
-    ["unsupported schema", alter((config) => (config.schemaVersion = 4 as 3))],
+    ["unsupported schema", alter((config) => (config.schemaVersion = 5 as 4))],
     ["negative seed", alter((config) => (config.seed = -1))],
     [
       "non-finite food",
@@ -134,6 +135,24 @@ describe("simulation configuration", () => {
         ),
       ).toBe(true);
     }
+  });
+
+  it("strictly validates habitat and secondary-food settings", () => {
+    expect(() =>
+      parseSimulationConfig(
+        alter((config) => {
+          config.ecology.groveFraction = 0;
+        }),
+      ),
+    ).toThrow(SimulationConfigError);
+    expect(() =>
+      parseSimulationConfig(
+        alter((config) => {
+          config.ecology.secondaryInitialUnits = 101;
+          config.ecology.secondaryMaximumUnits = 100;
+        }),
+      ),
+    ).toThrow(SimulationConfigError);
   });
 
   it.each([

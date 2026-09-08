@@ -32,11 +32,11 @@ if (app === null) throw new Error("Application root was not found.");
 
 app.innerHTML = `
   <main class="shell" aria-labelledby="page-title">
-    <header class="hero"><p class="eyebrow">Deterministic ecosystem laboratory</p><h1 id="page-title">Evolution</h1><p class="summary">A reproducible living sandbox with renewable resources and seeded founder organisms carrying explicit inheritable traits.</p></header>
+    <header class="hero"><p class="eyebrow">Deterministic ecosystem laboratory</p><h1 id="page-title">Evolution</h1><p class="summary">A reproducible living sandbox with distinct habitats, renewable resources, and seeded organisms carrying inheritable traits.</p></header>
     <section class="world-panel" aria-labelledby="world-title">
-      <div class="world-heading"><div><p class="eyebrow">Live world</p><h2 id="world-title">The habitat</h2></div><div class="legend" aria-label="Map legend"><span class="food-key">Food</span><span class="organism-key">Organisms</span></div></div>
+      <div class="world-heading"><div><p class="eyebrow">Live world</p><h2 id="world-title">The habitat</h2></div><div class="legend" aria-label="Map legend"><span class="food-key">Meadow food</span><span class="grove-key">Grove food</span><span class="organism-key">Organisms</span></div></div>
       <div class="world-layout">
-        <div><div class="world-frame"><canvas id="world" role="img" tabindex="0" aria-describedby="world-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape" aria-label="World at tick 0 with 250 organisms and 12,000 food units">Your browser does not support the ecosystem canvas.</canvas></div><p id="world-help" class="world-help">Tap or click an organism to inspect it. With the map focused, use the arrow keys to move through organisms, Home or End to jump, and Escape to clear selection. Cyan marks the selected organism.</p></div>
+        <div><div class="world-frame"><canvas id="world" role="img" tabindex="0" aria-describedby="world-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape" aria-label="World at tick 0 with 250 organisms and 16,000 food units">Your browser does not support the ecosystem canvas.</canvas></div><p id="world-help" class="world-help">Tap or click an organism to inspect it. With the map focused, use the arrow keys to move through organisms, Home or End to jump, and Escape to clear selection. Cyan marks the selected organism.</p></div>
         <aside class="inspector" aria-labelledby="inspector-title">
           <p class="eyebrow">Selected organism</p><h3 id="inspector-title">None selected</h3>
           <p id="inspector-empty">Choose an amber organism in the habitat to inspect its life and inherited traits.</p>
@@ -65,7 +65,7 @@ app.innerHTML = `
     </section>
     <section class="panel" aria-labelledby="clock-title">
       <div class="panel-heading"><div><p class="status"><span aria-hidden="true"></span><b id="state">Paused</b></p><h2 id="clock-title">Simulation clock</h2></div><div class="tick-readout"><small>Current tick</small><output id="tick">0</output></div></div>
-      <div class="metrics"><div><small>Simulated time</small><strong id="elapsed">0.00 s</strong></div><div><small>Population</small><strong id="population">250</strong></div><div><small>Food units</small><strong id="food">12,000</strong></div><div><small>Occupied cells</small><strong id="food-cells">0</strong></div><div><small>Seed</small><strong id="seed-display">42</strong></div></div>
+      <div class="metrics"><div><small>Simulated time</small><strong id="elapsed">0.00 s</strong></div><div><small>Population</small><strong id="population">250</strong></div><div><small>Total food</small><strong id="food">16,000</strong></div><div><small>Meadow / grove</small><strong id="food-types">12,000 / 4,000</strong></div><div><small>Occupied cells</small><strong id="food-cells">0</strong></div><div><small>Seed</small><strong id="seed-display">42</strong></div></div>
       <div class="controls" aria-label="Simulation controls">
         <button id="play" type="button">Play</button><button id="step" class="secondary" type="button">Step</button>
         <label>Speed<select id="speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
@@ -76,7 +76,8 @@ app.innerHTML = `
         <div class="settings-groups">
           <fieldset><legend>Environment</legend><label>Width <input id="setting-width" type="number" min="16" max="256" step="1"></label><label>Height <input id="setting-height" type="number" min="16" max="256" step="1"></label></fieldset>
           <fieldset><legend>Population</legend><label>Starting organisms <input id="setting-initial-population" type="number" min="1" max="1000" step="1"></label><label>Population ceiling <input id="setting-maximum-population" type="number" min="1" max="1000" step="1"></label></fieldset>
-          <fieldset><legend>Food</legend><label>Starting units <input id="setting-initial-food" type="number" min="0" max="1000000" step="1"></label><label>Maximum units <input id="setting-maximum-food" type="number" min="1" max="1000000" step="1"></label><label>Regrowth per tick <input id="setting-food-regrowth" type="number" min="0" max="10000" step="0.1"></label><label>Energy per unit <input id="setting-food-energy" type="number" min="0.001" max="10000" step="0.1"></label></fieldset>
+          <fieldset><legend>Meadow food</legend><label>Starting units <input id="setting-initial-food" type="number" min="0" max="1000000" step="1"></label><label>Maximum units <input id="setting-maximum-food" type="number" min="1" max="1000000" step="1"></label><label>Regrowth per tick <input id="setting-food-regrowth" type="number" min="0" max="10000" step="0.1"></label><label>Energy per unit <input id="setting-food-energy" type="number" min="0.001" max="10000" step="0.1"></label></fieldset>
+          <fieldset><legend>Grove habitat & food</legend><label><span>Enable two habitats</span> <input id="setting-rich-ecology" type="checkbox"></label><label>Habitat patches <input id="setting-habitat-patches" type="number" min="2" max="64" step="1"></label><label>Grove proportion <input id="setting-grove-fraction" type="number" min="0.01" max="0.99" step="0.01"></label><label>Starting units <input id="setting-secondary-initial-food" type="number" min="0" max="1000000" step="1"></label><label>Maximum units <input id="setting-secondary-maximum-food" type="number" min="0" max="1000000" step="1"></label><label>Regrowth per tick <input id="setting-secondary-food-regrowth" type="number" min="0" max="10000" step="0.1"></label><label>Energy per unit <input id="setting-secondary-food-energy" type="number" min="0.001" max="10000" step="0.1"></label></fieldset>
           <fieldset><legend>Life cycle</legend><label>Metabolism per tick <input id="setting-metabolism" type="number" min="0.000001" max="1000" step="0.01"></label><label>Reproduction energy <input id="setting-reproduction" type="number" min="0.001" max="10000" step="1"></label><label>Offspring energy <input id="setting-offspring" type="number" min="0.001" max="10000" step="1"></label></fieldset>
           <fieldset><legend>Trait tradeoffs</legend><label>Speed cost <input id="setting-movement-cost" type="number" min="0" max="1000" step="0.001"></label><label>Perception cost <input id="setting-perception-cost" type="number" min="0" max="1000" step="0.0001"></label><label>Metabolism food influence <span><input id="setting-metabolism-food-influence" type="number" min="0" max="1" step="0.01"><small>0–1</small></span></label><p>Speed and perception costs scale with inherited capacity squared. Metabolism influence controls how strongly metabolic rate changes energy extracted from food.</p></fieldset>
           <fieldset><legend>Evolution</legend><label>Mutation chance <span><input id="setting-mutation-probability" type="number" min="0" max="1" step="0.01"><small>0–1</small></span></label><label>Mutation size <span><input id="setting-mutation-magnitude" type="number" min="0" max="1" step="0.01"><small>0–1</small></span></label></fieldset>
@@ -89,7 +90,7 @@ app.innerHTML = `
         <input id="import-snapshot-file" class="visually-hidden" type="file" accept="application/json,.json"><input id="import-config-file" class="visually-hidden" type="file" accept="application/json,.json">
       </div>
       <p id="message" class="message" role="status"></p>
-    </section><footer><span>Milestone 3</span><span>Experiment tools</span></footer>
+    </section><footer><span>Milestone 4</span><span>Richer evolution</span></footer>
   </main>`;
 
 let config = createDefaultSimulationConfig();
@@ -121,6 +122,7 @@ const setting = (id: string): HTMLInputElement =>
   element(`setting-${id}`) as HTMLInputElement;
 
 const syncSettings = (): void => {
+  setting("rich-ecology").checked = config.ecology.enabled;
   setting("width").value = String(config.world.width);
   setting("height").value = String(config.world.height);
   setting("initial-population").value = String(config.population.initialCount);
@@ -129,6 +131,20 @@ const syncSettings = (): void => {
   setting("maximum-food").value = String(config.food.maximumUnits);
   setting("food-regrowth").value = String(config.food.regrowthUnitsPerTick);
   setting("food-energy").value = String(config.food.energyPerUnit);
+  setting("habitat-patches").value = String(config.ecology.habitatPatchCount);
+  setting("grove-fraction").value = String(config.ecology.groveFraction);
+  setting("secondary-initial-food").value = String(
+    config.ecology.secondaryInitialUnits,
+  );
+  setting("secondary-maximum-food").value = String(
+    config.ecology.secondaryMaximumUnits,
+  );
+  setting("secondary-food-regrowth").value = String(
+    config.ecology.secondaryRegrowthUnitsPerTick,
+  );
+  setting("secondary-food-energy").value = String(
+    config.ecology.secondaryEnergyPerUnit,
+  );
   setting("movement-cost").value = String(config.organisms.movementCostPerTick);
   setting("perception-cost").value = String(
     config.organisms.perceptionCostPerTick,
@@ -337,6 +353,8 @@ const render = (): void => {
   );
   element("food-cells").textContent =
     world.summary.occupiedFoodCells.toLocaleString();
+  element("food-types").textContent =
+    `${world.summary.foodTotals.meadow.toLocaleString(undefined, { maximumFractionDigits: 1 })} / ${world.summary.foodTotals.grove.toLocaleString(undefined, { maximumFractionDigits: 1 })}`;
   element("population").textContent = world.summary.population.toLocaleString();
   if (
     renderedWorldTick !== world.summary.tick ||
@@ -476,6 +494,23 @@ speed.addEventListener("change", () => {
           maximumUnits: Number(setting("maximum-food").value),
           regrowthUnitsPerTick: Number(setting("food-regrowth").value),
           energyPerUnit: Number(setting("food-energy").value),
+        },
+        ecology: {
+          enabled: setting("rich-ecology").checked,
+          habitatPatchCount: Number(setting("habitat-patches").value),
+          groveFraction: Number(setting("grove-fraction").value),
+          secondaryInitialUnits: Number(
+            setting("secondary-initial-food").value,
+          ),
+          secondaryMaximumUnits: Number(
+            setting("secondary-maximum-food").value,
+          ),
+          secondaryRegrowthUnitsPerTick: Number(
+            setting("secondary-food-regrowth").value,
+          ),
+          secondaryEnergyPerUnit: Number(
+            setting("secondary-food-energy").value,
+          ),
         },
         organisms: {
           ...config.organisms,
