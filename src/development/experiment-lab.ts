@@ -19,6 +19,13 @@ type ConfigNumberPath =
   | "food.maximumUnits"
   | "food.regrowthUnitsPerTick"
   | "food.energyPerUnit"
+  | "ecology.enabled"
+  | "ecology.habitatPatchCount"
+  | "ecology.groveFraction"
+  | "ecology.secondaryInitialUnits"
+  | "ecology.secondaryMaximumUnits"
+  | "ecology.secondaryRegrowthUnitsPerTick"
+  | "ecology.secondaryEnergyPerUnit"
   | "organisms.initialEnergy"
   | "organisms.maximumEnergy"
   | "organisms.reproductionThreshold"
@@ -44,6 +51,13 @@ export const LAB_CONFIG_PATHS: readonly ConfigNumberPath[] = Object.freeze([
   "food.maximumUnits",
   "food.regrowthUnitsPerTick",
   "food.energyPerUnit",
+  "ecology.enabled",
+  "ecology.habitatPatchCount",
+  "ecology.groveFraction",
+  "ecology.secondaryInitialUnits",
+  "ecology.secondaryMaximumUnits",
+  "ecology.secondaryRegrowthUnitsPerTick",
+  "ecology.secondaryEnergyPerUnit",
   "organisms.initialEnergy",
   "organisms.maximumEnergy",
   "organisms.reproductionThreshold",
@@ -87,6 +101,12 @@ const assignPath = (
   const parts = path.split(".");
   if (parts.length === 1) {
     config.seed = value;
+    return;
+  }
+  if (path === "ecology.enabled") {
+    if (value !== 0 && value !== 1)
+      throw new RangeError("ecology.enabled must equal 0 or 1.");
+    config.ecology.enabled = value === 1;
     return;
   }
   const [section, key] = parts;
@@ -160,6 +180,8 @@ export interface LabCheckpoint {
   cumulativeDeaths: number;
   totalFood: number;
   occupiedFoodCells: number;
+  foodByType: { meadow: number; grove: number };
+  habitatCells: { meadow: number; grove: number };
   lineages: number;
   meanAgeTicks: number | null;
   meanEnergy: number | null;
@@ -199,6 +221,18 @@ const summarize = (
     cumulativeDeaths,
     totalFood: round(snapshot.totalFood),
     occupiedFoodCells: snapshot.occupiedFoodCells,
+    foodByType: {
+      meadow: round(snapshot.foodTotals.meadow),
+      grove: round(snapshot.foodTotals.grove),
+    },
+    habitatCells: {
+      meadow:
+        snapshot.width * snapshot.height -
+        (snapshot.habitatByCell?.filter((habitat) => habitat === 1).length ??
+          0),
+      grove:
+        snapshot.habitatByCell?.filter((habitat) => habitat === 1).length ?? 0,
+    },
     lineages: new Set(organisms.map((organism) => organism.lineageId)).size,
     meanAgeTicks:
       organisms.length === 0
