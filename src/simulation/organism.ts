@@ -9,6 +9,10 @@ export interface Genome {
   mutationRateScale: number;
   /** 0 is meadow-specialized, 0.5 is generalist, and 1 is grove-specialized. */
   dietPreference: number;
+  /** Values at or above the configured threshold pursue and attack prey. */
+  predationTendency: number;
+  /** Higher values improve escape and resistance at an ongoing energy cost. */
+  defense: number;
 }
 
 export interface Organism {
@@ -38,6 +42,8 @@ export const GENOME_TRAIT_RANGES = Object.freeze({
   reproductionThresholdScale: traitRange(0.75, 1.25),
   mutationRateScale: traitRange(0.5, 1.5),
   dietPreference: traitRange(0, 1),
+  predationTendency: traitRange(0, 1),
+  defense: traitRange(0, 1),
 });
 
 const sampleTrait = (random: SeededRandom, range: TraitRange): number =>
@@ -63,6 +69,14 @@ const createFounderGenome = (
       config.ecology.enabled && config.ecology.dietSpecializationEnabled
         ? sampleTrait(random, GENOME_TRAIT_RANGES.dietPreference)
         : 0.5,
+    predationTendency:
+      config.ecology.enabled && config.ecology.predationEnabled
+        ? sampleTrait(random, GENOME_TRAIT_RANGES.predationTendency)
+        : 0,
+    defense:
+      config.ecology.enabled && config.ecology.predationEnabled
+        ? sampleTrait(random, GENOME_TRAIT_RANGES.defense)
+        : 0,
   });
 
 const clamp = (value: number, range: TraitRange): number =>
@@ -82,6 +96,13 @@ export const inheritGenome = (
       !(config.ecology.enabled && config.ecology.dietSpecializationEnabled)
     ) {
       inherited[trait] = 0.5;
+      continue;
+    }
+    if (
+      (trait === "predationTendency" || trait === "defense") &&
+      !(config.ecology.enabled && config.ecology.predationEnabled)
+    ) {
+      inherited[trait] = 0;
       continue;
     }
     const parentValue = parent[trait];

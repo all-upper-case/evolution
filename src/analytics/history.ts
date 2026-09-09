@@ -1,5 +1,9 @@
 import type { Genome } from "../simulation/organism";
-import type { WorldSnapshot, WorldTickEvents } from "../simulation/world";
+import type {
+  DeathCauseCounts,
+  WorldSnapshot,
+  WorldTickEvents,
+} from "../simulation/world";
 
 export type GenomeTrait = keyof Genome;
 
@@ -8,6 +12,7 @@ export interface EcosystemSample {
   population: number;
   births: number;
   deaths: number;
+  deathCauses: DeathCauseCounts;
   totalFood: number;
 }
 
@@ -20,6 +25,11 @@ export class EcosystemHistory {
   #lastSampleTick: number | null = null;
   #pendingBirths = 0;
   #pendingDeaths = 0;
+  readonly #pendingDeathCauses: DeathCauseCounts = {
+    starvation: 0,
+    age: 0,
+    predation: 0,
+  };
 
   public constructor(sampleEveryTicks: number, maximumSamples: number) {
     if (!Number.isSafeInteger(sampleEveryTicks) || sampleEveryTicks < 1)
@@ -38,7 +48,7 @@ export class EcosystemHistory {
     if (this.#lastObservedTick === null) {
       this.#lastObservedTick = snapshot.tick;
       this.#lastSampleTick = snapshot.tick;
-      this.#record(snapshot, 0, 0);
+      this.#record(snapshot, 0, 0, { starvation: 0, age: 0, predation: 0 });
       return true;
     }
     if (snapshot.tick === this.#lastObservedTick) return false;
@@ -58,30 +68,57 @@ export class EcosystemHistory {
       events.deaths < 0
     )
       throw new Error("Lifecycle event counts must be non-negative integers.");
+    const causeCounts = [
+      events.deathCauses.starvation,
+      events.deathCauses.age,
+      events.deathCauses.predation,
+    ];
+    if (
+      causeCounts.some((count) => !Number.isSafeInteger(count) || count < 0) ||
+      causeCounts.reduce((sum, count) => sum + count, 0) !== events.deaths
+    )
+      throw new Error("Death causes must be non-negative and sum to deaths.");
 
     this.#lastObservedTick = snapshot.tick;
     this.#pendingBirths += events.births;
     this.#pendingDeaths += events.deaths;
+    this.#pendingDeathCauses.starvation += events.deathCauses.starvation;
+    this.#pendingDeathCauses.age += events.deathCauses.age;
+    this.#pendingDeathCauses.predation += events.deathCauses.predation;
     if (
       this.#lastSampleTick !== null &&
       snapshot.tick - this.#lastSampleTick < this.#sampleEveryTicks
     )
       return false;
 
-    this.#record(snapshot, this.#pendingBirths, this.#pendingDeaths);
+    this.#record(
+      snapshot,
+      this.#pendingBirths,
+      this.#pendingDeaths,
+      this.#pendingDeathCauses,
+    );
     this.#lastSampleTick = snapshot.tick;
     this.#pendingBirths = 0;
     this.#pendingDeaths = 0;
+    this.#pendingDeathCauses.starvation = 0;
+    this.#pendingDeathCauses.age = 0;
+    this.#pendingDeathCauses.predation = 0;
     return true;
   }
 
-  #record(snapshot: WorldSnapshot, births: number, deaths: number): void {
+  #record(
+    snapshot: WorldSnapshot,
+    births: number,
+    deaths: number,
+    deathCauses: DeathCauseCounts,
+  ): void {
     this.#samples.push(
       Object.freeze({
         tick: snapshot.tick,
         population: snapshot.population,
         births,
         deaths,
+        deathCauses: Object.freeze({ ...deathCauses }),
         totalFood: snapshot.totalFood,
       }),
     );

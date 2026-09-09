@@ -17,11 +17,17 @@ const legacyConfig = () => {
     metabolismFoodEnergyInfluence: _metabolismInfluence,
     movementCostPerTick: _movement,
     perceptionCostPerTick: _perception,
+    predationCostPerTick: _predation,
+    defenseCostPerTick: _defense,
+    attackCost: _attack,
     ...organisms
   } = config.organisms;
   void _movement;
   void _perception;
   void _metabolismInfluence;
+  void _predation;
+  void _defense;
+  void _attack;
   const { ecology: _ecology, ...withoutEcology } = config;
   void _ecology;
   return { ...withoutEcology, schemaVersion: 1, organisms };
@@ -31,9 +37,17 @@ const versionTwoConfig = () => {
   const config = createDefaultSimulationConfig();
   config.food.regrowthUnitsPerTick = 20;
   config.organisms.perceptionCostPerTick = 0.001;
-  const { metabolismFoodEnergyInfluence: _influence, ...organisms } =
-    config.organisms;
+  const {
+    metabolismFoodEnergyInfluence: _influence,
+    predationCostPerTick: _predation,
+    defenseCostPerTick: _defense,
+    attackCost: _attack,
+    ...organisms
+  } = config.organisms;
   void _influence;
+  void _predation;
+  void _defense;
+  void _attack;
   const { ecology: _ecology, ...withoutEcology } = config;
   void _ecology;
   return { ...withoutEcology, schemaVersion: 2, organisms };
@@ -150,7 +164,12 @@ describe("energetic trait costs", () => {
     free.step();
     expect(firstOrganism(free).energy).toBeCloseTo(39.9, 10);
     const starving = controlledWorld(2, 12, 0.1, 0.01, 0.2);
-    expect(starving.step()).toEqual({ tick: 1, births: 0, deaths: 1 });
+    expect(starving.step()).toEqual({
+      tick: 1,
+      births: 0,
+      deaths: 1,
+      deathCauses: { starvation: 1, age: 0, predation: 0 },
+    });
     expect(starving.summary.population).toBe(0);
   });
 
@@ -178,7 +197,7 @@ describe("energetic trait costs", () => {
 
   it("migrates version-two files with neutral food yield", () => {
     const migrated = parseSimulationConfig(versionTwoConfig());
-    expect(migrated.schemaVersion).toBe(5);
+    expect(migrated.schemaVersion).toBe(6);
     expect(migrated.ecology.enabled).toBe(false);
     expect(migrated.ecology.dietSpecializationEnabled).toBe(false);
     expect(migrated.organisms.metabolismFoodEnergyInfluence).toBe(0);

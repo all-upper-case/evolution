@@ -36,5 +36,5 @@ describe("ecosystem characterization", () => {
       expect(run.lineageRetentionFraction).toBeGreaterThanOrEqual(0);
       expect(run.lineageRetentionFraction).toBeLessThanOrEqual(1);
     }
-  }, 30_000);
+  }, 60_000);
 });

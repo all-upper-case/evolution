@@ -5,6 +5,7 @@ const GROVE_BACKGROUND = [22, 18, 38, 255] as const;
 const ORGANISM_LOW_ENERGY = [255, 171, 64] as const;
 const ORGANISM_HIGH_ENERGY = [255, 241, 168] as const;
 const SELECTED_ORGANISM = [86, 224, 255, 255] as const;
+const PREDATOR = [255, 102, 133, 255] as const;
 
 const writePixel = (
   pixels: Uint8ClampedArray,
@@ -49,6 +50,15 @@ export const createWorldPixels = (
         organism.y * snapshot.width + organism.x,
         SELECTED_ORGANISM,
       );
+      continue;
+    }
+    if (
+      snapshot.config.ecology.enabled &&
+      snapshot.config.ecology.predationEnabled &&
+      organism.genome.predationTendency >=
+        snapshot.config.ecology.predatorThreshold
+    ) {
+      writePixel(pixels, organism.y * snapshot.width + organism.x, PREDATOR);
       continue;
     }
     const energyRatio = Math.min(

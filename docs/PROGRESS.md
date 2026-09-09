@@ -590,3 +590,21 @@ The opposing experiments demonstrate directional selection only over a bounded d
 ### Recommended next action
 
 Implement the first bounded predator/prey interaction: inherited attack and defense tradeoffs, deterministic pursuit/escape, single-consumption protection, separate death causes, visible inspection, and a mechanic-specific multi-seed experiment.
+
+## 2026-09-09 — Predation and defense (development)
+
+### Changed
+
+- Added inherited predation-tendency and defense traits with deterministic pursuit/escape, seeded attack outcomes, bounded energy transfer, per-attempt cost, quadratic maintenance costs, and reduced plant-food efficiency for predators.
+- Added immediate live-index removal so killed prey cannot act later or be eaten twice, plus separate starvation, age, and predation death accounting in tick events, history, and lab reports.
+- Added visible predator rendering, organism role/trait inspection, live trait distributions, safe settings, lab overrides, schema-6 configuration, and schema-4 snapshots with neutral legacy migration.
+- Added a fixed three-seed, 300-tick characterization. All runs retained both roles: 10–18 predators and 89–134 prey remained, with 289–305 predation deaths.
+- Completed the predation-and-defense roadmap increment.
+
+### Validation
+
+Formatting, linting, strict type checking, all 109 tests, and the four-entry production build pass locally. Coverage includes bounded attack energy, skipped prey turns, single-consumption protection, separate death causes, multi-seed viability, deterministic replay, strict persistence, and legacy continuation. GitHub CI remains required before merge completion.
+
+### Risk and next action
+
+The viability window is intentionally finite and does not demonstrate equilibrium or biological realism. Role balance remains sensitive to spatial density, resource supply, and configured costs. Add deterministic obstacles and refuges next, measuring their performance and whether they deepen spatial niches without making predation unreadable.

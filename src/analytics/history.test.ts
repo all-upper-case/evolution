@@ -4,6 +4,8 @@ import { GENOME_TRAIT_RANGES } from "../simulation/organism";
 import { SimulationWorld } from "../simulation/world";
 import { EcosystemHistory, traitHistogram } from "./history";
 
+const deathCauses = { starvation: 0, age: 0, predation: 0 } as const;
+
 describe("ecosystem history", () => {
   it("samples only at its interval and remains bounded", () => {
     const world = new SimulationWorld(createDefaultSimulationConfig());
@@ -41,7 +43,12 @@ describe("ecosystem history", () => {
         organisms: Object.freeze([...initial.organisms.slice(1), replacement]),
         nextOrganismId: initial.nextOrganismId + 1,
       },
-      { tick: 1, births: 1, deaths: 1 },
+      {
+        tick: 1,
+        births: 1,
+        deaths: 1,
+        deathCauses: { ...deathCauses, starvation: 1 },
+      },
     );
     expect(history.samples[1]).toMatchObject({ births: 1, deaths: 1 });
   });
@@ -66,14 +73,23 @@ describe("ecosystem history", () => {
         organisms: Object.freeze([...initial.organisms, transient]),
         nextOrganismId: initial.nextOrganismId + 1,
       },
-      { tick: 1, births: 1, deaths: 0 },
+      { tick: 1, births: 1, deaths: 0, deathCauses },
     );
     history.observe(
       { ...initial, tick: 2, nextOrganismId: initial.nextOrganismId + 1 },
-      { tick: 2, births: 0, deaths: 1 },
+      {
+        tick: 2,
+        births: 0,
+        deaths: 1,
+        deathCauses: { ...deathCauses, predation: 1 },
+      },
     );
 
-    expect(history.samples[1]).toMatchObject({ births: 1, deaths: 1 });
+    expect(history.samples[1]).toMatchObject({
+      births: 1,
+      deaths: 1,
+      deathCauses: { starvation: 0, age: 0, predation: 1 },
+    });
   });
 
   it("starts restored history at a non-aligned tick", () => {
@@ -95,7 +111,12 @@ describe("ecosystem history", () => {
       "Lifecycle events are required",
     );
     expect(() =>
-      history.observe(world.snapshot, { tick: 2, births: 0, deaths: 0 }),
+      history.observe(world.snapshot, {
+        tick: 2,
+        births: 0,
+        deaths: 0,
+        deathCauses,
+      }),
     ).toThrow("consecutive and aligned");
   });
 });

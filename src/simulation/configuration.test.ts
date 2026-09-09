@@ -103,7 +103,7 @@ describe("simulation configuration", () => {
   });
 
   it.each([
-    ["unsupported schema", alter((config) => (config.schemaVersion = 6 as 5))],
+    ["unsupported schema", alter((config) => (config.schemaVersion = 7 as 6))],
     ["negative seed", alter((config) => (config.seed = -1))],
     [
       "non-finite food",
@@ -169,21 +169,40 @@ describe("simulation configuration", () => {
       dietSpecializationEnabled: _dietEnabled,
       specialistFoodEfficiency: _specialist,
       oppositeFoodEfficiency: _opposite,
+      predationEnabled: _predationEnabled,
+      predatorThreshold: _predatorThreshold,
+      predationEnergyFraction: _predationEnergyFraction,
+      maximumPredationEnergyGain: _maximumPredationEnergyGain,
       ...legacyEcology
     } = current.ecology;
     void _dietEnabled;
     void _specialist;
     void _opposite;
+    void _predationEnabled;
+    void _predatorThreshold;
+    void _predationEnergyFraction;
+    void _maximumPredationEnergyGain;
+    const {
+      predationCostPerTick: _predationCost,
+      defenseCostPerTick: _defenseCost,
+      attackCost: _attackCost,
+      ...legacyOrganisms
+    } = current.organisms;
+    void _predationCost;
+    void _defenseCost;
+    void _attackCost;
     const migrated = parseSimulationConfig({
       ...current,
       schemaVersion: 4,
       ecology: legacyEcology,
+      organisms: legacyOrganisms,
     });
 
-    expect(migrated.schemaVersion).toBe(5);
+    expect(migrated.schemaVersion).toBe(6);
     expect(migrated.ecology.dietSpecializationEnabled).toBe(false);
     expect(migrated.ecology.specialistFoodEfficiency).toBe(1);
     expect(migrated.ecology.oppositeFoodEfficiency).toBe(1);
+    expect(migrated.ecology.predationEnabled).toBe(false);
   });
 
   it.each([

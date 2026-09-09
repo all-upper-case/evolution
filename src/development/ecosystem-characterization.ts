@@ -163,6 +163,7 @@ const createRequest = (
   // Preserve the calibrated pre-diet matrix as a compatibility baseline.
   // Richer mechanics receive their own opposing-environment experiments.
   config.ecology.dietSpecializationEnabled = false;
+  config.ecology.predationEnabled = false;
   regime.configure(config);
   return {
     config: parseSimulationConfig(config),

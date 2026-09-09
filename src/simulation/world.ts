@@ -41,7 +41,7 @@ export interface WorldSummary {
 }
 
 export interface WorldSnapshot extends WorldSummary {
-  schemaVersion: 1 | 2 | 3;
+  schemaVersion: 1 | 2 | 3 | 4;
   config: SimulationConfig;
   foodByCell: readonly number[];
   habitatByCell?: readonly number[];
@@ -55,12 +55,20 @@ export interface WorldTickEvents {
   tick: number;
   births: number;
   deaths: number;
+  deathCauses: DeathCauseCounts;
 }
 
 export interface WorldAdvanceEvents {
   ticks: number;
   births: number;
   deaths: number;
+  deathCauses: DeathCauseCounts;
+}
+
+export interface DeathCauseCounts {
+  starvation: number;
+  age: number;
+  predation: number;
 }
 
 type UnknownRecord = Record<string, unknown>;
@@ -145,15 +153,26 @@ const parseOrganism = (
 
   const genomeRecord = asRecord(record.genome, `${path}.genome`);
   const traits = Object.keys(GENOME_TRAIT_RANGES) as (keyof Genome)[];
-  const serializedTraits =
-    snapshotVersion < 3
-      ? traits.filter((trait) => trait !== "dietPreference")
-      : traits;
+  const serializedTraits = traits.filter(
+    (trait) =>
+      !(snapshotVersion < 3 && trait === "dietPreference") &&
+      !(
+        snapshotVersion < 4 &&
+        (trait === "predationTendency" || trait === "defense")
+      ),
+  );
   requireKeys(genomeRecord, serializedTraits, `${path}.genome`);
   const genome = {} as Genome;
   for (const trait of traits) {
     if (trait === "dietPreference" && snapshotVersion < 3) {
       genome[trait] = 0.5;
+      continue;
+    }
+    if (
+      snapshotVersion < 4 &&
+      (trait === "predationTendency" || trait === "defense")
+    ) {
+      genome[trait] = 0;
       continue;
     }
     const traitValue = finiteNumber(
@@ -181,8 +200,13 @@ const parseOrganism = (
 const parseWorldSnapshot = (value: unknown): WorldSnapshot => {
   const root = asRecord(value, "$");
   const snapshotVersion = safeInteger(root.schemaVersion, "$.schemaVersion", 1);
-  if (snapshotVersion !== 1 && snapshotVersion !== 2 && snapshotVersion !== 3)
-    throw new WorldSnapshotError("$.schemaVersion must equal 1, 2, or 3");
+  if (
+    snapshotVersion !== 1 &&
+    snapshotVersion !== 2 &&
+    snapshotVersion !== 3 &&
+    snapshotVersion !== 4
+  )
+    throw new WorldSnapshotError("$.schemaVersion must equal 1, 2, 3, or 4");
   const serializedConfig = asRecord(root.config, "$.config");
   const serializedConfigVersion = safeInteger(
     serializedConfig.schemaVersion,
@@ -192,6 +216,10 @@ const parseWorldSnapshot = (value: unknown): WorldSnapshot => {
   if (snapshotVersion < 3 && serializedConfigVersion >= 5)
     throw new WorldSnapshotError(
       "legacy world snapshots cannot contain diet-enabled configuration schemas",
+    );
+  if (snapshotVersion < 4 && serializedConfigVersion >= 6)
+    throw new WorldSnapshotError(
+      "legacy world snapshots cannot contain predation-enabled configuration schemas",
     );
   requireKeys(
     root,
@@ -428,7 +456,7 @@ export class SimulationWorld {
 
   public get snapshot(): WorldSnapshot {
     return {
-      schemaVersion: 3,
+      schemaVersion: 4,
       config: parseSimulationConfig(this.#config),
       ...this.summary,
       foodByCell: Object.freeze(Array.from(this.#foodByCell)),
@@ -500,12 +528,25 @@ export class SimulationWorld {
     }
     let births = 0;
     let deaths = 0;
+    const deathCauses: DeathCauseCounts = {
+      starvation: 0,
+      age: 0,
+      predation: 0,
+    };
     for (let index = 0; index < count; index += 1) {
       const events = this.step();
       births += events.births;
       deaths += events.deaths;
+      deathCauses.starvation += events.deathCauses.starvation;
+      deathCauses.age += events.deathCauses.age;
+      deathCauses.predation += events.deathCauses.predation;
     }
-    return Object.freeze({ ticks: count, births, deaths });
+    return Object.freeze({
+      ticks: count,
+      births,
+      deaths,
+      deathCauses: Object.freeze(deathCauses),
+    });
   }
 
   #generateHabitats(): void {
@@ -574,19 +615,102 @@ export class SimulationWorld {
     }
   }
 
-  #advanceOrganisms(): Pick<WorldTickEvents, "births" | "deaths"> {
+  #advanceOrganisms(): Pick<
+    WorldTickEvents,
+    "births" | "deaths" | "deathCauses"
+  > {
     const survivors: Organism[] = [];
     const offspring: Organism[] = [];
-    let deaths = 0;
+    const deathCauses: DeathCauseCounts = {
+      starvation: 0,
+      age: 0,
+      predation: 0,
+    };
+    const killed = new Set<number>();
+    const predationActive =
+      this.#config.ecology.enabled && this.#config.ecology.predationEnabled;
+    const living = predationActive
+      ? new Map(
+          this.#organisms.map((organism) => [organism.id, organism] as const),
+        )
+      : new Map<number, Organism>();
+    const occupants = new Map<number, Set<number>>();
+    if (predationActive) {
+      for (const organism of this.#organisms) {
+        const cell = organism.y * this.#config.world.width + organism.x;
+        const ids = occupants.get(cell) ?? new Set<number>();
+        ids.add(organism.id);
+        occupants.set(cell, ids);
+      }
+    }
+    const removeFromCell = (organism: Organism): void => {
+      if (!predationActive) return;
+      const cell = organism.y * this.#config.world.width + organism.x;
+      const ids = occupants.get(cell);
+      ids?.delete(organism.id);
+      if (ids?.size === 0) occupants.delete(cell);
+    };
 
     // The current array is always in identity order. Newborns are appended only
     // after every organism that existed at tick start has taken its turn.
     for (const organism of this.#organisms) {
-      const position = this.#moveTowardFood(organism);
-      const foodEnergy = this.#consumeFood(position.x, position.y, 1, organism);
+      if (killed.has(organism.id)) continue;
+      const position = this.#moveOrganism(organism, living, occupants);
+      const moved = predationActive
+        ? Object.freeze({ ...organism, ...position })
+        : organism;
+      const movedCell = position.y * this.#config.world.width + position.x;
+      if (predationActive) {
+        removeFromCell(organism);
+        const movedIds = occupants.get(movedCell) ?? new Set<number>();
+        movedIds.add(organism.id);
+        occupants.set(movedCell, movedIds);
+        living.set(organism.id, moved);
+      }
+      let attackEnergy = 0;
+      let attemptedAttack = false;
+      const predator = predationActive && this.#isPredator(organism);
+      if (predator) {
+        const prey = [...(occupants.get(movedCell) ?? [])]
+          .map((id) => living.get(id))
+          .filter(
+            (candidate): candidate is Organism =>
+              candidate !== undefined &&
+              candidate.id !== organism.id &&
+              !this.#isPredator(candidate),
+          )
+          .sort((left, right) => left.id - right.id)[0];
+        if (prey !== undefined) {
+          attemptedAttack = true;
+          const probability = Math.min(
+            0.25,
+            Math.max(
+              0.02,
+              0.02 +
+                organism.genome.predationTendency * 0.18 -
+                prey.genome.defense * 0.15,
+            ),
+          );
+          if (this.#random.chance(probability)) {
+            killed.add(prey.id);
+            removeFromCell(prey);
+            living.delete(prey.id);
+            deathCauses.predation += 1;
+            attackEnergy = Math.min(
+              prey.energy * this.#config.ecology.predationEnergyFraction,
+              this.#config.ecology.maximumPredationEnergyGain,
+            );
+          }
+        }
+      }
+      const foodEnergy = attemptedAttack
+        ? 0
+        : this.#consumeFood(position.x, position.y, 1, organism) *
+          (predator ? 1 - organism.genome.predationTendency : 1);
       const energy = Math.min(
         this.#config.organisms.maximumEnergy,
         organism.energy +
+          attackEnergy +
           foodEnergy *
             foodEnergyMultiplier(
               organism.genome.metabolismScale,
@@ -600,14 +724,24 @@ export class SimulationWorld {
         this.#config.organisms.movementCostPerTick *
           organism.genome.movementSpeed ** 2 -
         this.#config.organisms.perceptionCostPerTick *
-          organism.genome.perceptionRange ** 2;
+          organism.genome.perceptionRange ** 2 -
+        this.#config.organisms.predationCostPerTick *
+          organism.genome.predationTendency ** 2 -
+        this.#config.organisms.defenseCostPerTick *
+          organism.genome.defense ** 2 -
+        (attemptedAttack ? this.#config.organisms.attackCost : 0);
       const ageTicks = organism.ageTicks + 1;
 
-      if (
-        afterMetabolism <= 0 ||
-        ageTicks >= this.#config.organisms.maximumAgeTicks
-      ) {
-        deaths += 1;
+      if (afterMetabolism <= 0) {
+        deathCauses.starvation += 1;
+        removeFromCell(moved);
+        living.delete(organism.id);
+        continue;
+      }
+      if (ageTicks >= this.#config.organisms.maximumAgeTicks) {
+        deathCauses.age += 1;
+        removeFromCell(moved);
+        living.delete(organism.id);
         continue;
       }
 
@@ -620,16 +754,16 @@ export class SimulationWorld {
       const reproduces =
         afterMetabolism >= reproductionThreshold && hasCapacity;
 
-      survivors.push(
-        Object.freeze({
-          ...organism,
-          ...position,
-          ageTicks,
-          energy: reproduces
-            ? afterMetabolism - this.#config.organisms.offspringEnergy
-            : afterMetabolism,
-        }),
-      );
+      const survivor = Object.freeze({
+        ...organism,
+        ...position,
+        ageTicks,
+        energy: reproduces
+          ? afterMetabolism - this.#config.organisms.offspringEnergy
+          : afterMetabolism,
+      });
+      survivors.push(survivor);
+      if (predationActive) living.set(organism.id, survivor);
 
       if (reproduces) {
         offspring.push(
@@ -650,13 +784,32 @@ export class SimulationWorld {
     this.#organisms.splice(
       0,
       this.#organisms.length,
-      ...survivors,
+      ...survivors.filter((organism) => !killed.has(organism.id)),
       ...offspring,
     );
-    return { births: offspring.length, deaths };
+    const deaths =
+      deathCauses.starvation + deathCauses.age + deathCauses.predation;
+    return {
+      births: offspring.length,
+      deaths,
+      deathCauses: Object.freeze(deathCauses),
+    };
   }
 
-  #moveTowardFood(organism: Organism): { x: number; y: number } {
+  #isPredator(organism: Organism): boolean {
+    return (
+      this.#config.ecology.enabled &&
+      this.#config.ecology.predationEnabled &&
+      organism.genome.predationTendency >=
+        this.#config.ecology.predatorThreshold
+    );
+  }
+
+  #moveOrganism(
+    organism: Organism,
+    living: ReadonlyMap<number, Organism>,
+    occupants: ReadonlyMap<number, ReadonlySet<number>>,
+  ): { x: number; y: number } {
     const steps =
       Math.floor(organism.genome.movementSpeed) +
       (this.#random.chance(organism.genome.movementSpeed % 1) ? 1 : 0);
@@ -664,17 +817,112 @@ export class SimulationWorld {
     let y = organism.y;
 
     for (let step = 0; step < steps; step += 1) {
-      const target = this.#bestFoodPosition(
+      const range = Math.floor(organism.genome.perceptionRange);
+      if (!(
+        this.#config.ecology.enabled && this.#config.ecology.predationEnabled
+      )) {
+        const target = this.#bestFoodPosition(x, y, range, organism);
+        if (target.x !== x) x += Math.sign(target.x - x);
+        else if (target.y !== y) y += Math.sign(target.y - y);
+        continue;
+      }
+      const nearest = this.#nearestOtherRole(
         x,
         y,
-        Math.floor(organism.genome.perceptionRange),
+        range,
         organism,
+        living,
+        occupants,
       );
+      const target = this.#isPredator(organism)
+        ? (nearest ?? this.#bestFoodPosition(x, y, range, organism))
+        : nearest === undefined
+          ? this.#bestFoodPosition(x, y, range, organism)
+          : this.#escapePosition(x, y, nearest);
       if (target.x !== x) x += Math.sign(target.x - x);
       else if (target.y !== y) y += Math.sign(target.y - y);
     }
 
     return { x, y };
+  }
+
+  #nearestOtherRole(
+    originX: number,
+    originY: number,
+    range: number,
+    organism: Organism,
+    living: ReadonlyMap<number, Organism>,
+    occupants: ReadonlyMap<number, ReadonlySet<number>>,
+  ): { x: number; y: number } | undefined {
+    if (!(
+      this.#config.ecology.enabled && this.#config.ecology.predationEnabled
+    ))
+      return undefined;
+    const predator = this.#isPredator(organism);
+    for (let distance = 0; distance <= range; distance += 1) {
+      let nearest: Organism | undefined;
+      const minimumY = Math.max(0, originY - distance);
+      const maximumY = Math.min(
+        this.#config.world.height - 1,
+        originY + distance,
+      );
+      for (let y = minimumY; y <= maximumY; y += 1) {
+        const horizontal = distance - Math.abs(y - originY);
+        const xs =
+          horizontal === 0
+            ? [originX]
+            : [originX - horizontal, originX + horizontal];
+        for (const x of xs) {
+          if (x < 0 || x >= this.#config.world.width) continue;
+          const ids = occupants.get(y * this.#config.world.width + x);
+          if (ids === undefined) continue;
+          for (const id of ids) {
+            const candidate = living.get(id);
+            if (
+              candidate === undefined ||
+              candidate.id === organism.id ||
+              this.#isPredator(candidate) === predator
+            )
+              continue;
+            if (candidate.id < (nearest?.id ?? Number.POSITIVE_INFINITY))
+              nearest = candidate;
+          }
+        }
+      }
+      if (nearest !== undefined) return { x: nearest.x, y: nearest.y };
+    }
+    return undefined;
+  }
+
+  #escapePosition(
+    originX: number,
+    originY: number,
+    threat: { x: number; y: number },
+  ): { x: number; y: number } {
+    const candidates = [
+      { x: originX, y: originY - 1 },
+      { x: originX - 1, y: originY },
+      { x: originX, y: originY },
+      { x: originX + 1, y: originY },
+      { x: originX, y: originY + 1 },
+    ].filter(
+      ({ x, y }) =>
+        x >= 0 &&
+        x < this.#config.world.width &&
+        y >= 0 &&
+        y < this.#config.world.height,
+    );
+    let best = candidates[0] ?? { x: originX, y: originY };
+    let bestDistance = -1;
+    for (const candidate of candidates) {
+      const distance =
+        Math.abs(candidate.x - threat.x) + Math.abs(candidate.y - threat.y);
+      if (distance > bestDistance) {
+        best = candidate;
+        bestDistance = distance;
+      }
+    }
+    return best;
   }
 
   #bestFoodPosition(
