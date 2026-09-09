@@ -44,7 +44,7 @@ describe("SimulationWorld", () => {
     const snapshot = first.snapshot;
 
     expect(snapshot).toEqual(second.snapshot);
-    expect(snapshot.schemaVersion).toBe(3);
+    expect(snapshot.schemaVersion).toBe(4);
     expect(new Set(snapshot.habitatByCell)).toEqual(new Set([0, 1]));
     expect(snapshot.foodTotals).toEqual({ meadow: 100, grove: 60 });
     expect(
@@ -187,7 +187,12 @@ describe("SimulationWorld", () => {
     const events = world.step();
 
     expect(world.summary.population).toBe(5);
-    expect(events).toEqual({ tick: 1, births: 2, deaths: 0 });
+    expect(events).toEqual({
+      tick: 1,
+      births: 2,
+      deaths: 0,
+      deathCauses: { starvation: 0, age: 0, predation: 0 },
+    });
     const children = world.snapshot.organisms.filter(
       ({ parentId }) => parentId !== null,
     );
@@ -267,7 +272,12 @@ describe("SimulationWorld", () => {
     const events = world.step();
 
     expect(world.summary.population).toBe(0);
-    expect(events).toEqual({ tick: 1, births: 0, deaths: 4 });
+    expect(events).toEqual({
+      tick: 1,
+      births: 0,
+      deaths: 4,
+      deathCauses: { starvation: 4, age: 0, predation: 0 },
+    });
     expect(world.snapshot.organisms).toEqual([]);
   });
 
@@ -289,7 +299,7 @@ describe("SimulationWorld", () => {
       deaths += events.deaths;
     }
 
-    expect(aggregate).toEqual({ ticks: 500, births, deaths });
+    expect(aggregate).toMatchObject({ ticks: 500, births, deaths });
     expect(aggregate.births).toBeGreaterThan(0);
     expect(aggregateWorld.snapshot).toEqual(steppedWorld.snapshot);
   });
@@ -355,9 +365,19 @@ describe("SimulationWorld", () => {
     delete legacyEcology.dietSpecializationEnabled;
     delete legacyEcology.specialistFoodEfficiency;
     delete legacyEcology.oppositeFoodEfficiency;
+    delete legacyEcology.predationEnabled;
+    delete legacyEcology.predatorThreshold;
+    delete legacyEcology.predationEnergyFraction;
+    delete legacyEcology.maximumPredationEnergyGain;
+    const legacyOrganisms = legacyConfig.organisms as Record<string, unknown>;
+    delete legacyOrganisms.predationCostPerTick;
+    delete legacyOrganisms.defenseCostPerTick;
+    delete legacyOrganisms.attackCost;
     legacyConfig.schemaVersion = 4;
     for (const organism of current.organisms as Record<string, unknown>[]) {
       delete (organism.genome as Record<string, unknown>).dietPreference;
+      delete (organism.genome as Record<string, unknown>).predationTendency;
+      delete (organism.genome as Record<string, unknown>).defense;
     }
     current.schemaVersion = 2;
 
@@ -391,7 +411,7 @@ describe("SimulationWorld", () => {
       WorldSnapshotError,
     );
     expect(() =>
-      SimulationWorld.fromSnapshot({ ...valid, schemaVersion: 4 }),
+      SimulationWorld.fromSnapshot({ ...valid, schemaVersion: 5 }),
     ).toThrow(WorldSnapshotError);
     expect(() =>
       SimulationWorld.fromSnapshot({

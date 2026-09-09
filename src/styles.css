@@ -308,6 +308,10 @@ h1 {
   background: #ffd46c;
 }
 
+.predator-key::before {
+  background: #ff6685;
+}
+
 .world-frame {
   padding: clamp(0.55rem, 1.5vw, 0.85rem);
   border: 1px solid #294838;

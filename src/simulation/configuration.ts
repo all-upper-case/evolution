@@ -1,4 +1,4 @@
-export const CONFIG_SCHEMA_VERSION = 5 as const;
+export const CONFIG_SCHEMA_VERSION = 6 as const;
 
 export interface SimulationConfig {
   schemaVersion: typeof CONFIG_SCHEMA_VERSION;
@@ -21,6 +21,7 @@ export interface SimulationConfig {
   ecology: {
     enabled: boolean;
     dietSpecializationEnabled: boolean;
+    predationEnabled: boolean;
     habitatPatchCount: number;
     groveFraction: number;
     secondaryInitialUnits: number;
@@ -29,6 +30,9 @@ export interface SimulationConfig {
     secondaryEnergyPerUnit: number;
     specialistFoodEfficiency: number;
     oppositeFoodEfficiency: number;
+    predatorThreshold: number;
+    predationEnergyFraction: number;
+    maximumPredationEnergyGain: number;
   };
   organisms: {
     initialEnergy: number;
@@ -39,6 +43,9 @@ export interface SimulationConfig {
     metabolismFoodEnergyInfluence: number;
     movementCostPerTick: number;
     perceptionCostPerTick: number;
+    predationCostPerTick: number;
+    defenseCostPerTick: number;
+    attackCost: number;
     maximumAgeTicks: number;
   };
   evolution: {
@@ -126,6 +133,7 @@ const DEFAULT_CONFIG: SimulationConfig = {
   ecology: {
     enabled: true,
     dietSpecializationEnabled: true,
+    predationEnabled: true,
     habitatPatchCount: 12,
     groveFraction: 0.38,
     secondaryInitialUnits: 4_000,
@@ -134,6 +142,9 @@ const DEFAULT_CONFIG: SimulationConfig = {
     secondaryEnergyPerUnit: 7,
     specialistFoodEfficiency: 1.25,
     oppositeFoodEfficiency: 0.25,
+    predatorThreshold: 0.8,
+    predationEnergyFraction: 0.35,
+    maximumPredationEnergyGain: 18,
   },
   organisms: {
     initialEnergy: 40,
@@ -144,6 +155,9 @@ const DEFAULT_CONFIG: SimulationConfig = {
     metabolismFoodEnergyInfluence: 0.4,
     movementCostPerTick: 0.1,
     perceptionCostPerTick: 0.0018,
+    predationCostPerTick: 0.08,
+    defenseCostPerTick: 0.04,
+    attackCost: 0.35,
     maximumAgeTicks: 30_000,
   },
   evolution: {
@@ -258,7 +272,9 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
       "world",
       "population",
       "food",
-      ...(inputSchemaVersion === 4 || inputSchemaVersion === 5
+      ...(inputSchemaVersion === 4 ||
+      inputSchemaVersion === 5 ||
+      inputSchemaVersion === 6
         ? ["ecology"]
         : []),
       "organisms",
@@ -286,21 +302,31 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
     issues,
   );
   const ecology =
-    root.schemaVersion === 4 || root.schemaVersion === 5
+    root.schemaVersion === 4 ||
+    root.schemaVersion === 5 ||
+    root.schemaVersion === 6
       ? readRecord(
           root.ecology,
           "$.ecology",
           [
             "enabled",
-            ...(root.schemaVersion === 5 ? ["dietSpecializationEnabled"] : []),
+            ...(root.schemaVersion >= 5 ? ["dietSpecializationEnabled"] : []),
+            ...(root.schemaVersion === 6 ? ["predationEnabled"] : []),
             "habitatPatchCount",
             "groveFraction",
             "secondaryInitialUnits",
             "secondaryMaximumUnits",
             "secondaryRegrowthUnitsPerTick",
             "secondaryEnergyPerUnit",
-            ...(root.schemaVersion === 5
+            ...(root.schemaVersion >= 5
               ? ["specialistFoodEfficiency", "oppositeFoodEfficiency"]
+              : []),
+            ...(root.schemaVersion === 6
+              ? [
+                  "predatorThreshold",
+                  "predationEnergyFraction",
+                  "maximumPredationEnergyGain",
+                ]
               : []),
           ],
           issues,
@@ -317,12 +343,16 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
       "metabolismPerTick",
       ...(root.schemaVersion === 3 ||
       root.schemaVersion === 4 ||
-      root.schemaVersion === 5
+      root.schemaVersion === 5 ||
+      root.schemaVersion === 6
         ? ["metabolismFoodEnergyInfluence"]
         : []),
       ...(root.schemaVersion === 1
         ? []
         : ["movementCostPerTick", "perceptionCostPerTick"]),
+      ...(root.schemaVersion === 6
+        ? ["predationCostPerTick", "defenseCostPerTick", "attackCost"]
+        : []),
       "maximumAgeTicks",
     ],
     issues,
@@ -434,6 +464,15 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
           "$.ecology.dietSpecializationEnabled",
           issues,
         );
+  const predationEnabled =
+    schemaVersion < 6
+      ? false
+      : readBoolean(
+          ecology,
+          "predationEnabled",
+          "$.ecology.predationEnabled",
+          issues,
+        );
   const habitatPatchCount =
     schemaVersion < 4
       ? DEFAULT_CONFIG.ecology.habitatPatchCount
@@ -514,6 +553,36 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
           SIMULATION_LIMITS.foodEfficiency,
           issues,
         );
+  const predatorThreshold =
+    schemaVersion < 6
+      ? DEFAULT_CONFIG.ecology.predatorThreshold
+      : readNumber(
+          ecology,
+          "predatorThreshold",
+          "$.ecology.predatorThreshold",
+          SIMULATION_LIMITS.probability,
+          issues,
+        );
+  const predationEnergyFraction =
+    schemaVersion < 6
+      ? DEFAULT_CONFIG.ecology.predationEnergyFraction
+      : readNumber(
+          ecology,
+          "predationEnergyFraction",
+          "$.ecology.predationEnergyFraction",
+          SIMULATION_LIMITS.probability,
+          issues,
+        );
+  const maximumPredationEnergyGain =
+    schemaVersion < 6
+      ? DEFAULT_CONFIG.ecology.maximumPredationEnergyGain
+      : readNumber(
+          ecology,
+          "maximumPredationEnergyGain",
+          "$.ecology.maximumPredationEnergyGain",
+          SIMULATION_LIMITS.organismEnergy,
+          issues,
+        );
   const initialEnergy = readNumber(
     organisms,
     "initialEnergy",
@@ -586,6 +655,36 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
           SIMULATION_LIMITS.traitCost,
           issues,
         );
+  const predationCostPerTick =
+    schemaVersion < 6
+      ? 0
+      : readNumber(
+          organisms,
+          "predationCostPerTick",
+          "$.organisms.predationCostPerTick",
+          SIMULATION_LIMITS.traitCost,
+          issues,
+        );
+  const defenseCostPerTick =
+    schemaVersion < 6
+      ? 0
+      : readNumber(
+          organisms,
+          "defenseCostPerTick",
+          "$.organisms.defenseCostPerTick",
+          SIMULATION_LIMITS.traitCost,
+          issues,
+        );
+  const attackCost =
+    schemaVersion < 6
+      ? 0
+      : readNumber(
+          organisms,
+          "attackCost",
+          "$.organisms.attackCost",
+          SIMULATION_LIMITS.traitCost,
+          issues,
+        );
   const mutationProbability = readNumber(
     evolution,
     "mutationProbability",
@@ -653,6 +752,12 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
     issues,
   );
   addRelationalIssue(
+    predationEnabled && (predatorThreshold <= 0 || predatorThreshold >= 1),
+    "$.ecology.predatorThreshold",
+    "must be greater than 0 and less than 1 when predation is enabled",
+    issues,
+  );
+  addRelationalIssue(
     initialEnergy > maximumEnergy,
     "$.organisms.initialEnergy",
     "must not exceed maximumEnergy",
@@ -684,6 +789,7 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
     ecology: {
       enabled: ecologyEnabled,
       dietSpecializationEnabled,
+      predationEnabled,
       habitatPatchCount,
       groveFraction,
       secondaryInitialUnits,
@@ -692,6 +798,9 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
       secondaryEnergyPerUnit,
       specialistFoodEfficiency,
       oppositeFoodEfficiency,
+      predatorThreshold,
+      predationEnergyFraction,
+      maximumPredationEnergyGain,
     },
     organisms: {
       initialEnergy,
@@ -702,6 +811,9 @@ export const parseSimulationConfig = (input: unknown): SimulationConfig => {
       metabolismFoodEnergyInfluence,
       movementCostPerTick,
       perceptionCostPerTick,
+      predationCostPerTick,
+      defenseCostPerTick,
+      attackCost,
       maximumAgeTicks,
     },
     evolution: { mutationProbability, mutationMagnitude },

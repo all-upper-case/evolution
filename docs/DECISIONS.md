@@ -217,3 +217,13 @@ Configuration schema 4 can enable a heterogeneous world divided into determinist
 Configuration schema 5 adds an inherited diet preference from meadow (0) through generalist (0.5) to grove (1), plus explicit specialist and opposite-food efficiency endpoints. Preference linearly changes both perceived food value and energy extraction. Defaults give complete specialists 1.25× preferred-food efficiency and 0.25× opposite-food efficiency, while generalists receive 0.75× from either food. World snapshot schema 3 stores the new trait. Schema-4 configurations and schema-1/2 worlds migrate with diet specialization disabled, neutral 0.5 preferences, and no extra diet-related random draws.
 
 **Why:** A continuous preference produces inspectable ecological strategies without cosmetic species labels. Specialists gain peak efficiency but are vulnerable to scarcity of their preferred food; generalists avoid that vulnerability but cannot reach the peak. Separate opposing-resource experiments demonstrate selection in both directions while the existing calibrated matrix remains a compatibility baseline.
+
+## 2026-09-09 — Bounded inherited predation and defense
+
+**Status:** Accepted
+
+Configuration schema 6 adds continuous predation-tendency and defense traits, a predator threshold, bounded prey-energy conversion, and explicit attack and quadratic trait costs. Predators pursue the nearest visible prey; prey flee the nearest visible predator. Distance and identity define deterministic targeting ties, while attack outcomes use the seeded simulation random source. Predators retain only `1 - predationTendency` of plant-food energy, making stronger predation a feeding specialization rather than a universally beneficial capability.
+
+World snapshot schema 4 stores both traits. A per-tick spatial index keeps pursuit bounded at supported population sizes and removes killed prey immediately so they cannot act later or be eaten twice. Lifecycle events and lab checkpoints separately account for starvation, age, and predation. Schemas 1–5 migrate with predation disabled, zero new costs, neutral traits, and no added random draws.
+
+**Why:** A continuous, costly capability permits inherited ecological roles without introducing fixed species labels. Bounded gains, attempt costs, fallback-foraging loss, defense costs, and immediate removal make energy flow and ordering explicit. The three-seed 300-tick check demonstrates viable interaction but deliberately makes no equilibrium claim.

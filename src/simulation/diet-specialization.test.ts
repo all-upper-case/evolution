@@ -27,6 +27,8 @@ describe("inherited diet specialization", () => {
       reproductionThresholdScale: 1,
       mutationRateScale: 1,
       dietPreference: 0.5,
+      predationTendency: 0.5,
+      defense: 0.5,
     };
 
     for (let index = 0; index < 100; index += 1) {
@@ -43,6 +45,7 @@ describe("inherited diet specialization", () => {
   it("keeps the legacy neutral diet without consuming random draws", () => {
     const config = createDefaultSimulationConfig();
     config.ecology.dietSpecializationEnabled = false;
+    config.ecology.predationEnabled = false;
     const random = new SeededRandom(17);
     const before = random.state;
     const inherited = inheritGenome(
@@ -53,6 +56,8 @@ describe("inherited diet specialization", () => {
         reproductionThresholdScale: 1,
         mutationRateScale: 1,
         dietPreference: 0.5,
+        predationTendency: 0,
+        defense: 0,
       },
       { ...config, evolution: { ...config.evolution, mutationProbability: 0 } },
       random,

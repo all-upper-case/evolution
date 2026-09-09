@@ -4,7 +4,11 @@ import {
   type SimulationConfig,
 } from "../simulation/configuration";
 import { GENOME_TRAIT_RANGES, type Genome } from "../simulation/organism";
-import { SimulationWorld, type WorldSnapshot } from "../simulation/world";
+import {
+  SimulationWorld,
+  type DeathCauseCounts,
+  type WorldSnapshot,
+} from "../simulation/world";
 
 export const MAX_LAB_TICKS = 50_000;
 
@@ -21,6 +25,7 @@ type ConfigNumberPath =
   | "food.energyPerUnit"
   | "ecology.enabled"
   | "ecology.dietSpecializationEnabled"
+  | "ecology.predationEnabled"
   | "ecology.habitatPatchCount"
   | "ecology.groveFraction"
   | "ecology.secondaryInitialUnits"
@@ -29,6 +34,9 @@ type ConfigNumberPath =
   | "ecology.secondaryEnergyPerUnit"
   | "ecology.specialistFoodEfficiency"
   | "ecology.oppositeFoodEfficiency"
+  | "ecology.predatorThreshold"
+  | "ecology.predationEnergyFraction"
+  | "ecology.maximumPredationEnergyGain"
   | "organisms.initialEnergy"
   | "organisms.maximumEnergy"
   | "organisms.reproductionThreshold"
@@ -37,6 +45,9 @@ type ConfigNumberPath =
   | "organisms.metabolismFoodEnergyInfluence"
   | "organisms.movementCostPerTick"
   | "organisms.perceptionCostPerTick"
+  | "organisms.predationCostPerTick"
+  | "organisms.defenseCostPerTick"
+  | "organisms.attackCost"
   | "organisms.maximumAgeTicks"
   | "evolution.mutationProbability"
   | "evolution.mutationMagnitude"
@@ -56,6 +67,7 @@ export const LAB_CONFIG_PATHS: readonly ConfigNumberPath[] = Object.freeze([
   "food.energyPerUnit",
   "ecology.enabled",
   "ecology.dietSpecializationEnabled",
+  "ecology.predationEnabled",
   "ecology.habitatPatchCount",
   "ecology.groveFraction",
   "ecology.secondaryInitialUnits",
@@ -64,6 +76,9 @@ export const LAB_CONFIG_PATHS: readonly ConfigNumberPath[] = Object.freeze([
   "ecology.secondaryEnergyPerUnit",
   "ecology.specialistFoodEfficiency",
   "ecology.oppositeFoodEfficiency",
+  "ecology.predatorThreshold",
+  "ecology.predationEnergyFraction",
+  "ecology.maximumPredationEnergyGain",
   "organisms.initialEnergy",
   "organisms.maximumEnergy",
   "organisms.reproductionThreshold",
@@ -72,6 +87,9 @@ export const LAB_CONFIG_PATHS: readonly ConfigNumberPath[] = Object.freeze([
   "organisms.metabolismFoodEnergyInfluence",
   "organisms.movementCostPerTick",
   "organisms.perceptionCostPerTick",
+  "organisms.predationCostPerTick",
+  "organisms.defenseCostPerTick",
+  "organisms.attackCost",
   "organisms.maximumAgeTicks",
   "evolution.mutationProbability",
   "evolution.mutationMagnitude",
@@ -111,12 +129,15 @@ const assignPath = (
   }
   if (
     path === "ecology.enabled" ||
-    path === "ecology.dietSpecializationEnabled"
+    path === "ecology.dietSpecializationEnabled" ||
+    path === "ecology.predationEnabled"
   ) {
     if (value !== 0 && value !== 1)
       throw new RangeError(`${path} must equal 0 or 1.`);
     if (path === "ecology.enabled") config.ecology.enabled = value === 1;
-    else config.ecology.dietSpecializationEnabled = value === 1;
+    else if (path === "ecology.dietSpecializationEnabled")
+      config.ecology.dietSpecializationEnabled = value === 1;
+    else config.ecology.predationEnabled = value === 1;
     return;
   }
   const [section, key] = parts;
@@ -188,10 +209,12 @@ export interface LabCheckpoint {
   population: number;
   cumulativeBirths: number;
   cumulativeDeaths: number;
+  cumulativeDeathCauses: DeathCauseCounts;
   totalFood: number;
   occupiedFoodCells: number;
   foodByType: { meadow: number; grove: number };
   habitatCells: { meadow: number; grove: number };
+  ecologicalRoles: { predators: number; prey: number };
   lineages: number;
   meanAgeTicks: number | null;
   meanEnergy: number | null;
@@ -214,6 +237,7 @@ const summarize = (
   snapshot: WorldSnapshot,
   cumulativeBirths: number,
   cumulativeDeaths: number,
+  cumulativeDeathCauses: DeathCauseCounts,
 ): LabCheckpoint => {
   const organisms = snapshot.organisms;
   const traits = Object.fromEntries(
@@ -229,6 +253,7 @@ const summarize = (
     population: snapshot.population,
     cumulativeBirths,
     cumulativeDeaths,
+    cumulativeDeathCauses: Object.freeze({ ...cumulativeDeathCauses }),
     totalFood: round(snapshot.totalFood),
     occupiedFoodCells: snapshot.occupiedFoodCells,
     foodByType: {
@@ -242,6 +267,23 @@ const summarize = (
           0),
       grove:
         snapshot.habitatByCell?.filter((habitat) => habitat === 1).length ?? 0,
+    },
+    ecologicalRoles: {
+      predators: organisms.filter(
+        ({ genome }) =>
+          snapshot.config.ecology.enabled &&
+          snapshot.config.ecology.predationEnabled &&
+          genome.predationTendency >= snapshot.config.ecology.predatorThreshold,
+      ).length,
+      prey: organisms.filter(
+        ({ genome }) =>
+          !(
+            snapshot.config.ecology.enabled &&
+            snapshot.config.ecology.predationEnabled &&
+            genome.predationTendency >=
+              snapshot.config.ecology.predatorThreshold
+          ),
+      ).length,
     },
     lineages: new Set(organisms.map((organism) => organism.lineageId)).size,
     meanAgeTicks:
@@ -276,21 +318,44 @@ export const runLabExperiment = (request: LabRequest): LabReport => {
   let currentTick = 0;
   let cumulativeBirths = 0;
   let cumulativeDeaths = 0;
+  const cumulativeDeathCauses: DeathCauseCounts = {
+    starvation: 0,
+    age: 0,
+    predation: 0,
+  };
   for (const checkpoint of request.checkpoints) {
     const events = world.advanceTicks(checkpoint - currentTick);
     cumulativeBirths += events.births;
     cumulativeDeaths += events.deaths;
+    cumulativeDeathCauses.starvation += events.deathCauses.starvation;
+    cumulativeDeathCauses.age += events.deathCauses.age;
+    cumulativeDeathCauses.predation += events.deathCauses.predation;
     checkpoints.push(
-      summarize(world.snapshot, cumulativeBirths, cumulativeDeaths),
+      summarize(
+        world.snapshot,
+        cumulativeBirths,
+        cumulativeDeaths,
+        cumulativeDeathCauses,
+      ),
     );
     currentTick = checkpoint;
   }
   const finalEvents = world.advanceTicks(request.ticks - currentTick);
   cumulativeBirths += finalEvents.births;
   cumulativeDeaths += finalEvents.deaths;
+  cumulativeDeathCauses.starvation += finalEvents.deathCauses.starvation;
+  cumulativeDeathCauses.age += finalEvents.deathCauses.age;
+  cumulativeDeathCauses.predation += finalEvents.deathCauses.predation;
   const final = world.snapshot;
   if (request.checkpoints.at(-1) !== request.ticks)
-    checkpoints.push(summarize(final, cumulativeBirths, cumulativeDeaths));
+    checkpoints.push(
+      summarize(
+        final,
+        cumulativeBirths,
+        cumulativeDeaths,
+        cumulativeDeathCauses,
+      ),
+    );
   return {
     schemaVersion: 1,
     request,

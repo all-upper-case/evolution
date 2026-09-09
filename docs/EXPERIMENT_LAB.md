@@ -13,7 +13,7 @@ The document sets `data-lab-status="complete"` or `"error"` on its root element.
 - the complete normalized configuration;
 - requested tick count;
 - summaries at requested checkpoints and the final tick;
-- population, cumulative births and deaths, total food, per-food totals, habitat cell counts, occupied cells, living lineages, mean age, and mean energy;
+- population, cumulative births and deaths by cause, total food, per-food totals, habitat cell counts, predator/prey counts, occupied cells, living lineages, mean age, and mean energy;
 - minimum, mean, and maximum values for every inherited trait;
 - final random state and next organism identity for deterministic comparison.
 
@@ -32,3 +32,5 @@ For repeatable multi-seed calibration rather than a single custom run, use `char
 Trait maintenance costs can be overridden with `organisms.movementCostPerTick` and `organisms.perceptionCostPerTick` (each 0–1000). Defaults are 0.1 and 0.0018; each coefficient multiplies the corresponding inherited trait squared every acting tick, including while stationary. `organisms.metabolismFoodEnergyInfluence` accepts 0–1 and defaults to 0.4. At zero, metabolic rate does not affect food yield; at one, food yield scales directly with the inherited metabolism trait. Version-one and version-two files migrate with zero influence so their energy rules remain compatible.
 
 Habitat experiments expose `ecology.habitatPatchCount`, `ecology.groveFraction`, `ecology.secondaryInitialUnits`, `ecology.secondaryMaximumUnits`, `ecology.secondaryRegrowthUnitsPerTick`, and `ecology.secondaryEnergyPerUnit`. Meadow food continues to use the existing `food.*` paths. Set `ecology.enabled=0` for a legacy-style single habitat or `1` for both habitats. Schema 5 also accepts `ecology.dietSpecializationEnabled`, `ecology.specialistFoodEfficiency`, and `ecology.oppositeFoodEfficiency`; boolean values use `0` or `1`. Every checkpoint reports both food totals, meadow/grove cell counts, and summary statistics for diet preference with the other inherited traits.
+
+Schema 6 adds `ecology.predationEnabled`, `ecology.predatorThreshold`, `ecology.predationEnergyFraction`, and `ecology.maximumPredationEnergyGain`. Per-tick predation and defense maintenance costs and the cost of each attempted attack use `organisms.predationCostPerTick`, `organisms.defenseCostPerTick`, and `organisms.attackCost`. Checkpoints report predator/prey counts, predation and defense statistics, and cumulative starvation, age, and predation deaths.
