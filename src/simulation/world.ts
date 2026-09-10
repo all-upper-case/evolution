@@ -508,6 +508,8 @@ export class SimulationWorld {
   readonly #habitatByCell: Uint8Array;
   readonly #secondaryFoodByCell: Float64Array;
   readonly #terrainByCell: Uint8Array;
+  #habitatSnapshot: readonly number[] | undefined;
+  #terrainSnapshot: readonly number[] | undefined;
   readonly #habitatCells: [number[], number[]] = [[], []];
   readonly #organisms: Organism[];
   #tick = 0;
@@ -566,14 +568,16 @@ export class SimulationWorld {
   }
 
   public get snapshot(): WorldSnapshot {
+    this.#habitatSnapshot ??= Object.freeze(Array.from(this.#habitatByCell));
+    this.#terrainSnapshot ??= Object.freeze(Array.from(this.#terrainByCell));
     return {
       schemaVersion: 5,
       config: parseSimulationConfig(this.#config),
       ...this.summary,
       foodByCell: Object.freeze(Array.from(this.#foodByCell)),
-      habitatByCell: Object.freeze(Array.from(this.#habitatByCell)),
+      habitatByCell: this.#habitatSnapshot,
       secondaryFoodByCell: Object.freeze(Array.from(this.#secondaryFoodByCell)),
-      terrainByCell: Object.freeze(Array.from(this.#terrainByCell)),
+      terrainByCell: this.#terrainSnapshot,
       organisms: Object.freeze(this.#organisms.map(cloneOrganism)),
       randomState: this.#random.state,
       nextOrganismId: this.#nextOrganismId,

@@ -620,7 +620,7 @@ The viability window is intentionally finite and does not demonstrate equilibriu
 
 ### Validation
 
-Formatting, linting, strict type checking, all 113 tests, and the four-entry production build pass locally. Coverage includes seeded generation, bounded deterministic detours, refuge protection and cost, food and organism invariants, strict persistence, exact replay, legacy continuation, rendering, settings, and lab reporting. A local Node 22 timing advanced the recommended 256×256, 1,000-organism workload for 100 ticks in 901.9 ms with terrain versus 848.9 ms without it. GitHub CI and the deployed production-browser benchmark remain required before the roadmap item is completed.
+Formatting, linting, strict type checking, all 113 tests, and the four-entry production build passed locally for the feature. Coverage includes seeded generation, bounded deterministic detours, refuge protection and cost, food and organism invariants, strict persistence, exact replay, legacy continuation, rendering, settings, and lab reporting. A local Node 22 timing advanced the recommended 256×256, 1,000-organism workload for 100 ticks in 901.9 ms with terrain versus 848.9 ms without it. PR #29 and both post-merge workflows passed. Two deployed browser runs then failed the 33.3 ms p95 budget, so the roadmap item remains open and a follow-up removes repeated static-grid snapshot allocations before benchmarking again.
 
 ### Risk and follow-up
 
