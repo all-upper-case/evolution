@@ -39,9 +39,14 @@ The routing work is bounded by two movement steps, four candidate neighbors,
 and the existing perception radius of at most 12 cells. A local Node 22 timing
 run on 2026-09-10 advanced the recommended 256×256, 1,000-organism workload for
 100 ticks in 901.9 ms with terrain, versus 848.9 ms with terrain disabled (9.0
-ms versus 8.5 ms per tick on that runner). The deployed production-browser
-benchmark remains the authoritative tick-plus-render check and must pass its
-33.3 ms p95 budget before this roadmap increment is marked complete.
+ms versus 8.5 ms per tick on that runner).
+
+After static habitat and terrain snapshot arrays were cached, two deployed
+production-browser runs on 2026-09-10 measured the recommended 256×256,
+1,000-organism workload at 27.4 ms and 27.6 ms p95 for complete tick-plus-render
+work. Both pass the 33.3 ms responsiveness budget. The unsupported
+5,000-organism stress workload exceeded the budget, as expected; the documented
+interactive ceiling remains 1,000 organisms.
 
 These checks establish deterministic bounded mechanics and practical runtime,
 not biological realism or long-term predator/prey stability.

@@ -620,7 +620,7 @@ The viability window is intentionally finite and does not demonstrate equilibriu
 
 ### Validation
 
-Formatting, linting, strict type checking, all 113 tests, and the four-entry production build passed locally for the feature. Coverage includes seeded generation, bounded deterministic detours, refuge protection and cost, food and organism invariants, strict persistence, exact replay, legacy continuation, rendering, settings, and lab reporting. A local Node 22 timing advanced the recommended 256×256, 1,000-organism workload for 100 ticks in 901.9 ms with terrain versus 848.9 ms without it. PR #29 and both post-merge workflows passed. Two deployed browser runs then failed the 33.3 ms p95 budget, so the roadmap item remains open and a follow-up removes repeated static-grid snapshot allocations before benchmarking again.
+Formatting, linting, strict type checking, all 113 tests, and the four-entry production build passed locally for the feature and follow-up. Coverage includes seeded generation, bounded deterministic detours, refuge protection and cost, food and organism invariants, strict persistence, exact replay, legacy continuation, rendering, settings, lab reporting, and cached-grid immutability. PRs #29 and #30, their required CI, post-merge CI, and Pages deployments passed. Initial deployed benchmark runs exposed excessive allocation pressure; caching immutable habitat and terrain snapshot arrays brought two subsequent recommended-ceiling runs to 27.4 ms and 27.6 ms p95, both within the 33.3 ms budget. The terrain roadmap increment is complete.
 
 ### Risk and follow-up
 
@@ -628,4 +628,4 @@ Local neighbor selection produces predictable detours but does not guarantee a g
 
 ### Recommended next action
 
-Run the deployed benchmark with terrain enabled. If its recommended-ceiling p95 stays within 33.3 ms, complete this roadmap increment and evaluate the four Milestone 4 mechanics together before selecting an additional sensor or behavior gene.
+Evaluate habitats, diets, predation, and terrain together across multiple seeds before selecting an additional sensor or behavior gene. Treat the 5,000-organism benchmark as unsupported stress evidence; it no longer fits the interactive frame budget.
