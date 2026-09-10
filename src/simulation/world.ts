@@ -27,6 +27,12 @@ export const dietEfficiency = (
   );
 };
 
+export const TERRAIN_OPEN = 0 as const;
+export const TERRAIN_OBSTACLE = 1 as const;
+export const TERRAIN_REFUGE = 2 as const;
+export type TerrainType =
+  typeof TERRAIN_OPEN | typeof TERRAIN_OBSTACLE | typeof TERRAIN_REFUGE;
+
 export interface WorldSummary {
   tick: number;
   width: number;
@@ -38,14 +44,20 @@ export interface WorldSummary {
     meadow: number;
     grove: number;
   };
+  terrainTotals: {
+    open: number;
+    obstacles: number;
+    refuges: number;
+  };
 }
 
 export interface WorldSnapshot extends WorldSummary {
-  schemaVersion: 1 | 2 | 3 | 4;
+  schemaVersion: 1 | 2 | 3 | 4 | 5;
   config: SimulationConfig;
   foodByCell: readonly number[];
   habitatByCell?: readonly number[];
   secondaryFoodByCell?: readonly number[];
+  terrainByCell?: readonly number[];
   organisms: readonly Organism[];
   randomState: number;
   nextOrganismId: number;
@@ -204,9 +216,10 @@ const parseWorldSnapshot = (value: unknown): WorldSnapshot => {
     snapshotVersion !== 1 &&
     snapshotVersion !== 2 &&
     snapshotVersion !== 3 &&
-    snapshotVersion !== 4
+    snapshotVersion !== 4 &&
+    snapshotVersion !== 5
   )
-    throw new WorldSnapshotError("$.schemaVersion must equal 1, 2, 3, or 4");
+    throw new WorldSnapshotError("$.schemaVersion must equal 1, 2, 3, 4, or 5");
   const serializedConfig = asRecord(root.config, "$.config");
   const serializedConfigVersion = safeInteger(
     serializedConfig.schemaVersion,
@@ -220,6 +233,10 @@ const parseWorldSnapshot = (value: unknown): WorldSnapshot => {
   if (snapshotVersion < 4 && serializedConfigVersion >= 6)
     throw new WorldSnapshotError(
       "legacy world snapshots cannot contain predation-enabled configuration schemas",
+    );
+  if (snapshotVersion < 5 && serializedConfigVersion >= 7)
+    throw new WorldSnapshotError(
+      "legacy world snapshots cannot contain terrain-enabled configuration schemas",
     );
   requireKeys(
     root,
@@ -239,6 +256,7 @@ const parseWorldSnapshot = (value: unknown): WorldSnapshot => {
       ...(snapshotVersion >= 2
         ? ["habitatByCell", "secondaryFoodByCell", "foodTotals"]
         : []),
+      ...(snapshotVersion >= 5 ? ["terrainByCell", "terrainTotals"] : []),
     ],
     "$",
   );
@@ -279,7 +297,13 @@ const parseWorldSnapshot = (value: unknown): WorldSnapshot => {
   const computedTotal = foodByCell.reduce((sum, food) => sum + food, 0);
   let habitatByCell: readonly number[] | undefined;
   let secondaryFoodByCell: readonly number[] | undefined;
+  let terrainByCell: readonly number[] | undefined;
   let foodTotals = { meadow: computedTotal, grove: 0 };
+  let terrainTotals = {
+    open: width * height,
+    obstacles: 0,
+    refuges: 0,
+  };
   if (snapshotVersion >= 2) {
     if (!Array.isArray(root.habitatByCell))
       throw new WorldSnapshotError("$.habitatByCell must be an array");
@@ -338,6 +362,61 @@ const parseWorldSnapshot = (value: unknown): WorldSnapshot => {
       throw new WorldSnapshotError("$.foodTotals is inconsistent");
     foodTotals = { meadow, grove };
   }
+  if (snapshotVersion >= 5) {
+    if (!Array.isArray(root.terrainByCell))
+      throw new WorldSnapshotError("$.terrainByCell must be an array");
+    if (root.terrainByCell.length !== width * height)
+      throw new WorldSnapshotError("terrain grid must match the world");
+    terrainByCell = Object.freeze(
+      root.terrainByCell.map((value, index) => {
+        if (
+          value !== TERRAIN_OPEN &&
+          value !== TERRAIN_OBSTACLE &&
+          value !== TERRAIN_REFUGE
+        )
+          throw new WorldSnapshotError(
+            `$.terrainByCell[${String(index)}] must equal 0, 1, or 2`,
+          );
+        return Number(value);
+      }),
+    );
+    if (
+      !config.ecology.terrainEnabled &&
+      terrainByCell.some((terrain) => terrain !== TERRAIN_OPEN)
+    )
+      throw new WorldSnapshotError(
+        "disabled terrain cannot contain obstacles or refuges",
+      );
+    if (
+      terrainByCell.some(
+        (terrain, index) =>
+          terrain === TERRAIN_OBSTACLE &&
+          ((foodByCell[index] ?? 0) > 0 ||
+            (secondaryFoodByCell?.[index] ?? 0) > 0),
+      )
+    )
+      throw new WorldSnapshotError("obstacles cannot contain food");
+    const totals = asRecord(root.terrainTotals, "$.terrainTotals");
+    requireKeys(totals, ["open", "obstacles", "refuges"], "$.terrainTotals");
+    terrainTotals = {
+      open: safeInteger(totals.open, "$.terrainTotals.open"),
+      obstacles: safeInteger(totals.obstacles, "$.terrainTotals.obstacles"),
+      refuges: safeInteger(totals.refuges, "$.terrainTotals.refuges"),
+    };
+    const computed = {
+      open: terrainByCell.filter((terrain) => terrain === TERRAIN_OPEN).length,
+      obstacles: terrainByCell.filter((terrain) => terrain === TERRAIN_OBSTACLE)
+        .length,
+      refuges: terrainByCell.filter((terrain) => terrain === TERRAIN_REFUGE)
+        .length,
+    };
+    if (
+      terrainTotals.open !== computed.open ||
+      terrainTotals.obstacles !== computed.obstacles ||
+      terrainTotals.refuges !== computed.refuges
+    )
+      throw new WorldSnapshotError("$.terrainTotals is inconsistent");
+  }
   const combinedTotal = foodTotals.meadow + foodTotals.grove;
   const combinedOccupied = foodByCell.filter(
     (food, index) => food > 0 || (secondaryFoodByCell?.[index] ?? 0) > 0,
@@ -359,6 +438,21 @@ const parseWorldSnapshot = (value: unknown): WorldSnapshot => {
   const organisms = root.organisms.map((organism, index) =>
     parseOrganism(organism, index, config, snapshotVersion),
   );
+  if (
+    terrainByCell !== undefined &&
+    organisms.some((organism) => {
+      const terrain =
+        terrainByCell[organism.y * width + organism.x] ?? TERRAIN_OPEN;
+      const predator =
+        config.ecology.enabled &&
+        config.ecology.predationEnabled &&
+        organism.genome.predationTendency >= config.ecology.predatorThreshold;
+      return (
+        terrain === TERRAIN_OBSTACLE || (predator && terrain === TERRAIN_REFUGE)
+      );
+    })
+  )
+    throw new WorldSnapshotError("an organism occupies inaccessible terrain");
   for (let index = 1; index < organisms.length; index += 1) {
     if ((organisms[index - 1]?.id ?? 0) >= (organisms[index]?.id ?? 0))
       throw new WorldSnapshotError(
@@ -385,7 +479,9 @@ const parseWorldSnapshot = (value: unknown): WorldSnapshot => {
     foodByCell: Object.freeze(foodByCell),
     ...(habitatByCell === undefined ? {} : { habitatByCell }),
     ...(secondaryFoodByCell === undefined ? {} : { secondaryFoodByCell }),
+    ...(terrainByCell === undefined ? {} : { terrainByCell }),
     foodTotals: Object.freeze(foodTotals),
+    terrainTotals: Object.freeze(terrainTotals),
     organisms: Object.freeze(organisms),
     randomState,
     nextOrganismId,
@@ -411,6 +507,7 @@ export class SimulationWorld {
   readonly #foodByCell: Float64Array;
   readonly #habitatByCell: Uint8Array;
   readonly #secondaryFoodByCell: Float64Array;
+  readonly #terrainByCell: Uint8Array;
   readonly #habitatCells: [number[], number[]] = [[], []];
   readonly #organisms: Organism[];
   #tick = 0;
@@ -418,6 +515,8 @@ export class SimulationWorld {
   #occupiedFoodCells = 0;
   #primaryFood = 0;
   #secondaryFood = 0;
+  #obstacleCells = 0;
+  #refugeCells = 0;
   #nextOrganismId: number;
 
   public constructor(config: unknown) {
@@ -428,14 +527,20 @@ export class SimulationWorld {
     );
     this.#habitatByCell = new Uint8Array(this.#foodByCell.length);
     this.#secondaryFoodByCell = new Float64Array(this.#foodByCell.length);
+    this.#terrainByCell = new Uint8Array(this.#foodByCell.length);
     if (this.#config.ecology.enabled) this.#generateHabitats();
     else
       for (let cell = 0; cell < this.#foodByCell.length; cell += 1)
         this.#habitatCells[0].push(cell);
+    if (this.#config.ecology.enabled && this.#config.ecology.terrainEnabled)
+      this.#generateTerrain();
+    this.#removeObstaclesFromFoodCells();
     this.#depositFood(this.#config.food.initialUnits, 0);
     if (this.#config.ecology.enabled)
       this.#depositFood(this.#config.ecology.secondaryInitialUnits, 1);
-    this.#organisms = [...createFounderPopulation(this.#config, this.#random)];
+    this.#organisms = createFounderPopulation(this.#config, this.#random).map(
+      (organism) => this.#relocateFromInaccessibleTerrain(organism),
+    );
     this.#nextOrganismId = this.#organisms.length + 1;
   }
 
@@ -451,17 +556,24 @@ export class SimulationWorld {
         meadow: this.#primaryFood,
         grove: this.#secondaryFood,
       }),
+      terrainTotals: Object.freeze({
+        open:
+          this.#terrainByCell.length - this.#obstacleCells - this.#refugeCells,
+        obstacles: this.#obstacleCells,
+        refuges: this.#refugeCells,
+      }),
     };
   }
 
   public get snapshot(): WorldSnapshot {
     return {
-      schemaVersion: 4,
+      schemaVersion: 5,
       config: parseSimulationConfig(this.#config),
       ...this.summary,
       foodByCell: Object.freeze(Array.from(this.#foodByCell)),
       habitatByCell: Object.freeze(Array.from(this.#habitatByCell)),
       secondaryFoodByCell: Object.freeze(Array.from(this.#secondaryFoodByCell)),
+      terrainByCell: Object.freeze(Array.from(this.#terrainByCell)),
       organisms: Object.freeze(this.#organisms.map(cloneOrganism)),
       randomState: this.#random.state,
       nextOrganismId: this.#nextOrganismId,
@@ -477,13 +589,20 @@ export class SimulationWorld {
       world.#habitatByCell.set(restored.habitatByCell);
     if (restored.secondaryFoodByCell !== undefined)
       world.#secondaryFoodByCell.set(restored.secondaryFoodByCell);
+    if (restored.terrainByCell !== undefined)
+      world.#terrainByCell.set(restored.terrainByCell);
     world.#totalFood = restored.totalFood;
     world.#primaryFood = restored.foodTotals.meadow;
     world.#secondaryFood = restored.foodTotals.grove;
+    world.#obstacleCells = restored.terrainTotals.obstacles;
+    world.#refugeCells = restored.terrainTotals.refuges;
     world.#habitatCells[0].length = 0;
     world.#habitatCells[1].length = 0;
     for (let cell = 0; cell < world.#habitatByCell.length; cell += 1)
-      world.#habitatCells[world.#habitatByCell[cell] === 1 ? 1 : 0].push(cell);
+      if (world.#terrainByCell[cell] !== TERRAIN_OBSTACLE)
+        world.#habitatCells[world.#habitatByCell[cell] === 1 ? 1 : 0].push(
+          cell,
+        );
     world.#occupiedFoodCells = restored.occupiedFoodCells;
     world.#organisms.splice(
       0,
@@ -590,6 +709,91 @@ export class SimulationWorld {
       this.#habitatByCell[cell] = habitat;
       this.#habitatCells[habitat].push(cell);
     }
+  }
+
+  #generateTerrain(): void {
+    const obstacleFraction = this.#config.ecology.obstacleFraction;
+    const refugeBoundary =
+      obstacleFraction + this.#config.ecology.refugeFraction;
+    const assignTerrain = (cell: number, terrain: TerrainType): void => {
+      const previous = this.#terrainByCell[cell] ?? TERRAIN_OPEN;
+      if (previous === terrain) return;
+      if (previous === TERRAIN_OBSTACLE) this.#obstacleCells -= 1;
+      if (previous === TERRAIN_REFUGE) this.#refugeCells -= 1;
+      this.#terrainByCell[cell] = terrain;
+      if (terrain === TERRAIN_OBSTACLE) this.#obstacleCells += 1;
+      if (terrain === TERRAIN_REFUGE) this.#refugeCells += 1;
+    };
+    for (let cell = 0; cell < this.#terrainByCell.length; cell += 1) {
+      const draw = this.#random.next();
+      if (draw < obstacleFraction) {
+        this.#terrainByCell[cell] = TERRAIN_OBSTACLE;
+        this.#obstacleCells += 1;
+      } else if (draw < refugeBoundary) {
+        this.#terrainByCell[cell] = TERRAIN_REFUGE;
+        this.#refugeCells += 1;
+      }
+    }
+    if (obstacleFraction > 0 && this.#obstacleCells === 0) {
+      assignTerrain(0, TERRAIN_OBSTACLE);
+    }
+    if (this.#config.ecology.refugeFraction > 0 && this.#refugeCells === 0) {
+      assignTerrain(this.#terrainByCell.length - 1, TERRAIN_REFUGE);
+    }
+    if (obstacleFraction > 0 && this.#obstacleCells === 0)
+      assignTerrain(0, TERRAIN_OBSTACLE);
+  }
+
+  #removeObstaclesFromFoodCells(): void {
+    for (const habitat of [0, 1] as const) {
+      const cells = this.#habitatCells[habitat];
+      if (
+        cells.length > 0 &&
+        !cells.some((cell) => this.#terrainByCell[cell] !== TERRAIN_OBSTACLE)
+      ) {
+        const opened = cells[0] ?? 0;
+        this.#terrainByCell[opened] = TERRAIN_OPEN;
+        this.#obstacleCells -= 1;
+      }
+      this.#habitatCells[habitat] = cells.filter(
+        (cell) => this.#terrainByCell[cell] !== TERRAIN_OBSTACLE,
+      );
+    }
+  }
+
+  #relocateFromInaccessibleTerrain(organism: Organism): Organism {
+    const predator = this.#isPredator(organism);
+    const originCell = organism.y * this.#config.world.width + organism.x;
+    if (this.#canEnterCell(originCell, predator)) return organism;
+    const maximumDistance =
+      this.#config.world.width + this.#config.world.height - 2;
+    for (let distance = 1; distance <= maximumDistance; distance += 1) {
+      const minimumY = Math.max(0, organism.y - distance);
+      const maximumY = Math.min(
+        this.#config.world.height - 1,
+        organism.y + distance,
+      );
+      for (let y = minimumY; y <= maximumY; y += 1) {
+        const horizontal = distance - Math.abs(y - organism.y);
+        const xs =
+          horizontal === 0
+            ? [organism.x]
+            : [organism.x - horizontal, organism.x + horizontal];
+        for (const x of xs) {
+          if (x < 0 || x >= this.#config.world.width) continue;
+          if (this.#canEnterCell(y * this.#config.world.width + x, predator))
+            return Object.freeze({ ...organism, x, y });
+        }
+      }
+    }
+    throw new Error("Terrain generation left no accessible organism cell.");
+  }
+
+  #canEnterCell(cell: number, predator: boolean): boolean {
+    const terrain = this.#terrainByCell[cell] ?? TERRAIN_OPEN;
+    return (
+      terrain !== TERRAIN_OBSTACLE && !(predator && terrain === TERRAIN_REFUGE)
+    );
   }
 
   #depositFood(requestedUnits: number, habitat: 0 | 1): void {
@@ -729,7 +933,10 @@ export class SimulationWorld {
           organism.genome.predationTendency ** 2 -
         this.#config.organisms.defenseCostPerTick *
           organism.genome.defense ** 2 -
-        (attemptedAttack ? this.#config.organisms.attackCost : 0);
+        (attemptedAttack ? this.#config.organisms.attackCost : 0) -
+        (this.#terrainByCell[movedCell] === TERRAIN_REFUGE
+          ? this.#config.organisms.refugeCostPerTick
+          : 0);
       const ageTicks = organism.ageTicks + 1;
 
       if (afterMetabolism <= 0) {
@@ -815,15 +1022,15 @@ export class SimulationWorld {
       (this.#random.chance(organism.genome.movementSpeed % 1) ? 1 : 0);
     let x = organism.x;
     let y = organism.y;
+    const predator = this.#isPredator(organism);
 
     for (let step = 0; step < steps; step += 1) {
       const range = Math.floor(organism.genome.perceptionRange);
       if (!(
         this.#config.ecology.enabled && this.#config.ecology.predationEnabled
       )) {
-        const target = this.#bestFoodPosition(x, y, range, organism);
-        if (target.x !== x) x += Math.sign(target.x - x);
-        else if (target.y !== y) y += Math.sign(target.y - y);
+        const target = this.#bestFoodPosition(x, y, range, organism, predator);
+        ({ x, y } = this.#stepToward(x, y, target, predator));
         continue;
       }
       const nearest = this.#nearestOtherRole(
@@ -834,16 +1041,56 @@ export class SimulationWorld {
         living,
         occupants,
       );
-      const target = this.#isPredator(organism)
-        ? (nearest ?? this.#bestFoodPosition(x, y, range, organism))
+      const target = predator
+        ? (nearest ?? this.#bestFoodPosition(x, y, range, organism, predator))
         : nearest === undefined
-          ? this.#bestFoodPosition(x, y, range, organism)
+          ? this.#bestFoodPosition(x, y, range, organism, predator)
           : this.#escapePosition(x, y, nearest);
-      if (target.x !== x) x += Math.sign(target.x - x);
-      else if (target.y !== y) y += Math.sign(target.y - y);
+      ({ x, y } = this.#stepToward(x, y, target, predator));
     }
 
     return { x, y };
+  }
+
+  #stepToward(
+    originX: number,
+    originY: number,
+    target: { x: number; y: number },
+    predator: boolean,
+  ): { x: number; y: number } {
+    if (target.x === originX && target.y === originY)
+      return { x: originX, y: originY };
+    if (!(
+      this.#config.ecology.enabled && this.#config.ecology.terrainEnabled
+    )) {
+      if (target.x !== originX)
+        return { x: originX + Math.sign(target.x - originX), y: originY };
+      return { x: originX, y: originY + Math.sign(target.y - originY) };
+    }
+    const candidates = [
+      { x: originX, y: originY - 1 },
+      { x: originX - 1, y: originY },
+      { x: originX + 1, y: originY },
+      { x: originX, y: originY + 1 },
+    ].filter(
+      ({ x, y }) =>
+        x >= 0 &&
+        x < this.#config.world.width &&
+        y >= 0 &&
+        y < this.#config.world.height &&
+        this.#canEnterCell(y * this.#config.world.width + x, predator),
+    );
+    let best = candidates[0];
+    let bestDistance = Number.POSITIVE_INFINITY;
+    for (const candidate of candidates) {
+      const distance =
+        Math.abs(candidate.x - target.x) + Math.abs(candidate.y - target.y);
+      if (distance < bestDistance) {
+        best = candidate;
+        bestDistance = distance;
+      }
+    }
+    return best ?? { x: originX, y: originY };
   }
 
   #nearestOtherRole(
@@ -881,7 +1128,11 @@ export class SimulationWorld {
             if (
               candidate === undefined ||
               candidate.id === organism.id ||
-              this.#isPredator(candidate) === predator
+              this.#isPredator(candidate) === predator ||
+              (predator &&
+                this.#terrainByCell[
+                  candidate.y * this.#config.world.width + candidate.x
+                ] === TERRAIN_REFUGE)
             )
               continue;
             if (candidate.id < (nearest?.id ?? Number.POSITIVE_INFINITY))
@@ -910,7 +1161,8 @@ export class SimulationWorld {
         x >= 0 &&
         x < this.#config.world.width &&
         y >= 0 &&
-        y < this.#config.world.height,
+        y < this.#config.world.height &&
+        this.#canEnterCell(y * this.#config.world.width + x, false),
     );
     let best = candidates[0] ?? { x: originX, y: originY };
     let bestDistance = -1;
@@ -930,6 +1182,7 @@ export class SimulationWorld {
     originY: number,
     range: number,
     organism: Organism,
+    predator: boolean,
   ): { x: number; y: number } {
     let bestX = originX;
     let bestY = originY;
@@ -949,6 +1202,8 @@ export class SimulationWorld {
       for (let x = minimumX; x <= maximumX; x += 1) {
         const distance = Math.abs(x - originX) + Math.abs(y - originY);
         if (distance > range) continue;
+        if (!this.#canEnterCell(y * this.#config.world.width + x, predator))
+          continue;
         const food = this.#foodValueAt(
           y * this.#config.world.width + x,
           organism,

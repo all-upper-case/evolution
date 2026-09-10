@@ -8,7 +8,7 @@ import {
 describe("experiment lab", () => {
   it("parses complete dotted overrides and ordered checkpoints", () => {
     const request = parseLabRequest(
-      "?ticks=20&checkpoints=20,0,10,10&seed=77&world.width=32&world.height=48&population.initialCount=12&population.maximumCount=50&evolution.mutationProbability=0.25&organisms.movementCostPerTick=0&organisms.perceptionCostPerTick=0.002&organisms.metabolismFoodEnergyInfluence=0.6",
+      "?ticks=20&checkpoints=20,0,10,10&seed=77&world.width=32&world.height=48&population.initialCount=12&population.maximumCount=50&evolution.mutationProbability=0.25&organisms.movementCostPerTick=0&organisms.perceptionCostPerTick=0.002&organisms.metabolismFoodEnergyInfluence=0.6&ecology.terrainEnabled=1&ecology.obstacleFraction=0.1&ecology.refugeFraction=0.05&organisms.refugeCostPerTick=0.02",
     );
     expect(request).toMatchObject({
       ticks: 20,
@@ -22,6 +22,12 @@ describe("experiment lab", () => {
           movementCostPerTick: 0,
           perceptionCostPerTick: 0.002,
           metabolismFoodEnergyInfluence: 0.6,
+          refugeCostPerTick: 0.02,
+        },
+        ecology: {
+          terrainEnabled: true,
+          obstacleFraction: 0.1,
+          refugeFraction: 0.05,
         },
       },
     });
@@ -83,5 +89,7 @@ describe("experiment lab", () => {
     expect(first.checkpoints[0]?.foodByType.meadow).toBe(500);
     expect(typeof first.checkpoints[0]?.foodByType.grove).toBe("number");
     expect(first.checkpoints[0]?.habitatCells.grove).toBeGreaterThan(0);
+    expect(first.checkpoints[0]?.terrainCells.obstacles).toBeGreaterThan(0);
+    expect(first.checkpoints[0]?.terrainCells.refuges).toBeGreaterThan(0);
   });
 });

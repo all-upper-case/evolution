@@ -164,6 +164,7 @@ const createRequest = (
   // Richer mechanics receive their own opposing-environment experiments.
   config.ecology.dietSpecializationEnabled = false;
   config.ecology.predationEnabled = false;
+  config.ecology.terrainEnabled = false;
   regime.configure(config);
   return {
     config: parseSimulationConfig(config),

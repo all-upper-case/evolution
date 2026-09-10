@@ -20,6 +20,7 @@ const legacyConfig = () => {
     predationCostPerTick: _predation,
     defenseCostPerTick: _defense,
     attackCost: _attack,
+    refugeCostPerTick: _refuge,
     ...organisms
   } = config.organisms;
   void _movement;
@@ -28,6 +29,7 @@ const legacyConfig = () => {
   void _predation;
   void _defense;
   void _attack;
+  void _refuge;
   const { ecology: _ecology, ...withoutEcology } = config;
   void _ecology;
   return { ...withoutEcology, schemaVersion: 1, organisms };
@@ -42,12 +44,14 @@ const versionTwoConfig = () => {
     predationCostPerTick: _predation,
     defenseCostPerTick: _defense,
     attackCost: _attack,
+    refugeCostPerTick: _refuge,
     ...organisms
   } = config.organisms;
   void _influence;
   void _predation;
   void _defense;
   void _attack;
+  void _refuge;
   const { ecology: _ecology, ...withoutEcology } = config;
   void _ecology;
   return { ...withoutEcology, schemaVersion: 2, organisms };
@@ -197,7 +201,7 @@ describe("energetic trait costs", () => {
 
   it("migrates version-two files with neutral food yield", () => {
     const migrated = parseSimulationConfig(versionTwoConfig());
-    expect(migrated.schemaVersion).toBe(6);
+    expect(migrated.schemaVersion).toBe(7);
     expect(migrated.ecology.enabled).toBe(false);
     expect(migrated.ecology.dietSpecializationEnabled).toBe(false);
     expect(migrated.organisms.metabolismFoodEnergyInfluence).toBe(0);

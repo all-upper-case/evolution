@@ -1,4 +1,8 @@
-import type { WorldSnapshot } from "../simulation/world";
+import {
+  TERRAIN_OBSTACLE,
+  TERRAIN_REFUGE,
+  type WorldSnapshot,
+} from "../simulation/world";
 
 const BACKGROUND = [7, 18, 14, 255] as const;
 const GROVE_BACKGROUND = [22, 18, 38, 255] as const;
@@ -6,6 +10,8 @@ const ORGANISM_LOW_ENERGY = [255, 171, 64] as const;
 const ORGANISM_HIGH_ENERGY = [255, 241, 168] as const;
 const SELECTED_ORGANISM = [86, 224, 255, 255] as const;
 const PREDATOR = [255, 102, 133, 255] as const;
+const OBSTACLE = [50, 61, 58, 255] as const;
+const REFUGE = [35, 118, 126, 255] as const;
 
 const writePixel = (
   pixels: Uint8ClampedArray,
@@ -27,10 +33,19 @@ export const createWorldPixels = (
   const pixels = new Uint8ClampedArray(snapshot.width * snapshot.height * 4);
 
   for (let cell = 0; cell < snapshot.foodByCell.length; cell += 1) {
+    const terrain = snapshot.terrainByCell?.[cell] ?? 0;
+    if (terrain === TERRAIN_OBSTACLE) {
+      writePixel(pixels, cell, OBSTACLE);
+      continue;
+    }
     const food = snapshot.foodByCell[cell] ?? 0;
     const groveFood = snapshot.secondaryFoodByCell?.[cell] ?? 0;
     const isGrove = snapshot.habitatByCell?.[cell] === 1;
     if (food <= 0 && groveFood <= 0) {
+      if (terrain === TERRAIN_REFUGE) {
+        writePixel(pixels, cell, REFUGE);
+        continue;
+      }
       writePixel(pixels, cell, isGrove ? GROVE_BACKGROUND : BACKGROUND);
       continue;
     }

@@ -46,6 +46,28 @@ describe("world renderer", () => {
     expect(transparentCells).toEqual([]);
   });
 
+  it("renders obstacles and refuges as distinct terrain", () => {
+    const config = createDefaultSimulationConfig();
+    config.world.width = 16;
+    config.world.height = 16;
+    config.population.initialCount = 1;
+    config.population.maximumCount = 1;
+    config.food.initialUnits = 0;
+    config.ecology.secondaryInitialUnits = 0;
+    config.ecology.obstacleFraction = 0.15;
+    config.ecology.refugeFraction = 0.15;
+    const snapshot = new SimulationWorld(config).snapshot;
+    const pixels = createWorldPixels(snapshot);
+    const colors = new Set(
+      Array.from({ length: snapshot.width * snapshot.height }, (_, cell) =>
+        Array.from(pixels.slice(cell * 4, cell * 4 + 3)).join(","),
+      ),
+    );
+
+    expect(colors).toContain("50,61,58");
+    expect(colors).toContain("35,118,126");
+  });
+
   it("draws organisms over resources without changing snapshot state", () => {
     const config = createDefaultSimulationConfig();
     config.world.width = 16;
@@ -54,6 +76,7 @@ describe("world renderer", () => {
     config.population.maximumCount = 1;
     config.food.initialUnits = 256;
     config.food.maximumUnits = 256;
+    config.ecology.predationEnabled = false;
     const world = new SimulationWorld(config);
     const snapshot = world.snapshot;
     const organism = snapshot.organisms[0];
