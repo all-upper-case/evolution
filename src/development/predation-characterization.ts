@@ -32,6 +32,7 @@ export const runPredationCharacterization =
         config.ecology.secondaryInitialUnits = 1_000;
         config.ecology.secondaryMaximumUnits = 3_000;
         config.ecology.secondaryRegrowthUnitsPerTick = 5;
+        config.ecology.terrainEnabled = false;
         const report = runLabExperiment({
           config: parseSimulationConfig(config),
           ticks: PREDATION_CHARACTERIZATION_TICKS,

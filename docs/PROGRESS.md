@@ -608,3 +608,24 @@ Formatting, linting, strict type checking, all 109 tests, and the four-entry pro
 ### Risk and next action
 
 The viability window is intentionally finite and does not demonstrate equilibrium or biological realism. Role balance remains sensitive to spatial density, resource supply, and configured costs. Add deterministic obstacles and refuges next, measuring their performance and whether they deepen spatial niches without making predation unreadable.
+
+## 2026-09-10 — Obstacles and refuges (development)
+
+### Changed
+
+- Added seeded open, obstacle, and refuge terrain with a 35% combined density ceiling, deterministic local detours, inaccessible target filtering, and strict food/organism placement invariants.
+- Made refuges prey-only shelter that blocks predator detection and charges an explicit per-tick energy cost.
+- Added distinct map rendering, legend and terrain totals, safe settings, lab overrides and checkpoint metrics, configuration schema 7, and world snapshot schema 5 with all-open legacy migration.
+- Preserved the fixed ecology, diet, and predation characterization baselines by explicitly disabling the new terrain mechanic in those experiments.
+
+### Validation
+
+Formatting, linting, strict type checking, all 113 tests, and the four-entry production build pass locally. Coverage includes seeded generation, bounded deterministic detours, refuge protection and cost, food and organism invariants, strict persistence, exact replay, legacy continuation, rendering, settings, and lab reporting. A local Node 22 timing advanced the recommended 256×256, 1,000-organism workload for 100 ticks in 901.9 ms with terrain versus 848.9 ms without it. GitHub CI and the deployed production-browser benchmark remain required before the roadmap item is completed.
+
+### Risk and follow-up
+
+Local neighbor selection produces predictable detours but does not guarantee a globally shortest route through complex barriers. Refuges provide asymmetric shelter over a bounded window; they do not prove long-term coexistence or biological realism.
+
+### Recommended next action
+
+Run the deployed benchmark with terrain enabled. If its recommended-ceiling p95 stays within 33.3 ms, complete this roadmap increment and evaluate the four Milestone 4 mechanics together before selecting an additional sensor or behavior gene.

@@ -44,7 +44,7 @@ describe("SimulationWorld", () => {
     const snapshot = first.snapshot;
 
     expect(snapshot).toEqual(second.snapshot);
-    expect(snapshot.schemaVersion).toBe(4);
+    expect(snapshot.schemaVersion).toBe(5);
     expect(new Set(snapshot.habitatByCell)).toEqual(new Set([0, 1]));
     expect(snapshot.foodTotals).toEqual({ meadow: 100, grove: 60 });
     expect(
@@ -369,10 +369,14 @@ describe("SimulationWorld", () => {
     delete legacyEcology.predatorThreshold;
     delete legacyEcology.predationEnergyFraction;
     delete legacyEcology.maximumPredationEnergyGain;
+    delete legacyEcology.terrainEnabled;
+    delete legacyEcology.obstacleFraction;
+    delete legacyEcology.refugeFraction;
     const legacyOrganisms = legacyConfig.organisms as Record<string, unknown>;
     delete legacyOrganisms.predationCostPerTick;
     delete legacyOrganisms.defenseCostPerTick;
     delete legacyOrganisms.attackCost;
+    delete legacyOrganisms.refugeCostPerTick;
     legacyConfig.schemaVersion = 4;
     for (const organism of current.organisms as Record<string, unknown>[]) {
       delete (organism.genome as Record<string, unknown>).dietPreference;
@@ -380,6 +384,8 @@ describe("SimulationWorld", () => {
       delete (organism.genome as Record<string, unknown>).defense;
     }
     current.schemaVersion = 2;
+    delete current.terrainByCell;
+    delete current.terrainTotals;
 
     const restored = SimulationWorld.fromSnapshot(current);
     expect(
@@ -411,7 +417,7 @@ describe("SimulationWorld", () => {
       WorldSnapshotError,
     );
     expect(() =>
-      SimulationWorld.fromSnapshot({ ...valid, schemaVersion: 5 }),
+      SimulationWorld.fromSnapshot({ ...valid, schemaVersion: 6 }),
     ).toThrow(WorldSnapshotError);
     expect(() =>
       SimulationWorld.fromSnapshot({
@@ -427,6 +433,21 @@ describe("SimulationWorld", () => {
     ).toThrow(WorldSnapshotError);
     expect(() =>
       SimulationWorld.fromSnapshot({ ...valid, unexpected: true }),
+    ).toThrow(WorldSnapshotError);
+    expect(() =>
+      SimulationWorld.fromSnapshot({
+        ...valid,
+        terrainTotals: {
+          ...valid.terrainTotals,
+          obstacles: valid.terrainTotals.obstacles + 1,
+        },
+      }),
+    ).toThrow(WorldSnapshotError);
+    expect(() =>
+      SimulationWorld.fromSnapshot({
+        ...valid,
+        terrainByCell: valid.terrainByCell?.slice(1),
+      }),
     ).toThrow(WorldSnapshotError);
     expect(() =>
       SimulationWorld.fromSnapshot({

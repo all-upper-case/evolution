@@ -19,6 +19,7 @@ export interface DietCharacterizationOutcome {
 
 const configureBase = (config: SimulationConfig): void => {
   config.ecology.predationEnabled = false;
+  config.ecology.terrainEnabled = false;
   config.world.width = 32;
   config.world.height = 32;
   config.population.initialCount = 100;

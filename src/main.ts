@@ -34,7 +34,7 @@ app.innerHTML = `
   <main class="shell" aria-labelledby="page-title">
     <header class="hero"><p class="eyebrow">Deterministic ecosystem laboratory</p><h1 id="page-title">Evolution</h1><p class="summary">A reproducible living sandbox with distinct habitats, renewable resources, and seeded organisms carrying inheritable traits.</p></header>
     <section class="world-panel" aria-labelledby="world-title">
-      <div class="world-heading"><div><p class="eyebrow">Live world</p><h2 id="world-title">The habitat</h2></div><div class="legend" aria-label="Map legend"><span class="food-key">Meadow food</span><span class="grove-key">Grove food</span><span class="organism-key">Foragers</span><span class="predator-key">Predators</span></div></div>
+      <div class="world-heading"><div><p class="eyebrow">Live world</p><h2 id="world-title">The habitat</h2></div><div class="legend" aria-label="Map legend"><span class="food-key">Meadow food</span><span class="grove-key">Grove food</span><span class="obstacle-key">Obstacle</span><span class="refuge-key">Refuge</span><span class="organism-key">Foragers</span><span class="predator-key">Predators</span></div></div>
       <div class="world-layout">
         <div><div class="world-frame"><canvas id="world" role="img" tabindex="0" aria-describedby="world-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape" aria-label="World at tick 0 with 250 organisms and 16,000 food units">Your browser does not support the ecosystem canvas.</canvas></div><p id="world-help" class="world-help">Tap or click an organism to inspect it. With the map focused, use the arrow keys to move through organisms, Home or End to jump, and Escape to clear selection. Cyan marks the selected organism.</p></div>
         <aside class="inspector" aria-labelledby="inspector-title">
@@ -68,7 +68,7 @@ app.innerHTML = `
     </section>
     <section class="panel" aria-labelledby="clock-title">
       <div class="panel-heading"><div><p class="status"><span aria-hidden="true"></span><b id="state">Paused</b></p><h2 id="clock-title">Simulation clock</h2></div><div class="tick-readout"><small>Current tick</small><output id="tick">0</output></div></div>
-      <div class="metrics"><div><small>Simulated time</small><strong id="elapsed">0.00 s</strong></div><div><small>Population</small><strong id="population">250</strong></div><div><small>Total food</small><strong id="food">16,000</strong></div><div><small>Meadow / grove</small><strong id="food-types">12,000 / 4,000</strong></div><div><small>Occupied cells</small><strong id="food-cells">0</strong></div><div><small>Seed</small><strong id="seed-display">42</strong></div></div>
+      <div class="metrics"><div><small>Simulated time</small><strong id="elapsed">0.00 s</strong></div><div><small>Population</small><strong id="population">250</strong></div><div><small>Total food</small><strong id="food">16,000</strong></div><div><small>Meadow / grove</small><strong id="food-types">12,000 / 4,000</strong></div><div><small>Obstacles / refuges</small><strong id="terrain-types">—</strong></div><div><small>Occupied cells</small><strong id="food-cells">0</strong></div><div><small>Seed</small><strong id="seed-display">42</strong></div></div>
       <div class="controls" aria-label="Simulation controls">
         <button id="play" type="button">Play</button><button id="step" class="secondary" type="button">Step</button>
         <label>Speed<select id="speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
@@ -84,6 +84,7 @@ app.innerHTML = `
           <fieldset><legend>Life cycle</legend><label>Metabolism per tick <input id="setting-metabolism" type="number" min="0.000001" max="1000" step="0.01"></label><label>Reproduction energy <input id="setting-reproduction" type="number" min="0.001" max="10000" step="1"></label><label>Offspring energy <input id="setting-offspring" type="number" min="0.001" max="10000" step="1"></label></fieldset>
           <fieldset><legend>Trait tradeoffs</legend><label>Speed cost <input id="setting-movement-cost" type="number" min="0" max="1000" step="0.001"></label><label>Perception cost <input id="setting-perception-cost" type="number" min="0" max="1000" step="0.0001"></label><label>Metabolism food influence <span><input id="setting-metabolism-food-influence" type="number" min="0" max="1" step="0.01"><small>0–1</small></span></label><label><span>Enable inherited diets</span> <input id="setting-diet-specialization" type="checkbox"></label><label>Specialist efficiency <input id="setting-specialist-efficiency" type="number" min="0.01" max="2" step="0.01"></label><label>Opposite-food efficiency <input id="setting-opposite-efficiency" type="number" min="0.01" max="2" step="0.01"></label><p>Diet specialists extract more energy from their preferred food but less from the other food; generalists sit midway between both efficiencies.</p></fieldset>
           <fieldset><legend>Predation & defense</legend><label><span>Enable predation</span> <input id="setting-predation" type="checkbox"></label><label>Predator threshold <input id="setting-predator-threshold" type="number" min="0.01" max="0.99" step="0.01"></label><label>Energy fraction <input id="setting-predation-energy-fraction" type="number" min="0" max="1" step="0.01"></label><label>Maximum attack gain <input id="setting-maximum-predation-gain" type="number" min="0.001" max="10000" step="0.1"></label><label>Predation trait cost <input id="setting-predation-cost" type="number" min="0" max="1000" step="0.001"></label><label>Defense trait cost <input id="setting-defense-cost" type="number" min="0" max="1000" step="0.001"></label><label>Attack attempt cost <input id="setting-attack-cost" type="number" min="0" max="1000" step="0.01"></label><p>Predators pursue foragers; foragers flee. Defense reduces attack success but consumes energy every tick.</p></fieldset>
+          <fieldset><legend>Terrain</legend><label><span>Enable terrain</span> <input id="setting-terrain" type="checkbox"></label><label>Obstacle proportion <input id="setting-obstacle-fraction" type="number" min="0" max="0.35" step="0.005"></label><label>Refuge proportion <input id="setting-refuge-fraction" type="number" min="0" max="0.35" step="0.005"></label><label>Refuge cost per tick <input id="setting-refuge-cost" type="number" min="0" max="1000" step="0.001"></label><p>Obstacles block every organism. Foragers can shelter in refuges, where predators cannot enter or detect them, but shelter consumes energy.</p></fieldset>
           <fieldset><legend>Evolution</legend><label>Mutation chance <span><input id="setting-mutation-probability" type="number" min="0" max="1" step="0.01"><small>0–1</small></span></label><label>Mutation size <span><input id="setting-mutation-magnitude" type="number" min="0" max="1" step="0.01"><small>0–1</small></span></label></fieldset>
         </div>
         <div class="settings-action"><p>For responsive experiments, this editor limits worlds to 256×256 cells and populations to 1,000. Imported files may use the larger safety bounds.</p><button id="apply-settings" type="button">Apply and restart</button></div>
@@ -130,6 +131,7 @@ const syncSettings = (): void => {
   setting("diet-specialization").checked =
     config.ecology.dietSpecializationEnabled;
   setting("predation").checked = config.ecology.predationEnabled;
+  setting("terrain").checked = config.ecology.terrainEnabled;
   setting("width").value = String(config.world.width);
   setting("height").value = String(config.world.height);
   setting("initial-population").value = String(config.population.initialCount);
@@ -167,6 +169,8 @@ const syncSettings = (): void => {
   setting("maximum-predation-gain").value = String(
     config.ecology.maximumPredationEnergyGain,
   );
+  setting("obstacle-fraction").value = String(config.ecology.obstacleFraction);
+  setting("refuge-fraction").value = String(config.ecology.refugeFraction);
   setting("movement-cost").value = String(config.organisms.movementCostPerTick);
   setting("perception-cost").value = String(
     config.organisms.perceptionCostPerTick,
@@ -176,6 +180,7 @@ const syncSettings = (): void => {
   );
   setting("defense-cost").value = String(config.organisms.defenseCostPerTick);
   setting("attack-cost").value = String(config.organisms.attackCost);
+  setting("refuge-cost").value = String(config.organisms.refugeCostPerTick);
   setting("metabolism-food-influence").value = String(
     config.organisms.metabolismFoodEnergyInfluence,
   );
@@ -413,6 +418,8 @@ const render = (): void => {
     world.summary.occupiedFoodCells.toLocaleString();
   element("food-types").textContent =
     `${world.summary.foodTotals.meadow.toLocaleString(undefined, { maximumFractionDigits: 1 })} / ${world.summary.foodTotals.grove.toLocaleString(undefined, { maximumFractionDigits: 1 })}`;
+  element("terrain-types").textContent =
+    `${world.summary.terrainTotals.obstacles.toLocaleString()} / ${world.summary.terrainTotals.refuges.toLocaleString()}`;
   element("population").textContent = world.summary.population.toLocaleString();
   if (
     renderedWorldTick !== world.summary.tick ||
@@ -557,6 +564,7 @@ speed.addEventListener("change", () => {
           enabled: setting("rich-ecology").checked,
           dietSpecializationEnabled: setting("diet-specialization").checked,
           predationEnabled: setting("predation").checked,
+          terrainEnabled: setting("terrain").checked,
           habitatPatchCount: Number(setting("habitat-patches").value),
           groveFraction: Number(setting("grove-fraction").value),
           secondaryInitialUnits: Number(
@@ -582,6 +590,8 @@ speed.addEventListener("change", () => {
           maximumPredationEnergyGain: Number(
             setting("maximum-predation-gain").value,
           ),
+          obstacleFraction: Number(setting("obstacle-fraction").value),
+          refugeFraction: Number(setting("refuge-fraction").value),
         },
         organisms: {
           ...config.organisms,
@@ -590,6 +600,7 @@ speed.addEventListener("change", () => {
           predationCostPerTick: Number(setting("predation-cost").value),
           defenseCostPerTick: Number(setting("defense-cost").value),
           attackCost: Number(setting("attack-cost").value),
+          refugeCostPerTick: Number(setting("refuge-cost").value),
           metabolismFoodEnergyInfluence: Number(
             setting("metabolism-food-influence").value,
           ),

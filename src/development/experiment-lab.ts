@@ -26,6 +26,7 @@ type ConfigNumberPath =
   | "ecology.enabled"
   | "ecology.dietSpecializationEnabled"
   | "ecology.predationEnabled"
+  | "ecology.terrainEnabled"
   | "ecology.habitatPatchCount"
   | "ecology.groveFraction"
   | "ecology.secondaryInitialUnits"
@@ -37,6 +38,8 @@ type ConfigNumberPath =
   | "ecology.predatorThreshold"
   | "ecology.predationEnergyFraction"
   | "ecology.maximumPredationEnergyGain"
+  | "ecology.obstacleFraction"
+  | "ecology.refugeFraction"
   | "organisms.initialEnergy"
   | "organisms.maximumEnergy"
   | "organisms.reproductionThreshold"
@@ -48,6 +51,7 @@ type ConfigNumberPath =
   | "organisms.predationCostPerTick"
   | "organisms.defenseCostPerTick"
   | "organisms.attackCost"
+  | "organisms.refugeCostPerTick"
   | "organisms.maximumAgeTicks"
   | "evolution.mutationProbability"
   | "evolution.mutationMagnitude"
@@ -68,6 +72,7 @@ export const LAB_CONFIG_PATHS: readonly ConfigNumberPath[] = Object.freeze([
   "ecology.enabled",
   "ecology.dietSpecializationEnabled",
   "ecology.predationEnabled",
+  "ecology.terrainEnabled",
   "ecology.habitatPatchCount",
   "ecology.groveFraction",
   "ecology.secondaryInitialUnits",
@@ -79,6 +84,8 @@ export const LAB_CONFIG_PATHS: readonly ConfigNumberPath[] = Object.freeze([
   "ecology.predatorThreshold",
   "ecology.predationEnergyFraction",
   "ecology.maximumPredationEnergyGain",
+  "ecology.obstacleFraction",
+  "ecology.refugeFraction",
   "organisms.initialEnergy",
   "organisms.maximumEnergy",
   "organisms.reproductionThreshold",
@@ -90,6 +97,7 @@ export const LAB_CONFIG_PATHS: readonly ConfigNumberPath[] = Object.freeze([
   "organisms.predationCostPerTick",
   "organisms.defenseCostPerTick",
   "organisms.attackCost",
+  "organisms.refugeCostPerTick",
   "organisms.maximumAgeTicks",
   "evolution.mutationProbability",
   "evolution.mutationMagnitude",
@@ -130,14 +138,17 @@ const assignPath = (
   if (
     path === "ecology.enabled" ||
     path === "ecology.dietSpecializationEnabled" ||
-    path === "ecology.predationEnabled"
+    path === "ecology.predationEnabled" ||
+    path === "ecology.terrainEnabled"
   ) {
     if (value !== 0 && value !== 1)
       throw new RangeError(`${path} must equal 0 or 1.`);
     if (path === "ecology.enabled") config.ecology.enabled = value === 1;
     else if (path === "ecology.dietSpecializationEnabled")
       config.ecology.dietSpecializationEnabled = value === 1;
-    else config.ecology.predationEnabled = value === 1;
+    else if (path === "ecology.predationEnabled")
+      config.ecology.predationEnabled = value === 1;
+    else config.ecology.terrainEnabled = value === 1;
     return;
   }
   const [section, key] = parts;
@@ -215,6 +226,8 @@ export interface LabCheckpoint {
   foodByType: { meadow: number; grove: number };
   habitatCells: { meadow: number; grove: number };
   ecologicalRoles: { predators: number; prey: number };
+  terrainCells: { open: number; obstacles: number; refuges: number };
+  refugeOccupants: number;
   lineages: number;
   meanAgeTicks: number | null;
   meanEnergy: number | null;
@@ -285,6 +298,10 @@ const summarize = (
           ),
       ).length,
     },
+    terrainCells: { ...snapshot.terrainTotals },
+    refugeOccupants: organisms.filter(
+      ({ x, y }) => snapshot.terrainByCell?.[y * snapshot.width + x] === 2,
+    ).length,
     lineages: new Set(organisms.map((organism) => organism.lineageId)).size,
     meanAgeTicks:
       organisms.length === 0

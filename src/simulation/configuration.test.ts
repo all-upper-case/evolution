@@ -103,7 +103,7 @@ describe("simulation configuration", () => {
   });
 
   it.each([
-    ["unsupported schema", alter((config) => (config.schemaVersion = 7 as 6))],
+    ["unsupported schema", alter((config) => (config.schemaVersion = 8 as 7))],
     ["negative seed", alter((config) => (config.seed = -1))],
     [
       "non-finite food",
@@ -148,6 +148,14 @@ describe("simulation configuration", () => {
     expect(() =>
       parseSimulationConfig(
         alter((config) => {
+          config.ecology.obstacleFraction = 0.2;
+          config.ecology.refugeFraction = 0.2;
+        }),
+      ),
+    ).toThrow(SimulationConfigError);
+    expect(() =>
+      parseSimulationConfig(
+        alter((config) => {
           config.ecology.secondaryInitialUnits = 101;
           config.ecology.secondaryMaximumUnits = 100;
         }),
@@ -173,6 +181,9 @@ describe("simulation configuration", () => {
       predatorThreshold: _predatorThreshold,
       predationEnergyFraction: _predationEnergyFraction,
       maximumPredationEnergyGain: _maximumPredationEnergyGain,
+      terrainEnabled: _terrainEnabled,
+      obstacleFraction: _obstacleFraction,
+      refugeFraction: _refugeFraction,
       ...legacyEcology
     } = current.ecology;
     void _dietEnabled;
@@ -182,15 +193,20 @@ describe("simulation configuration", () => {
     void _predatorThreshold;
     void _predationEnergyFraction;
     void _maximumPredationEnergyGain;
+    void _terrainEnabled;
+    void _obstacleFraction;
+    void _refugeFraction;
     const {
       predationCostPerTick: _predationCost,
       defenseCostPerTick: _defenseCost,
       attackCost: _attackCost,
+      refugeCostPerTick: _refugeCost,
       ...legacyOrganisms
     } = current.organisms;
     void _predationCost;
     void _defenseCost;
     void _attackCost;
+    void _refugeCost;
     const migrated = parseSimulationConfig({
       ...current,
       schemaVersion: 4,
@@ -198,11 +214,12 @@ describe("simulation configuration", () => {
       organisms: legacyOrganisms,
     });
 
-    expect(migrated.schemaVersion).toBe(6);
+    expect(migrated.schemaVersion).toBe(7);
     expect(migrated.ecology.dietSpecializationEnabled).toBe(false);
     expect(migrated.ecology.specialistFoodEfficiency).toBe(1);
     expect(migrated.ecology.oppositeFoodEfficiency).toBe(1);
     expect(migrated.ecology.predationEnabled).toBe(false);
+    expect(migrated.ecology.terrainEnabled).toBe(false);
   });
 
   it.each([

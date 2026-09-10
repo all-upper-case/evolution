@@ -304,6 +304,14 @@ h1 {
   background: #697dff;
 }
 
+.obstacle-key::before {
+  background: #323d3a;
+}
+
+.refuge-key::before {
+  background: #23767e;
+}
+
 .organism-key::before {
   background: #ffd46c;
 }

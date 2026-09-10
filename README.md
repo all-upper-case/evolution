@@ -43,7 +43,7 @@ Individual commands are also available for tests, type checking, linting, format
 
 ## Project status
 
-The project has a responsive browser interface that visualizes seeded meadow and grove patches, two habitat-bound renewable foods, foragers, and predators while a deterministic ecological core advances beneath it. Organisms inherit diet, predation, and defense traits. Predators pursue foragers for bounded energy, foragers escape visible predators, attacks and defensive capacity carry energy costs, and predators trade plant-feeding efficiency for hunting ability. A user can inspect each organism's ecological role and exact traits. Accessible bounded charts show population, exact births and deaths, food resources, and every inherited trait; the experiment lab separates starvation, age, and predation deaths. Safe controls and strict, versioned JSON files support reproducible experiments and deterministic continuation. See:
+The project has a responsive browser interface that visualizes seeded meadow and grove patches, two habitat-bound renewable foods, impassable obstacles, prey refuges, foragers, and predators while a deterministic ecological core advances beneath it. Organisms inherit diet, predation, and defense traits. Predators pursue foragers for bounded energy, foragers escape visible predators, and refuges hide prey from predators at an explicit energy cost. Attacks and defensive capacity carry energy costs, and predators trade plant-feeding efficiency for hunting ability. A user can inspect each organism's ecological role and exact traits. Accessible bounded charts show population, exact births and deaths, food resources, and every inherited trait; the experiment lab separates starvation, age, and predation deaths and reports terrain occupancy. Safe controls and strict, versioned JSON files support reproducible experiments and deterministic continuation. See:
 
 - [Roadmap](docs/ROADMAP.md)
 - [Autonomous development policy](docs/AUTONOMY.md)
@@ -54,6 +54,7 @@ The project has a responsive browser interface that visualizes seeded meadow and
 - [Ecosystem characterization](docs/CHARACTERIZATION.md)
 - [Diet-specialization characterization](docs/DIET_SPECIALIZATION.md)
 - [Predation and defense characterization](docs/PREDATION.md)
+- [Obstacles and refuges](docs/TERRAIN.md)
 
 ## License
 

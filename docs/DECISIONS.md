@@ -227,3 +227,24 @@ Configuration schema 6 adds continuous predation-tendency and defense traits, a 
 World snapshot schema 4 stores both traits. A per-tick spatial index keeps pursuit bounded at supported population sizes and removes killed prey immediately so they cannot act later or be eaten twice. Lifecycle events and lab checkpoints separately account for starvation, age, and predation. Schemas 1–5 migrate with predation disabled, zero new costs, neutral traits, and no added random draws.
 
 **Why:** A continuous, costly capability permits inherited ecological roles without introducing fixed species labels. Bounded gains, attempt costs, fallback-foraging loss, defense costs, and immediate removal make energy flow and ordering explicit. The three-seed 300-tick check demonstrates viable interaction but deliberately makes no equilibrium claim.
+
+## 2026-09-10 — Deterministic cell terrain and prey-only refuges
+
+**Status:** Accepted
+
+Configuration schema 7 adds a seeded per-cell terrain layer containing open
+ground, impassable obstacles, and prey-accessible refuges. Obstacles reject food
+and all organisms. Predators cannot enter refuges or target prey sheltered
+inside them; refuge occupants pay a configurable per-tick energy cost. Movement
+selects from at most four legal neighboring cells using Manhattan distance and
+a stable directional tie order, retaining explicit bounded work rather than
+introducing global pathfinding.
+
+World snapshot schema 5 stores and strictly validates terrain. Older
+configurations and snapshots migrate to disabled, all-open terrain with zero
+refuge cost and no extra random draws.
+
+**Why:** A simple cell layer creates spatial barriers and asymmetric shelter
+without coupling the core to rendering or adding an unbounded route search.
+The refuge cost prevents shelter from being a free universal advantage, while
+strict legacy migration preserves historical experiments.
