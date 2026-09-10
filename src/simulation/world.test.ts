@@ -128,6 +128,12 @@ describe("SimulationWorld", () => {
     expect(before.organisms[0]?.genome).not.toBe(
       world.snapshot.organisms[0]?.genome,
     );
+    expect(() =>
+      (before.habitatByCell as number[] | undefined)?.splice(0, 1),
+    ).toThrow(TypeError);
+    expect(() =>
+      (before.terrainByCell as number[] | undefined)?.splice(0, 1),
+    ).toThrow(TypeError);
   });
 
   it("includes deterministic bounded founders in world snapshots", () => {
