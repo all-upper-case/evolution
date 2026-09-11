@@ -55,6 +55,7 @@ The project has a responsive browser interface that visualizes seeded meadow and
 - [Diet-specialization characterization](docs/DIET_SPECIALIZATION.md)
 - [Predation and defense characterization](docs/PREDATION.md)
 - [Obstacles and refuges](docs/TERRAIN.md)
+- [Combined richer-ecology characterization](docs/RICHER_ECOLOGY.md)
 
 ## License
 

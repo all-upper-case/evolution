@@ -248,3 +248,23 @@ refuge cost and no extra random draws.
 without coupling the core to rendering or adding an unbounded route search.
 The refuge cost prevents shelter from being a free universal advantage, while
 strict legacy migration preserves historical experiments.
+
+## 2026-09-11 — Energy-threshold hunting drive is the next behavior gene
+
+**Status:** Accepted
+
+The next inherited behavior gene will set the predator's own-energy threshold
+for pursuing visible prey. It will not determine predator role or attack
+success. Lower drive preserves energy and fallback-foraging opportunities but
+can miss prey; higher drive takes more hunting opportunities while risking
+costly pursuit. The gene and its current decision must remain inspectable.
+
+**Why:** The fixed combined-ecology matrix recorded predation and persistent
+prey in every run, but all three default-regime predator populations were gone
+by tick 1,000 and mean predation tendency declined in every seed. Increasing
+refuge coverage from none to 10% reduced the median predation share of deaths
+from 22.9% to 7.8%, confirming that prey accessibility materially changes the
+hunter's opportunity landscape. A hunting-drive threshold is the smallest
+reversible behavior gene that lets selection balance unconditional pursuit
+against plant foraging without redesigning role classification or attack
+mechanics.
