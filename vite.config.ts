@@ -10,6 +10,7 @@ export default defineConfig({
         benchmark: resolve(import.meta.dirname, "benchmark.html"),
         lab: resolve(import.meta.dirname, "lab.html"),
         characterization: resolve(import.meta.dirname, "characterization.html"),
+        richerEcology: resolve(import.meta.dirname, "richer-ecology.html"),
       },
     },
   },

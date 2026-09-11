@@ -629,3 +629,42 @@ Local neighbor selection produces predictable detours but does not guarantee a g
 ### Recommended next action
 
 Evaluate habitats, diets, predation, and terrain together across multiple seeds before selecting an additional sensor or behavior gene. Treat the 5,000-organism benchmark as unsupported stress evidence; it no longer fits the interactive frame budget.
+
+## 2026-09-11 — Combined richer-ecology evaluation (planning)
+
+### Changed
+
+- Added a production-built, machine-readable nine-run characterization that
+  evaluates habitats, diets, predation, defense, obstacles, and refuges together
+  over 1,000 ticks.
+- Compared no refuges, the 2.5% default, and 10% refuge coverage across the same
+  three seeds while retaining obstacles and every biological mechanic.
+- Recorded exact role persistence, death causes, cap pressure, refuge occupancy,
+  and ecology-trait means, then documented the resulting baseline and a concrete
+  acceptance gate for the next gene.
+
+### Validation
+
+Formatting, linting, strict type checking, all 114 tests, and the five-entry
+production build pass locally. The characterization has internally consistent
+population, role, and death accounting. Every run retained a population,
+recorded predation, and avoided sustained cap pressure. Median predation's share
+of deaths fell from 22.9% without refuges to 17.1% at default coverage and 7.8%
+with 10% coverage; sampled refuge occupancy rose from 0% to 2.4% and 10.8%,
+respectively. All three default runs had zero predators at tick 1,000, and mean
+predation tendency fell by 0.114 to 0.278. The deployed lab independently
+reproduced seed 17's tick-1,000 population of 295, zero predators, 290 predation
+deaths, and matching trait means. GitHub CI remains required before merge.
+
+### Risk and follow-up
+
+This fixed finite matrix identifies a reproducible pressure but does not prove
+equilibrium, long-term instability, or biological realism. It varies refuge
+coverage rather than isolating every interaction independently.
+
+### Recommended next action
+
+Implement inherited `huntingDrive` as the predator's own-energy threshold for
+pursuing visible prey. Compare both-role persistence over 1,000 ticks against
+the current zero-of-three default baseline while preserving headroom,
+determinism, bounded targeting, strict persistence, and legacy continuation.

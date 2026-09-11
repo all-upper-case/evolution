@@ -27,7 +27,11 @@ Birth and death totals come directly from every simulated lifecycle rather than 
 
 Unknown and duplicate parameters are rejected. Configuration overrides pass through the same strict parser as saved experiment files. Lab runs additionally enforce the supported interactive ceiling of 256×256 cells and 1,000 organisms. This prevents an accidental diagnostic URL from locking up an ordinary browser; larger stress work remains in the dedicated benchmark.
 
-For repeatable multi-seed calibration rather than a single custom run, use `characterization.html` and see [Ecosystem characterization](CHARACTERIZATION.md).
+For repeatable multi-seed calibration rather than a single custom run, use
+`characterization.html` and see
+[Ecosystem characterization](CHARACTERIZATION.md). The richer model's fixed
+refuge counterfactual is available at `richer-ecology.html`; see
+[Combined richer-ecology characterization](RICHER_ECOLOGY.md).
 
 Trait maintenance costs can be overridden with `organisms.movementCostPerTick` and `organisms.perceptionCostPerTick` (each 0–1000). Defaults are 0.1 and 0.0018; each coefficient multiplies the corresponding inherited trait squared every acting tick, including while stationary. `organisms.metabolismFoodEnergyInfluence` accepts 0–1 and defaults to 0.4. At zero, metabolic rate does not affect food yield; at one, food yield scales directly with the inherited metabolism trait. Version-one and version-two files migrate with zero influence so their energy rules remain compatible.
 
