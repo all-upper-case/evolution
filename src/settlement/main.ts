@@ -16,13 +16,14 @@ root.innerHTML = `<div class="settlement-shell">
     </div>
     <aside class="cast-card" aria-labelledby="cast-title"><p class="settlement-eyebrow">The cast</p><h2 id="cast-title">Who lives here</h2><div id="cast" class="cast-list"></div></aside>
     <aside class="detail-card" aria-labelledby="detail-name"><p class="settlement-eyebrow">Following</p><h2 id="detail-name">The settlement</h2><p id="detail-summary">Choose someone from the cast to see what they are doing and how they feel.</p><div id="detail" hidden>
-      <p class="activity" id="detail-activity"></p><dl class="needs"><div><dt>Health</dt><dd id="need-health"></dd></div><div><dt>Hunger</dt><dd id="need-hunger"></dd></div><div><dt>Fatigue</dt><dd id="need-fatigue"></dd></div><div><dt>Loneliness</dt><dd id="need-loneliness"></dd></div></dl>
+      <p class="activity" id="detail-activity"></p><dl class="needs"><div><dt>Health</dt><dd id="need-health"></dd></div><div><dt>Hunger</dt><dd id="need-hunger"></dd></div><div><dt>Fatigue</dt><dd id="need-fatigue"></dd></div><div><dt>Loneliness</dt><dd id="need-loneliness"></dd></div><div><dt>Carrying</dt><dd id="carried-food"></dd></div></dl>
       <h3>Disposition</h3><dl class="traits"><div><dt>Curiosity</dt><dd id="trait-curiosity"></dd></div><div><dt>Sociability</dt><dd id="trait-sociability"></dd></div><div><dt>Resilience</dt><dd id="trait-resilience"></dd></div></dl>
+      <h3>Practiced work</h3><p id="skill-summary" class="skill-summary"></p>
     </div></aside>
     <section class="chronicle-card" aria-labelledby="chronicle-title"><div class="section-heading"><div><p class="settlement-eyebrow">The chronicle</p><h2 id="chronicle-title">Things worth noticing</h2></div><span id="chronicle-count"></span></div><ol id="chronicle"></ol></section>
   </section>
-  <section class="clock-card" aria-labelledby="clock-title"><div><p class="settlement-eyebrow">Time</p><h2 id="clock-title">Let it unfold</h2></div><div class="settlement-metrics"><div><small>Tick</small><strong id="tick">0</strong></div><div><small>Population</small><strong id="population">14</strong></div><div><small>Wild food</small><strong id="food">520</strong></div><div><small>Seed</small><strong id="seed-value">42</strong></div></div><div class="settlement-controls"><button id="play" type="button">Watch</button><button id="step" type="button" class="quiet">One moment</button><label>Tempo<select id="speed"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select></label><label>World seed<input id="seed" type="number" min="0" max="4294967295" value="42"></label><button id="reset" type="button" class="quiet">New world</button></div><p id="message" role="status"></p></section>
-  <footer>Early foundation · needs, intentions, personalities, and a bounded event chronicle</footer>
+  <section class="clock-card" aria-labelledby="clock-title"><div><p class="settlement-eyebrow">Time and provisions</p><h2 id="clock-title">Let it unfold</h2></div><div class="settlement-metrics"><div><small>Tick</small><strong id="tick">0</strong></div><div><small>Population</small><strong id="population">14</strong></div><div><small>Wild food</small><strong id="food">520</strong></div><div><small>Raw stores</small><strong id="raw-food">12</strong></div><div><small>Prepared meals</small><strong id="prepared-meals">8</strong></div><div><small>Seed</small><strong id="seed-value">42</strong></div></div><div class="settlement-controls"><button id="play" type="button">Watch</button><button id="step" type="button" class="quiet">One moment</button><label>Tempo<select id="speed"><option value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select></label><label>World seed<input id="seed" type="number" min="0" max="4294967295" value="42"></label><button id="reset" type="button" class="quiet">New world</button></div><p id="message" role="status"></p></section>
+  <footer>Observation only · needs, skilled work, communal provisions, and a causal chronicle</footer>
 </div>`;
 
 const element = (id: string): HTMLElement => {
@@ -65,6 +66,8 @@ const renderInhabitant = (inhabitant: Inhabitant | undefined): void => {
   element("need-hunger").textContent = formatNeed(inhabitant.hunger);
   element("need-fatigue").textContent = formatNeed(inhabitant.fatigue);
   element("need-loneliness").textContent = formatNeed(inhabitant.loneliness);
+  element("carried-food").textContent =
+    `${inhabitant.carriedFood.toFixed(1)} measures`;
   element("trait-curiosity").textContent = disposition(
     inhabitant.personality.curiosity,
   );
@@ -74,6 +77,12 @@ const renderInhabitant = (inhabitant: Inhabitant | undefined): void => {
   element("trait-resilience").textContent = disposition(
     inhabitant.personality.resilience,
   );
+  const strongestSkill = Object.entries(inhabitant.skills).sort(
+    ([, first], [, second]) => second - first,
+  )[0];
+  element("skill-summary").textContent = strongestSkill
+    ? `${inhabitant.name} is especially practiced at ${strongestSkill[0]}. Their role changes how quickly that work meets the settlement's needs.`
+    : "Their practical strengths are still emerging.";
 };
 
 const render = (): void => {
@@ -88,6 +97,9 @@ const render = (): void => {
   element("population").textContent =
     snapshot.inhabitants.length.toLocaleString();
   element("food").textContent = Math.floor(snapshot.totalFood).toLocaleString();
+  element("raw-food").textContent = snapshot.stockpile.rawFood.toFixed(1);
+  element("prepared-meals").textContent =
+    snapshot.stockpile.preparedMeals.toLocaleString();
   element("seed-value").textContent = snapshot.seed.toLocaleString();
   canvas.setAttribute(
     "aria-label",
