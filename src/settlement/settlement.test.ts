@@ -39,6 +39,33 @@ describe("SettlementWorld", () => {
     ).toBe(true);
   });
 
+  it("turns wild food into carried, stored, prepared, and eaten provisions", () => {
+    const world = new SettlementWorld(31);
+    const totals = world.advanceTicks(1_000);
+    const snapshot = world.snapshot;
+    expect(totals.gathered).toBeGreaterThan(0);
+    expect(totals.deposited).toBeGreaterThan(0);
+    expect(totals.prepared).toBeGreaterThan(0);
+    expect(totals.meals).toBeGreaterThan(0);
+    expect(snapshot.stockpile.rawFood).toBeGreaterThanOrEqual(0);
+    expect(snapshot.stockpile.preparedMeals).toBeGreaterThanOrEqual(0);
+    expect(
+      snapshot.chronicle.some(({ text }) => text.includes("communal")),
+    ).toBe(true);
+  });
+
+  it("gives every role an explicit practical strength", () => {
+    const inhabitants = new SettlementWorld(42).snapshot.inhabitants;
+    const roles = new Set(inhabitants.map(({ role }) => role));
+    expect(roles).toEqual(
+      new Set(["forager", "cook", "caretaker", "storykeeper", "naturalist"]),
+    );
+    for (const inhabitant of inhabitants) {
+      const { gathering, cooking, care, fellowship } = inhabitant.skills;
+      expect(Math.max(gathering, cooking, care, fellowship)).toBeGreaterThan(1);
+    }
+  });
+
   it("continues exactly after a snapshot restore", () => {
     const uninterrupted = new SettlementWorld(8675309);
     uninterrupted.advanceTicks(300);
@@ -55,6 +82,8 @@ describe("SettlementWorld", () => {
     expect(snapshot.inhabitants.length).toBeGreaterThan(0);
     expect(snapshot.totalFood).toBeGreaterThanOrEqual(0);
     expect(snapshot.totalFood).toBeLessThanOrEqual(900);
+    expect(snapshot.stockpile.rawFood).toBeGreaterThanOrEqual(0);
+    expect(snapshot.stockpile.preparedMeals).toBeGreaterThanOrEqual(0);
     expect(snapshot.chronicle.length).toBeLessThanOrEqual(120);
     for (const inhabitant of snapshot.inhabitants) {
       expect(inhabitant.health).toBeGreaterThan(0);
