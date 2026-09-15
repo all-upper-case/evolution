@@ -280,3 +280,13 @@ The new experience begins on a separate `settlement.html` route under the workin
 The first Hearthwatch model uses fourteen named inhabitants in a seeded 64×64 valley. Health, hunger, fatigue, loneliness, personality dispositions, and current activity drive autonomous exploring, foraging, eating, returning to camp, resting, and seeking company. Its bounded chronicle records real activity transitions. Assigned roles deliberately do not claim behavioral meaning yet; the next increment must make them causal through gathering, carrying, stockpiling, consumption, and skill effects.
 
 **Why:** Population-level evolution produced meaningful experiments but not the individually legible, emergent lives the owner now wants to watch. A parallel prototype preserves working scientific infrastructure and limits migration risk while validating the new experience. Establishing needs, intentions, identity, and event history first gives later work, relationships, construction, conflict, families, and inheritance a coherent substrate.
+
+## 2026-09-14 — Causal subsistence and functional-realism roadmap
+
+**Status:** Accepted
+
+Hearthwatch's first economy explicitly moves food through wild, personally carried, communal raw, and prepared-meal states. Inhabitants gather finite cell resources, respect carrying capacity, haul them to camp, and consume actual stores. Cooks spend two raw measures and accumulated skilled labor to create one more nourishing meal. Founding roles now change gathering, cooking, self-care, or fellowship effectiveness; none remains a cosmetic label.
+
+The product roadmap prioritizes causal material survival, meaningful time and places, relationship memory, autonomous communal priorities, construction, and layered observation before hazards, generations, and culture. “Functional realism” means conserving important resources, modeling travel and labor, and exposing attributable causes without pursuing microscopic simulation or claims of real-world prediction.
+
+**Why:** Persistent characters become engaging when their choices have opportunity costs and leave visible consequences. A real but compact provisioning chain creates interdependence and understandable failure modes, while the roadmap prevents breadth, decorative prose, or realism theater from outrunning legibility and reliable simulation.
