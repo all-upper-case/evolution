@@ -668,3 +668,23 @@ Implement inherited `huntingDrive` as the predator's own-energy threshold for
 pursuing visible prey. Compare both-role persistence over 1,000 ticks against
 the current zero-of-three default baseline while preserving headroom,
 determinism, bounded targeting, strict persistence, and legacy continuation.
+
+## 2026-09-14 — First Hearthwatch living-world foundation (development)
+
+### Changed
+
+- Pivoted active product development toward a Dwarf Fortress-inspired but observation-first settlement simulation, while retaining the complete original Evolution laboratory.
+- Added a separate Hearthwatch browser entry with a seeded 64×64 valley, connected meadow/woods/camp terrain, edge water, and bounded renewable wild food.
+- Added fourteen deterministic named inhabitants with roles, personality dispositions, health, hunger, fatigue, loneliness, positions, ages, targets, and current activities.
+- Added autonomous exploring, foraging, eating, returning to camp, resting, seeking company, and socializing. Watching or selecting an inhabitant does not affect simulation state.
+- Added a selectable cast, individual need/disposition inspector, pixel map, time controls, seed reset, and a bounded reverse-chronological event feed.
+- Added complete in-memory settlement snapshots and exact deterministic continuation after restore.
+- Updated the mission, roadmap, autonomy criteria, README, and original interface navigation so future autonomous runs follow the new direction.
+
+### Validation
+
+Formatting, linting, strict type checking, all 105 tests, and the five-entry production build pass locally. Focused coverage verifies deterministic generation, autonomous activity, five-thousand-tick survival, bounded state, rendering purity, unsafe inputs, and snapshot continuation. GitHub CI and deployed browser verification remain required before merge completion.
+
+### Risk and next action
+
+This is an intentional vertical foundation, not yet a deep colony simulation. Roles are labels until the material work loop is implemented, the chronicle covers only a few transitions, snapshots are not yet exposed through files, and browser integration still needs deployed verification. Next implement gathering, carrying, a shared food stockpile, stored-food consumption, and causal role/skill effects, then evaluate whether following one inhabitant produces a coherent day-to-day story.

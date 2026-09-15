@@ -2,11 +2,27 @@
 
 This is the source of truth for autonomous development. Follow the active priority below; completed foundation work remains recorded in milestone order.
 
-## Active priority — Environmental and biological diversity
+## Active priority — Observational living-world pivot
 
-Owner direction, 2026-09-07: prioritize richer habitats, food sources, and predator–prey relationships now. The remaining Milestone 3 presentation and diagnostic tools are deferred unless needed to validate a specific ecological mechanic. Do not require completion of Milestone 3 before starting the ordered Milestone 4 increments below.
+Owner direction, 2026-09-14: spin the project into a Dwarf Fortress-style simulation focused much more strongly on observing autonomous critters or NPCs than on directing them. The tested Evolution application remains available as a compatibility laboratory; new product development targets the separate Hearthwatch experience until it is mature enough to become the default route.
 
-Next implementation: add an inherited hunting-drive threshold so predators can trade missed opportunities against costly unconditional pursuit, then compare 1,000-tick predator/prey persistence against the documented zero-of-three combined-ecology baseline.
+Next implementation: replace decorative roles with a real self-organizing subsistence loop—gathering, carrying, a shared stockpile, eating stored food, and role/skill effects—while exposing intentions and outcomes in the inspector and chronicle.
+
+## Milestone 5 — Hearthwatch observational settlement
+
+- [x] Establish a separate deterministic prototype with a small named cast, terrain, wild food, personal needs, autonomous activities, selection, and a bounded event chronicle.
+- [ ] Add a causal work and material loop: gathering, carrying, stockpiling, consumption, and meaningful role or skill differences.
+- [ ] Add persistent relationships, interaction memories, preferences, and compatible/conflicting dispositions.
+- [ ] Add places that matter: shelters, beds or dens, workshops, communal spaces, and inhabitant attachment to them.
+- [ ] Add autonomous settlement planning and construction without requiring player work orders.
+- [ ] Add injury, illness, recovery, hazards, predators, and deaths with specific attributable causes.
+- [ ] Add seasons, weather, resource cycles, migration, and environmental pressure.
+- [ ] Add families, generations, inheritance, and the original evolutionary systems where they enrich individual lives.
+- [ ] Add searchable biographies, relationship views, settlement history, and story-oriented observation tools.
+
+Exit condition: a seeded settlement sustains a causally legible material and social life over long runs, and following one inhabitant reveals an individual history rather than merely current meters. Observation remains non-interventional.
+
+Do not copy Dwarf Fortress feature-for-feature. Use its depth, autonomy, persistent individuals, and emergent history as inspiration while keeping the browser experience bounded and readable.
 
 ## Milestone 0 — Project foundation
 

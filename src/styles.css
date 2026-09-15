@@ -882,3 +882,13 @@ footer {
     transition-duration: 0.01ms !important;
   }
 }
+
+.prototype-link {
+  margin: 1rem 0 0;
+}
+
+.prototype-link a {
+  color: #83e6a6;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
