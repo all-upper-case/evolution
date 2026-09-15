@@ -38,6 +38,8 @@ Do not manufacture changes merely to fill an activation. If no safe implementati
 
 At milestone boundaries, and at least once every four completed development increments, use the experiment lab and deployed application to evaluate actual product and model behavior. Green engineering gates establish implementation quality, not scientific usefulness. Evidence of misleading metrics, degenerate ecological dynamics, or a workflow bottleneck may reorder unchecked roadmap work when the rationale is recorded in the decision and progress logs.
 
+During the Hearthwatch pivot, evaluation must also ask whether inhabitants are distinguishable, whether actions follow visibly from state, whether the chronicle highlights meaningful changes without flooding, and whether a viewer can form a coherent story about one life. Passing survival or determinism tests alone is not sufficient.
+
 ## Priority order
 
 1. Security or data-loss risk.

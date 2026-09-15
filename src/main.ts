@@ -32,7 +32,7 @@ if (app === null) throw new Error("Application root was not found.");
 
 app.innerHTML = `
   <main class="shell" aria-labelledby="page-title">
-    <header class="hero"><p class="eyebrow">Deterministic ecosystem laboratory</p><h1 id="page-title">Evolution</h1><p class="summary">A reproducible living sandbox with distinct habitats, renewable resources, and seeded organisms carrying inheritable traits.</p></header>
+    <header class="hero"><p class="eyebrow">Deterministic ecosystem laboratory</p><h1 id="page-title">Evolution</h1><p class="summary">A reproducible living sandbox with distinct habitats, renewable resources, and seeded organisms carrying inheritable traits.</p><p class="prototype-link"><a href="./settlement.html">Meet the named inhabitants of the new Hearthwatch prototype →</a></p></header>
     <section class="world-panel" aria-labelledby="world-title">
       <div class="world-heading"><div><p class="eyebrow">Live world</p><h2 id="world-title">The habitat</h2></div><div class="legend" aria-label="Map legend"><span class="food-key">Meadow food</span><span class="grove-key">Grove food</span><span class="obstacle-key">Obstacle</span><span class="refuge-key">Refuge</span><span class="organism-key">Foragers</span><span class="predator-key">Predators</span></div></div>
       <div class="world-layout">

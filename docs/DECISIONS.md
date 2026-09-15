@@ -268,3 +268,15 @@ hunter's opportunity landscape. A hunting-drive threshold is the smallest
 reversible behavior gene that lets selection balance unconditional pursuit
 against plant foraging without redesigning role classification or attack
 mechanics.
+
+## 2026-09-14 — Hearthwatch observational settlement pivot
+
+**Status:** Accepted; supersedes richer evolution as the active product priority.
+
+The project will develop a Dwarf Fortress-inspired observational settlement simulation centered on a small cast of autonomous, persistent individuals. The viewer may select, follow, pause, accelerate, and replay, but observation must not issue orders or alter outcomes. Individual intentions and events must arise from causal simulated state rather than disconnected narrative text.
+
+The new experience begins on a separate `settlement.html` route under the working name Hearthwatch. The original Evolution route, ecological core, experiment tools, file compatibility, and calibration remain intact until the settlement proves mature enough to justify a default-route change. Reusable deterministic random, clock, testing, deployment, and bounded-state patterns remain shared.
+
+The first Hearthwatch model uses fourteen named inhabitants in a seeded 64×64 valley. Health, hunger, fatigue, loneliness, personality dispositions, and current activity drive autonomous exploring, foraging, eating, returning to camp, resting, and seeking company. Its bounded chronicle records real activity transitions. Assigned roles deliberately do not claim behavioral meaning yet; the next increment must make them causal through gathering, carrying, stockpiling, consumption, and skill effects.
+
+**Why:** Population-level evolution produced meaningful experiments but not the individually legible, emergent lives the owner now wants to watch. A parallel prototype preserves working scientific infrastructure and limits migration risk while validating the new experience. Establishing needs, intentions, identity, and event history first gives later work, relationships, construction, conflict, families, and inheritance a coherent substrate.

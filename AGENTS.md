@@ -2,7 +2,7 @@
 
 ## Mission
 
-Build a deterministic, browser-based evolution and ecosystem simulator that is scientifically legible, enjoyable to watch, and easy to extend.
+Build a deterministic, browser-based living-world simulation that is enjoyable to observe, produces legible emergent stories, and remains easy to extend. Preserve the original evolution laboratory as a compatibility baseline while Hearthwatch develops into the primary observational settlement experience.
 
 ## Required workflow
 
@@ -25,6 +25,9 @@ Build a deterministic, browser-based evolution and ecosystem simulator that is s
 - Numerical limits must be explicit; prevent unbounded population, memory, and history growth.
 - New mechanics need a measurable purpose and tests covering their main effects.
 - Avoid claims of biological realism unless documented and supported.
+- Inhabitants must choose their own actions. User observation and selection must never change simulation outcomes.
+- New social, economic, or narrative systems need causal state beneath their presentation; do not generate disconnected flavor text.
+- Prefer a small cast with inspectable lives over population scale that makes individuals disposable or unreadable.
 
 ## Autonomous judgment
 
