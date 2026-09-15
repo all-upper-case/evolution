@@ -130,7 +130,8 @@ select:focus-visible {
 }
 .map-help,
 #detail-summary,
-#message {
+#message,
+.skill-summary {
   color: #aa9a83;
   font-size: 0.8rem;
   line-height: 1.5;
