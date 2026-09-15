@@ -44,15 +44,16 @@ Individual commands are also available for tests, type checking, linting, format
 
 ## Project status
 
-Hearthwatch is now available as a separate early prototype. It creates a seeded 64×64 valley and a cast of fourteen named inhabitants with roles, personality dispositions, health, hunger, fatigue, loneliness, and current intentions. They independently explore, seek wild food, eat, return to camp, rest, and find neighbors for conversation. The browser provides a selectable cast, personal inspector, terrain map, simulation controls, and a bounded chronicle derived from real state transitions. The complete settlement continues deterministically from an in-memory snapshot.
+Hearthwatch is now available as a separate early prototype. It creates a seeded 64×64 valley and a cast of fourteen named inhabitants with roles, practical strengths, personality dispositions, health, hunger, fatigue, loneliness, possessions, and current intentions. They gather finite wild food, carry it home, stock communal stores, cook nourishing meals, eat, rest, and find neighbors for conversation. The browser exposes wild, raw, and prepared food, plus each selected inhabitant's cargo and strongest skill. The complete settlement continues deterministically from an in-memory snapshot.
 
-This is the first foundation, not yet a colony-management game. Roles are identity scaffolding rather than a complete labor economy; there are not yet buildings, stockpiles, relationships, memories, families, seasons, combat, or player-issued work orders.
+This is an observation-first foundation, not a colony-management game. The subsistence economy is intentionally small; there are not yet buildings, durable possessions, relationships, memories, families, seasons, combat, or player-issued work orders.
 
 ### Original evolution laboratory
 
 The project has a responsive browser interface that visualizes seeded meadow and grove patches, two habitat-bound renewable foods, impassable obstacles, prey refuges, foragers, and predators while a deterministic ecological core advances beneath it. Organisms inherit diet, predation, and defense traits. Predators pursue foragers for bounded energy, foragers escape visible predators, and refuges hide prey from predators at an explicit energy cost. Attacks and defensive capacity carry energy costs, and predators trade plant-feeding efficiency for hunting ability. A user can inspect each organism's ecological role and exact traits. Accessible bounded charts show population, exact births and deaths, food resources, and every inherited trait; the experiment lab separates starvation, age, and predation deaths and reports terrain occupancy. Safe controls and strict, versioned JSON files support reproducible experiments and deterministic continuation. See:
 
 - [Roadmap](docs/ROADMAP.md)
+- [Hearthwatch tentative roadmap](docs/HEARTHWATCH_ROADMAP.md)
 - [Autonomous development policy](docs/AUTONOMY.md)
 - [Decision log](docs/DECISIONS.md)
 - [Progress log](docs/PROGRESS.md)
