@@ -688,3 +688,20 @@ Formatting, linting, strict type checking, all 105 tests, and the five-entry pro
 ### Risk and next action
 
 This is an intentional vertical foundation, not yet a deep colony simulation. Roles are labels until the material work loop is implemented, the chronicle covers only a few transitions, snapshots are not yet exposed through files, and browser integration still needs deployed verification. Next implement gathering, carrying, a shared food stockpile, stored-food consumption, and causal role/skill effects, then evaluate whether following one inhabitant produces a coherent day-to-day story.
+
+## 2026-09-14 — Hearthwatch subsistence economy and roadmap (development)
+
+### Changed
+
+- Added finite gathering, personal carrying capacity, hauling, communal raw-food storage, skilled cooking, prepared meals, and stored-food consumption.
+- Replaced decorative roles with five causal roles whose practical strengths affect gathering, cooking, care, or fellowship.
+- Exposed raw stores, prepared meals, personal cargo, skilled work, and material events in the ordinary Hearthwatch interface.
+- Added a detailed tentative roadmap covering product principles, near-term sequence, medium-horizon ecology and society, realism strategy, quality gates, guardrails, and review cadence.
+
+### Validation
+
+Focused tests cover the complete material chain, causal strengths, bounds, and exact snapshot continuation. The existing 5,000-tick survival trial caught and prevented an unload/eat priority deadlock. The complete local gate, GitHub CI, and deployed browser verification remain required before completion.
+
+### Risk and next action
+
+Food is intentionally abstract and buildings are not yet represented, so cooking currently occurs anywhere within the camp area. Role strengths are fixed founder competencies rather than learned experience. Next add a readable day/night rhythm and explicit shelter, beds, hearth, and work sites so routines and travel have spatial and temporal meaning.
