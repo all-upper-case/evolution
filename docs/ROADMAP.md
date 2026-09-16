@@ -6,13 +6,13 @@ This is the source of truth for autonomous development. Follow the active priori
 
 Owner direction, 2026-09-14: spin the project into a Dwarf Fortress-style simulation focused much more strongly on observing autonomous critters or NPCs than on directing them. The tested Evolution application remains available as a compatibility laboratory; new product development targets the separate Hearthwatch experience until it is mature enough to become the default route.
 
-The detailed, tentative product sequence and design strategy now live in [the Hearthwatch roadmap](HEARTHWATCH_ROADMAP.md). The next implementation is days, routines, and meaningful places: shelter, beds, hearth, work sites, and an observable day/night rhythm.
+The detailed, tentative product sequence and design strategy now live in [the Hearthwatch roadmap](HEARTHWATCH_ROADMAP.md). The immediate next priority is richer reciprocal social activity, preferences, and coherent geography, building on sustained routines, causal shelters, persistent paths, personal memories, and the new observation camera. Runtime LLM integration is deferred.
 
 ## Milestone 5 — Hearthwatch observational settlement
 
 - [x] Establish a separate deterministic prototype with a small named cast, terrain, wild food, personal needs, autonomous activities, selection, and a bounded event chronicle.
 - [x] Add a causal work and material loop: gathering, carrying, stockpiling, cooking, consumption, and meaningful role or skill differences.
-- [ ] Add days, routines, shelter, beds, hearth, and work sites that make time and place consequential.
+- [x] Add days, routines, shelter, beds, hearth, and work sites that make time and place consequential.
 - [ ] Add persistent relationships, interaction memories, preferences, and compatible/conflicting dispositions.
 - [ ] Add places that matter: shelters, beds or dens, workshops, communal spaces, and inhabitant attachment to them.
 - [ ] Add autonomous settlement planning and construction without requiring player work orders.

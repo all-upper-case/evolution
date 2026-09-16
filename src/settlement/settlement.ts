@@ -1,9 +1,13 @@
+import { validateSettlement } from "./persistence";
 import { SeededRandom } from "../simulation/random";
 
 export type Terrain = "meadow" | "woods" | "water" | "camp";
 export type Role =
   "forager" | "cook" | "caretaker" | "storykeeper" | "naturalist";
 export type Activity =
+  | "building"
+  | "woodcutting"
+  | "relaxing"
   | "exploring"
   | "foraging"
   | "gathering"
@@ -45,6 +49,11 @@ export interface Inhabitant {
   workProgress: number;
   personality: Personality;
   skills: Skills;
+  homeId: number;
+  carriedWood: number;
+  actionTicks: number;
+  relationships: Record<string, number>;
+  memories: ChronicleEntry[];
 }
 
 export interface ChronicleEntry {
@@ -53,8 +62,26 @@ export interface ChronicleEntry {
   text: string;
 }
 
+export interface Shelter {
+  id: number;
+  x: number;
+  y: number;
+  timber: number;
+  progress: number;
+}
+export const DAY_TICKS = 600;
+export const settlementTime = (tick: number): string => {
+  const hour = (6 + Math.floor(((tick % DAY_TICKS) * 24) / DAY_TICKS)) % 24;
+  return `Day ${String(Math.floor(tick / DAY_TICKS) + 1)} · ${String(hour).padStart(2, "0")}:00`;
+};
+export const isNight = (tick: number): boolean => {
+  const hour = (6 + ((tick % DAY_TICKS) * 24) / DAY_TICKS) % 24;
+  return hour >= 21 || hour < 6;
+};
 export interface SettlementSnapshot {
-  schemaVersion: 2;
+  schemaVersion: 3;
+  pathsByCell: readonly number[];
+  shelters: readonly Shelter[];
   seed: number;
   tick: number;
   width: number;
@@ -160,6 +187,8 @@ const cloneInhabitant = (inhabitant: Inhabitant): Inhabitant =>
     ...inhabitant,
     personality: Object.freeze({ ...inhabitant.personality }),
     skills: Object.freeze({ ...inhabitant.skills }),
+    relationships: Object.freeze({ ...inhabitant.relationships }),
+    memories: inhabitant.memories.map((entry) => Object.freeze({ ...entry })),
   });
 
 /** A deterministic, bounded observational settlement with a causal subsistence economy. */
@@ -170,6 +199,14 @@ export class SettlementWorld {
   readonly #foodByCell: Float64Array;
   readonly #inhabitants: Inhabitant[];
   readonly #chronicle: ChronicleEntry[];
+  readonly #pathsByCell = new Uint16Array(WIDTH * HEIGHT);
+  readonly #shelters: Shelter[] = Array.from({ length: 7 }, (_, index) => ({
+    id: index + 1,
+    x: 25 + (index % 4) * 5,
+    y: index < 4 ? 26 : 38,
+    timber: 0,
+    progress: 0,
+  }));
   #tick = 0;
   #totalFood = 0;
   #rawFood = INITIAL_RAW_FOOD;
@@ -195,7 +232,11 @@ export class SettlementWorld {
 
   public get snapshot(): SettlementSnapshot {
     return Object.freeze({
-      schemaVersion: 2,
+      schemaVersion: 3,
+      pathsByCell: Object.freeze(Array.from(this.#pathsByCell)),
+      shelters: Object.freeze(
+        this.#shelters.map((shelter) => Object.freeze({ ...shelter })),
+      ),
       seed: this.#seed,
       tick: this.#tick,
       width: WIDTH,
@@ -217,6 +258,7 @@ export class SettlementWorld {
   }
 
   public static fromSnapshot(snapshot: SettlementSnapshot): SettlementWorld {
+    validateSettlement(snapshot);
     if (
       snapshot.width !== WIDTH ||
       snapshot.height !== HEIGHT ||
@@ -226,6 +268,12 @@ export class SettlementWorld {
       throw new Error("Unsupported or malformed settlement snapshot.");
     const world = new SettlementWorld(snapshot.seed);
     world.#tick = snapshot.tick;
+    world.#pathsByCell.set(snapshot.pathsByCell);
+    world.#shelters.splice(
+      0,
+      world.#shelters.length,
+      ...snapshot.shelters.map((shelter) => ({ ...shelter })),
+    );
     world.#terrainByCell.splice(
       0,
       world.#terrainByCell.length,
@@ -242,6 +290,8 @@ export class SettlementWorld {
         ...inhabitant,
         personality: { ...inhabitant.personality },
         skills: { ...inhabitant.skills },
+        relationships: { ...inhabitant.relationships },
+        memories: inhabitant.memories.map((entry) => ({ ...entry })),
       })),
     );
     world.#chronicle.splice(
@@ -349,6 +399,11 @@ export class SettlementWorld {
         targetId: null,
         carriedFood: 0,
         workProgress: 0,
+        homeId: Math.floor(index / 2) + 1,
+        carriedWood: 0,
+        actionTicks: 0,
+        relationships: {},
+        memories: [],
         personality: {
           curiosity: 0.75 + this.#random.next() * 0.5,
           sociability: 0.75 + this.#random.next() * 0.5,
@@ -372,8 +427,11 @@ export class SettlementWorld {
       ...source,
       personality: { ...source.personality },
       skills: { ...source.skills },
+      relationships: { ...source.relationships },
+      memories: source.memories.map((entry) => ({ ...entry })),
+      actionTicks: source.actionTicks + 1,
       ageTicks: source.ageTicks + 1,
-      hunger: clampNeed(source.hunger + 0.3),
+      hunger: clampNeed(source.hunger + 0.12),
       fatigue: clampNeed(source.fatigue + 0.18),
       loneliness: clampNeed(
         source.loneliness + 0.12 * source.personality.sociability,
@@ -387,7 +445,13 @@ export class SettlementWorld {
     let prepared = 0;
     let nextActivity: Activity;
 
-    if (inhabitant.hunger >= 52) {
+    const home = this.#shelters.find(({ id }) => id === inhabitant.homeId);
+    if (!home) throw new Error("Missing home.");
+    const bed = { x: home.x + (inhabitant.id % 2 === 0 ? 1 : -1), y: home.y };
+    if (
+      inhabitant.hunger >= 52 ||
+      (source.activity === "eating" && source.actionTicks < 8)
+    ) {
       if (distance(inhabitant, CAMP) <= 2 && inhabitant.carriedFood > 0) {
         deposited = inhabitant.carriedFood;
         this.#rawFood += deposited;
@@ -397,7 +461,15 @@ export class SettlementWorld {
           `${inhabitant.name} brought ${deposited.toFixed(1)} measures of wild food home before eating.`,
         );
       }
-      if (distance(inhabitant, CAMP) <= 2 && this.#preparedMeals >= 1) {
+      if (source.activity === "eating" && source.actionTicks < 8) {
+        nextActivity = "eating";
+      } else if (
+        distance(inhabitant, CAMP) > 2 &&
+        (this.#preparedMeals >= 1 || this.#rawFood >= 1)
+      ) {
+        this.#moveToward(inhabitant, CAMP);
+        nextActivity = "returning";
+      } else if (distance(inhabitant, CAMP) <= 2 && this.#preparedMeals >= 1) {
         this.#preparedMeals -= 1;
         inhabitant.hunger = clampNeed(inhabitant.hunger - 44);
         nextActivity = "eating";
@@ -407,26 +479,36 @@ export class SettlementWorld {
         inhabitant.hunger = clampNeed(inhabitant.hunger - 27);
         nextActivity = "eating";
         meal = true;
-      } else if (inhabitant.carriedFood > 0) {
+      } else if (inhabitant.carriedFood >= 1 && inhabitant.hunger >= 75) {
+        inhabitant.carriedFood -= 1;
+        inhabitant.hunger = clampNeed(inhabitant.hunger - 27);
+        nextActivity = "eating";
+        meal = true;
+      } else if (inhabitant.carriedFood >= 1) {
         this.#moveToward(inhabitant, CAMP);
         nextActivity = "hauling";
       } else {
         ({ activity: nextActivity, gathered } = this.#gather(inhabitant));
       }
-    } else if (inhabitant.fatigue >= 68) {
-      if (distance(inhabitant, CAMP) <= 2) {
+    } else if (
+      inhabitant.fatigue >= 68 ||
+      (source.activity === "resting" && inhabitant.fatigue > 15) ||
+      isNight(this.#tick)
+    ) {
+      if (distance(inhabitant, bed) === 0) {
         inhabitant.fatigue = clampNeed(
           inhabitant.fatigue -
-            4.5 * inhabitant.personality.resilience * inhabitant.skills.care,
+            (home.progress >= 100 ? 1.5 : 0.85) *
+              inhabitant.personality.resilience,
         );
         nextActivity = "resting";
       } else {
-        this.#moveToward(inhabitant, CAMP);
+        this.#moveToward(inhabitant, bed);
         nextActivity = "returning";
       }
     } else if (
-      inhabitant.loneliness >=
-      58 / inhabitant.personality.sociability
+      inhabitant.loneliness >= 58 / inhabitant.personality.sociability ||
+      (source.activity === "socializing" && source.actionTicks < 12)
     ) {
       const companion = this.#nearestCompanion(inhabitant);
       if (companion !== null && distance(inhabitant, companion) <= 1) {
@@ -436,6 +518,12 @@ export class SettlementWorld {
         inhabitant.targetId = companion.id;
         nextActivity = "socializing";
         conversation = true;
+        if (source.activity !== "socializing") {
+          inhabitant.relationships[String(companion.id)] = Math.min(
+            100,
+            (inhabitant.relationships[String(companion.id)] ?? 0) + 4,
+          );
+        }
       } else if (companion !== null) {
         inhabitant.targetId = companion.id;
         this.#moveToward(inhabitant, companion);
@@ -444,7 +532,9 @@ export class SettlementWorld {
         this.#moveToward(inhabitant, CAMP);
         nextActivity = "seeking-company";
       }
-    } else if (inhabitant.carriedFood > 0) {
+    } else if (
+      inhabitant.carriedFood >= (inhabitant.role === "forager" ? 5 : 3)
+    ) {
       if (distance(inhabitant, CAMP) <= 2) {
         deposited = inhabitant.carriedFood;
         this.#rawFood += deposited;
@@ -458,8 +548,12 @@ export class SettlementWorld {
         this.#moveToward(inhabitant, CAMP);
         nextActivity = "hauling";
       }
-    } else if (inhabitant.role === "cook" && this.#rawFood >= 2) {
-      if (distance(inhabitant, CAMP) <= 2) {
+    } else if (
+      inhabitant.role === "cook" &&
+      this.#rawFood >= 2 &&
+      this.#preparedMeals < 28
+    ) {
+      if (distance(inhabitant, CAMP) === 0) {
         inhabitant.workProgress += inhabitant.skills.cooking;
         nextActivity = "cooking";
         if (inhabitant.workProgress >= 4) {
@@ -476,6 +570,11 @@ export class SettlementWorld {
         this.#moveToward(inhabitant, CAMP);
         nextActivity = "returning";
       }
+    } else if (this.#rawFood + this.#preparedMeals > 8 && home.progress < 100) {
+      nextActivity = this.#buildHome(inhabitant, home);
+    } else if (this.#rawFood + this.#preparedMeals > 45) {
+      if (distance(inhabitant, CAMP) > 4) this.#moveToward(inhabitant, CAMP);
+      nextActivity = "relaxing";
     } else {
       ({ activity: nextActivity, gathered } = this.#gather(inhabitant));
     }
@@ -484,12 +583,12 @@ export class SettlementWorld {
       if (nextActivity === "eating")
         this.#record(
           inhabitant.id,
-          `${inhabitant.name} ate from the communal store.`,
+          `${inhabitant.name} ate ${distance(inhabitant, CAMP) <= 2 ? "from the communal store" : "from their carried provisions"}.`,
         );
       else if (nextActivity === "resting")
         this.#record(
           inhabitant.id,
-          `${inhabitant.name} curled up at camp to rest.`,
+          `${inhabitant.name} settled into their ${home.progress >= 100 ? "sheltered bed" : "bedroll"} to rest.`,
         );
       else if (nextActivity === "socializing") {
         const companion = this.#inhabitants.find(
@@ -501,7 +600,20 @@ export class SettlementWorld {
         );
       }
     }
+    if (nextActivity !== source.activity) inhabitant.actionTicks = 0;
     inhabitant.activity = nextActivity;
+    // Personal memories persist independently of the village's rolling chronicle.
+    const memory = this.#chronicle.at(-1);
+    if (
+      memory?.tick === this.#tick &&
+      memory.inhabitantId === inhabitant.id &&
+      !inhabitant.memories.some(
+        (entry) => entry.tick === memory.tick && entry.text === memory.text,
+      )
+    ) {
+      inhabitant.memories.push({ ...memory });
+      inhabitant.memories = inhabitant.memories.slice(-24);
+    }
     if (inhabitant.hunger >= 100)
       inhabitant.health -= 1.2 / inhabitant.personality.resilience;
     if (inhabitant.fatigue >= 100)
@@ -512,6 +624,52 @@ export class SettlementWorld {
         inhabitant.health + 0.04 * inhabitant.skills.care,
       );
     return { inhabitant, meal, conversation, gathered, deposited, prepared };
+  }
+
+  #buildHome(inhabitant: Inhabitant, home: Shelter): Activity {
+    if (inhabitant.carriedWood > 0 || home.timber >= 8) {
+      if (distance(inhabitant, home) > 1) {
+        this.#moveToward(inhabitant, home);
+        return "building";
+      }
+      if (inhabitant.carriedWood > 0) {
+        const used = Math.min(8 - home.timber, inhabitant.carriedWood);
+        home.timber += used;
+        inhabitant.carriedWood -= used;
+      }
+      if (home.timber >= 8) {
+        home.progress = Math.min(100, home.progress + 1);
+        if (home.progress === 100)
+          this.#record(
+            inhabitant.id,
+            `${inhabitant.name} finished shelter ${String(home.id)}. Its two beds now offer better rest.`,
+          );
+      }
+      return "building";
+    }
+    let tree: { x: number; y: number } | undefined;
+    for (let cell = 0; cell < this.#terrainByCell.length; cell++) {
+      if (this.#terrainByCell[cell] !== "woods") continue;
+      const candidate = { x: cell % WIDTH, y: Math.floor(cell / WIDTH) };
+      if (!tree || distance(inhabitant, candidate) < distance(inhabitant, tree))
+        tree = candidate;
+    }
+    if (tree) {
+      if (distance(inhabitant, tree) > 0) this.#moveToward(inhabitant, tree);
+      else {
+        inhabitant.workProgress += 1;
+        if (inhabitant.workProgress >= 12) {
+          inhabitant.workProgress = 0;
+          this.#terrainByCell[cellOf(tree.x, tree.y)] = "meadow";
+          inhabitant.carriedWood += 4;
+          this.#record(
+            inhabitant.id,
+            `${inhabitant.name} felled a tree and carried its timber for their shelter.`,
+          );
+        }
+      }
+    }
+    return "woodcutting";
   }
 
   #gather(inhabitant: Inhabitant): {
@@ -555,20 +713,30 @@ export class SettlementWorld {
 
   #nearestCompanion(inhabitant: Inhabitant): Inhabitant | null {
     let best: Inhabitant | null = null;
+    let bestScore = Number.POSITIVE_INFINITY;
     for (const candidate of this.#inhabitants) {
-      if (candidate.id === inhabitant.id) continue;
       if (
-        best === null ||
-        distance(inhabitant, candidate) < distance(inhabitant, best) ||
-        (distance(inhabitant, candidate) === distance(inhabitant, best) &&
-          candidate.id < best.id)
+        candidate.id === inhabitant.id ||
+        candidate.health <= 0 ||
+        candidate.activity === "resting"
       )
+        continue;
+      const score =
+        distance(inhabitant, candidate) -
+        (inhabitant.relationships[String(candidate.id)] ?? 0) / 10;
+      if (
+        score < bestScore ||
+        (score === bestScore && (best === null || candidate.id < best.id))
+      ) {
         best = candidate;
+        bestScore = score;
+      }
     }
     return best;
   }
 
   #moveToward(inhabitant: Inhabitant, target: { x: number; y: number }): void {
+    if (distance(inhabitant, target) === 0) return;
     const candidates = [
       { x: inhabitant.x + 1, y: inhabitant.y },
       { x: inhabitant.x, y: inhabitant.y + 1 },
@@ -583,6 +751,11 @@ export class SettlementWorld {
     if (next !== undefined) {
       inhabitant.x = next.x;
       inhabitant.y = next.y;
+      const cell = cellOf(next.x, next.y);
+      this.#pathsByCell[cell] = Math.min(
+        100,
+        (this.#pathsByCell[cell] ?? 0) + 1,
+      );
     }
   }
 
@@ -646,14 +819,17 @@ export class SettlementWorld {
 
 export const activityLabel = (activity: Activity): string =>
   ({
+    building: "Building their shelter",
+    woodcutting: "Harvesting timber for home",
+    relaxing: "Taking some quiet time",
     exploring: "Exploring",
     foraging: "Searching for wild food",
     gathering: "Gathering wild food",
     hauling: "Carrying food to camp",
     cooking: "Preparing a communal meal",
-    eating: "Eating at camp",
-    returning: "Returning to camp",
-    resting: "Resting at camp",
+    eating: "Taking time to eat",
+    returning: "Heading home",
+    resting: "Resting in their bed",
     "seeking-company": "Looking for company",
     socializing: "Talking with a neighbor",
   })[activity];

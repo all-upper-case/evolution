@@ -110,3 +110,9 @@ Predation, disease, childhood, and violence arrive only after food, work, place,
 ## Review cadence
 
 Revisit this roadmap after each two or three material systems, at milestone boundaries, or whenever experiments show that the current order produces shallow, opaque, unstable, or repetitive life. Scientific integrity, user comprehension, and emergent-story quality may outrank the next checkbox.
+
+## September 16 implementation update
+
+The material loop, day/night clock, assigned beds, hearth, timber harvesting, fixed-site autonomous shelter construction, path wear, basic acquaintance, personal memories, camera controls, and persistent saves are implemented. Social scores are directed familiarity and memories remain bounded; the relationship stage is only partially complete. Autonomous site choice, broader material chains, tools, maintenance, reciprocal social engagement, and long-term histories remain future work.
+
+Owner direction explicitly permits retirement of unnecessary Evolution features. Keep the separate laboratory for now without growing it; prioritize Hearthwatch's lived experience. Do not spend this phase on LLM plumbing: retain the headless causal model and introduce a formal action/controller boundary only when concrete behaviors require it.

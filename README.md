@@ -44,9 +44,13 @@ Individual commands are also available for tests, type checking, linting, format
 
 ## Project status
 
-Hearthwatch is now available as a separate early prototype. It creates a seeded 64×64 valley and a cast of fourteen named inhabitants with roles, practical strengths, personality dispositions, health, hunger, fatigue, loneliness, possessions, and current intentions. They gather finite wild food, carry it home, stock communal stores, cook nourishing meals, eat, rest, and find neighbors for conversation. The browser exposes wild, raw, and prepared food, plus each selected inhabitant's cargo and strongest skill. The complete settlement continues deterministically from an in-memory snapshot.
+Hearthwatch now follows fourteen people through readable days: gathering useful loads, carrying provisions, cooking, eating, talking, building shared shelters, and sleeping in personal beds. Trees felled for timber disappear, completed shelters improve rest, and repeated travel wears lasting paths. Each person has remembered encounters and acquaintance scores that influence companion choice.
 
-This is an observation-first foundation, not a colony-management game. The subsistence economy is intentionally small; there are not yet buildings, durable possessions, relationships, memories, families, seasons, combat, or player-issued work orders.
+Zoom with +/−, drag or use arrow keys to pan, tap a villager or select a cast member to inspect them, and toggle Follow to keep them in view. The detailed map shows trees, people, cargo, hearth, beds, and construction progress. Time advances at three moments per second (600 moments per day), with slower and faster options.
+
+Worlds save automatically in the current browser and resume paused. Download JSON backups to move between devices; loading validates the entire world before replacement. No time passes while the page is closed. New world has an Undo button until the next reload or reset. Browser storage can be cleared by browser settings, so download important worlds. Earlier in-memory Hearthwatch format 2 is not accepted as a version 3 file.
+
+Home locations are fixed, shelters are abstract open-roof structures, and acquaintance is not yet a complete relationship system. Families, seasons, combat, and LLM-controlled decisions remain future work.
 
 ### Original evolution laboratory
 

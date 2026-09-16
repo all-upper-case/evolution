@@ -22,7 +22,7 @@ select {
 .settlement-shell {
   width: min(100% - 2rem, 82rem);
   margin: auto;
-  padding: clamp(2rem, 6vw, 5rem) 0 2rem;
+  padding: 1.5rem 0 2rem;
 }
 .settlement-hero {
   display: flex;
@@ -38,7 +38,7 @@ select {
   margin: 0;
   color: #fff5df;
   font-family: Georgia, serif;
-  font-size: clamp(3.5rem, 10vw, 7.5rem);
+  font-size: clamp(3rem, 7vw, 5rem);
   font-weight: 500;
   letter-spacing: -0.06em;
   line-height: 0.92;
@@ -119,7 +119,7 @@ h2 {
   border: 1px solid #6d583b;
   border-radius: 0.55rem;
   background: #111;
-  image-rendering: pixelated;
+  touch-action: none;
 }
 #settlement-map:focus-visible,
 button:focus-visible,
@@ -367,4 +367,31 @@ footer {
   .chronicle-card {
     grid-column: auto;
   }
+}
+
+.map-controls {
+  margin-bottom: 0.8rem;
+  align-items: center;
+}
+#daytime {
+  margin-left: auto;
+  color: #e3c88e;
+  font-size: 0.85rem;
+}
+#home-summary,
+#connections,
+#memories,
+#save-status {
+  font-size: 0.78rem;
+  color: #cbbda7;
+  line-height: 1.6;
+}
+#memories {
+  padding-left: 1rem;
+}
+#memories li {
+  margin-bottom: 0.6rem;
+}
+#follow[aria-pressed="true"] {
+  background: #b9d0ac;
 }
