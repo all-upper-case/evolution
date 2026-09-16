@@ -705,3 +705,11 @@ Focused tests cover the complete material chain, causal strengths, bounds, and e
 ### Risk and next action
 
 Food is intentionally abstract and buildings are not yet represented, so cooking currently occurs anywhere within the camp area. Role strengths are fixed founder competencies rather than learned experience. Next add a readable day/night rhythm and explicit shelter, beds, hearth, and work sites so routines and travel have spatial and temporal meaning.
+
+## 2026-09-16 — A lived-in Hearthwatch village (development)
+
+Implemented sustained daily routines, individual beds, seven shared shelter sites, causal tree-to-timber-to-construction flow, persistent paths, acquaintance-driven companionship, and 24-entry personal memories. Added a detailed canvas view with visible people and places, zoom/pan/direct selection/follow, home and connection inspection, day/time display, local autosave, validated JSON transfer, and undo for a new-world reset. Paused/hidden time does not generate catch-up bursts. The original laboratory remains available but is not the active product model.
+
+Validation: four seeds over 6,000 moments retain fourteen residents, complete shelters, wear paths, and remember conversations. Harvested timber reconciles with installed plus carried timber. Every run restores and continues exactly for 700 additional moments. Tests cover sustained sleep at assigned beds, malformed saves, and camera coordinate mapping. Formatting, linting, strict typing, all 129 tests, and the six-page production build pass locally. Remote CI must pass before merge. The local browser preview is unavailable in this environment; verify the deployed controls, visual map, and reload persistence after Pages publishes.
+
+Limits: fixed home sites, abstract open-roof shelters, no building collision/doors, no offline progression, directed acquaintance rather than mutual relationships, bounded recent history rather than an unlimited archive. Save format 3 is explicit; no legacy settlement file migration is claimed. Next deepen social interactions and autonomy (reciprocal availability, shared activities, personal preferences) and replace scattered terrain with a more coherent valley layout. Defer agentic LLM integration.
